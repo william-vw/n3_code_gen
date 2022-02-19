@@ -2,12 +2,12 @@ package wvw.semweb.owl.gen.model;
 
 import org.apache.jen3.datatypes.RDFDatatype;
 
-public class ModelProperty extends ModelElement {
+public class ModelEdge extends ModelElement {
 
 	private RDFDatatype dataType;
-	private ModelClass objectType;
+	private ModelNode objectType;
 
-	public ModelProperty(String name) {
+	public ModelEdge(String name) {
 		super(name);
 	}
 
@@ -31,17 +31,15 @@ public class ModelProperty extends ModelElement {
 		return objectType != null;
 	}
 
-	public ModelClass getObjectType() {
+	public ModelNode getObjectType() {
 		return objectType;
 	}
 
-	public void setObjectType(ModelClass objectType) {
+	public void setObjectType(ModelNode objectType) {
 		this.objectType = objectType;
-
-		objectType.addIn(this);
 	}
 
-	public void replaceObjectType(ModelClass objectType) {
+	public void replaceObjectType(ModelNode objectType) {
 		this.objectType = objectType;
 	}
 
