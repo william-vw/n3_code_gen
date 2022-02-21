@@ -1,6 +1,7 @@
 package wvw.semweb.owl.gen;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -9,6 +10,7 @@ import java.util.stream.Collectors;
 
 import org.apache.jen3.graph.Node;
 import org.apache.jen3.graph.NodeFactory;
+import org.apache.jen3.graph.Node_URI;
 import org.apache.jen3.n3.N3Model;
 import org.apache.jen3.n3.N3ModelSpec;
 import org.apache.jen3.n3.N3ModelSpec.Types;
@@ -36,8 +38,8 @@ public class ParseClassModel implements N3EventListener {
 	public static void main(String[] args) throws Exception {
 		ParseClassModel parser = new ParseClassModel();
 
-//		parser.parseClassModel("diabetes-iot.n3", "DMTO.n3");
-		parser.parseClassModel("test.n3", "ontology.n3");
+		parser.parseClassModel("diabetes-iot.n3", "DMTO.n3");
+//		parser.parseClassModel("test.n3", "ontology.n3");
 	}
 
 	@Override
@@ -60,7 +62,8 @@ public class ParseClassModel implements N3EventListener {
 		if (parsedRules.isEmpty())
 			log.error("no rules found in " + rulesPath);
 
-		Node entryTerm = NodeFactory.createVariable("x");
+		Node entryTerm = NodeFactory.createVariable("p");
+//		Node entryTerm = NodeFactory.createVariable("x");
 
 		for (N3Rule r : parsedRules)
 			processRule(r, entryTerm, ontology);
@@ -77,28 +80,35 @@ public class ParseClassModel implements N3EventListener {
 		log.debug(termNode.values().stream().map(v -> v.toString()).collect(Collectors.joining("\n")));
 		log.debug("");
 
-//		GraphNode entryNode = termNode.get(entryTerm);
-//		Collection<ModelNode> modelNodes = ModelGraphFactory.toModel(entryNode);
-//
-//		ModelOntologyAnalyser analyser = new ModelOntologyAnalyser(ontology);
-//
-//		// - try and find types for terms
-//
-//		log.debug("- trying to find types for model nodes");
-//		modelNodes.forEach(node -> {
-//			if (!node.hasName())
-//				findTypes(node, analyser);
-//		});
-//		log.debug("");
-//
-//		log.debug("- trying to find annotations for model");
-//		modelNodes.forEach(node -> {
-//			if (node.hasName()) {
-//				findAnnotations(node, analyser);
-//			}
-//		});
-//		log.debug("");
-//
+		GraphNode entryNode = termNode.get(entryTerm);
+		Collection<ModelNode> modelNode = ModelGraphFactory.toModel(entryNode);
+
+		log.debug("- initial model:");
+		log.debug(modelNode.stream().map(v -> v.toString()).collect(Collectors.joining("\n")));
+
+		ModelOntologyAnalyser analyser = new ModelOntologyAnalyser(ontology);
+
+		// - try and find types for terms
+
+		log.debug("- trying to find types for model nodes");
+		modelNode.forEach(node -> {
+			if (!node.hasName())
+				findTypes(node, analyser);
+		});
+		log.debug("");
+
+		log.debug("- trying to find annotations for model");
+		modelNode.forEach(node -> {
+			if (node.hasName()) {
+				findAnnotations(node, analyser);
+			}
+		});
+		log.debug("");
+		
+		log.debug("- updated model:");
+		log.debug(modelNode.stream().map(v -> v.toString()).collect(Collectors.joining("\n")));
+		log.debug("");
+
 //		// - at this point, we've collected all possible information about the rule's
 //		// nodes; let's now merge nodes with same types into a single node
 //
@@ -151,8 +161,17 @@ public class ParseClassModel implements N3EventListener {
 			ModelEdge edge = edges.next();
 
 			if (edge.getName().equals(RDF.type.getURI())) {
-				edges.remove();
-				types.add(edge.getObjectType().getName());
+				GraphNode or = edge.getObjectType().getOr().get(0); // not merged yet so only 1
+				
+				// if a URI, this graph node indicated a concrete type
+				if (or.getId() instanceof Node_URI) {
+					edges.remove();
+					
+					ModelNode target = edge.getObjectType();
+					target.setName(((Node_URI) or.getId()).getURI());
+					
+					types.add(target.getName());
+				}
 			}
 		}
 
@@ -166,7 +185,6 @@ public class ParseClassModel implements N3EventListener {
 
 		} else {
 			// else, look into ontology (check domains, ranges of properties)
-
 			List<Resource> ontologyTypes = analyser.findTypes(mNode);
 
 			if (ontologyTypes.size() > 0) {
@@ -179,7 +197,7 @@ public class ParseClassModel implements N3EventListener {
 			}
 		}
 	}
-	
+
 	private void findAnnotations(ModelNode mNode, ModelOntologyAnalyser analyser) {
 		analyser.findAnnotations(mNode);
 		mNode.getOut().forEach(p -> analyser.findAnnotations(p));

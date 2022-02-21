@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import wvw.semweb.owl.gen.graph.GraphNode;
 
@@ -25,7 +26,7 @@ public class ModelNode extends ModelElement {
 		out.addAll(node1.getOut());
 		out.addAll(node2.getOut());
 	}
-	
+
 	public void setOr(GraphNode or) {
 		this.or.add(or);
 	}
@@ -67,7 +68,18 @@ public class ModelNode extends ModelElement {
 	}
 
 	@Override
+	public String getString() {
+		if (label != null)
+			return label;
+		if (name != null)
+			return label;
+		else
+			return "(or: " + or.stream().map(o -> o.prettyPrint()).collect(Collectors.joining(", ")) + ")";
+	}
+
+	@Override
 	public String toString() {
-		return super.toString() + (!in.isEmpty() ? "\n\tin:" + in : "") + (!out.isEmpty() ? "\n\tout: " + out : "");
+		String id = getString();
+		return id + (!in.isEmpty() ? "\n\tin:" + in : "") + (!out.isEmpty() ? "\n\tout: " + out : "");
 	}
 }

@@ -32,15 +32,15 @@
 } .
 
 
-{   ?p a DMTO:DMTO_0000021 ; # type patient
-        DMTO:DMTO_0001667 ?profile . # has_patient_profile
-    ?profile DDO:DDO_0000238 ?exam . # has_physical_examination
-    ?exam a DDO:DDO_0000230 ; # type BMI
-        DDO:DDO_0000134 ?value . # has_quantitative_value
-    ?value math:notLessThan 25 .
+#{   ?p a DMTO:DMTO_0000021 ; # type patient
+#        DMTO:DMTO_0001667 ?profile . # has_patient_profile
+#    ?profile DDO:DDO_0000238 ?exam . # has_physical_examination
+#    ?exam a DDO:DDO_0000230 ; # type BMI
+#        DDO:DDO_0000134 ?value . # has_quantitative_value
+#    ?value math:notLessThan 25 .
 
-} => {
-    ?profile DDO:DDO_0000139 [ # has_demographic
-		a DTO:DTO:0002078 # type overweight
-    ]
-} .
+#} => {
+#    ?profile DDO:DDO_0000139 [ # has_demographic
+#		a DTO:DTO:0002078 # type overweight
+#    ]
+#} .
