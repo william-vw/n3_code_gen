@@ -4,6 +4,8 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.jen3.graph.Node_URI;
+
 import wvw.semweb.owl.gen.graph.GraphEdge;
 import wvw.semweb.owl.gen.graph.GraphNode;
 import wvw.semweb.owl.gen.model.ModelEdge;
@@ -52,11 +54,11 @@ public class ModelGraphFactory {
 	}
 
 	private static ModelEdge modelEdge(GraphEdge e) {
-		String id = e.getId();
+		String uri = ((Node_URI) e.getId()).getURI();
 		if (e.isInverse())
-			id = invertProperty(id);
+			uri = invertProperty(uri);
 		
-		return new ModelEdge(id);
+		return new ModelEdge(uri);
 	}
 
 	private static String invertProperty(String name) {

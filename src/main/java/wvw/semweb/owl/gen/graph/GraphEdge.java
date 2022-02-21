@@ -7,11 +7,11 @@ public class GraphEdge extends GraphElement {
 
 	private boolean inverse;
 
-	public GraphEdge(String id) {
+	public GraphEdge(Object id) {
 		super(id);
 	}
 
-	public GraphEdge(String id, GraphNode source, GraphNode target) {
+	public GraphEdge(Object id, GraphNode source, GraphNode target) {
 		super(id);
 		this.source = source;
 		this.target = target;
@@ -43,6 +43,6 @@ public class GraphEdge extends GraphElement {
 
 	@Override
 	public String toString() {
-		return "-" + id + (inverse ? "(i)" : "") + "->" + target.getId();
+		return "--" + super.toString() + (inverse ? "(i)" : "") + "-> " + target.prettyPrint();
 	}
 }

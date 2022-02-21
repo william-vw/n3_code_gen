@@ -20,9 +20,9 @@ public class RuleGraphFactory {
 
 	private static final Logger log = LogManager.getLogger(RuleGraphFactory.class);
 
-	private Map<String, GraphNode> termNode = new HashMap<>();
+	private Map<Node, GraphNode> termNode = new HashMap<>();
 
-	public Map<String, GraphNode> createGraph(N3Rule rule, String entryTerm) throws ParseModelException {
+	public Map<Node, GraphNode> createGraph(N3Rule rule, Node entryTerm) throws ParseModelException {
 		buildGraph(rule);
 
 		Set<GraphNode> found = expandGraph(entryTerm, rule);
@@ -33,33 +33,33 @@ public class RuleGraphFactory {
 
 	private void buildGraph(N3Rule rule) {
 		Stream.concat(Arrays.stream(rule.getBody()), Arrays.stream(rule.getHead())).forEach(c -> {
-			if (c instanceof TriplePattern) {
-				TriplePattern tp = (TriplePattern) c;
+			if (!(c instanceof TriplePattern))
+				return;
 
-				if (!tp.getPredicate().isURI())
-					log.error("found non-URI predicate: " + tp.getPredicate());
+			TriplePattern tp = (TriplePattern) c;
 
-				GraphNode node = uniqueGraphNode(tp.getSubject());
+			if (!tp.getPredicate().isURI())
+				log.error("found non-URI predicate: " + tp.getPredicate());
 
-				GraphEdge edge = new GraphEdge(tp.getPredicate().getURI());
-				edge.setSource(node);
+			GraphNode node = uniqueGraphNode(tp.getSubject());
 
-				node.addOut(edge);
+			GraphEdge edge = new GraphEdge(tp.getPredicate());
+			edge.setSource(node);
 
-				GraphNode node2 = null;
-				if (!tp.getObject().isLiteral())
-					node2 = uniqueGraphNode(tp.getObject());
-				else
-					node2 = new GraphNode(tp.getObject().getLiteralValue().toString());
+			node.addOut(edge);
 
-				edge.setTarget(node2);
-				node2.addIn(edge);
-			}
+			GraphNode node2 = null;
+			if (!tp.getObject().isLiteral())
+				node2 = uniqueGraphNode(tp.getObject());
+			else
+				node2 = new GraphNode(tp.getObject().getLiteralValue().toString());
+
+			edge.setTarget(node2);
+			node2.addIn(edge);
 		});
-
 	}
 
-	private Set<GraphNode> expandGraph(String entryTerm, N3Rule rule) throws ParseModelException {
+	private Set<GraphNode> expandGraph(Node entryTerm, N3Rule rule) throws ParseModelException {
 		GraphNode entryNode = termNode.get(entryTerm);
 		if (entryNode == null)
 			throw new ParseModelException("entry term " + entryTerm + " not found in rule: " + rule);
@@ -84,6 +84,8 @@ public class RuleGraphFactory {
 				GraphEdge inverse = new GraphEdge(in.getId(), cur, in.getSource());
 				inverse.setInverse(true);
 
+				log.debug("adding inverse: " + inverse);
+
 				cur.addOut(inverse);
 			}
 		}
@@ -95,20 +97,19 @@ public class RuleGraphFactory {
 		}
 	}
 
-	private void checkGraph(Set<GraphNode> found, String entryTerm) {
+	private void checkGraph(Set<GraphNode> found, Node entryTerm) {
 		termNode.values().forEach(n -> {
 			if (!found.contains(n))
-				System.err.println("term " + n + " not reachable from entry point " + entryTerm);
+				System.err.println("term " + n.prettyPrint() + " not reachable from entry point " + entryTerm);
 		});
 	}
 
 	private GraphNode uniqueGraphNode(Node term) {
-		String id = term.toString();
-		GraphNode node = termNode.get(id);
+		GraphNode node = termNode.get(term);
 
 		if (node == null) {
-			node = new GraphNode(id);
-			termNode.put(id, node);
+			node = new GraphNode(term);
+			termNode.put(term, node);
 		}
 
 		return node;

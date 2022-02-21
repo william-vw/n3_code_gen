@@ -10,7 +10,7 @@ public class GraphNode extends GraphElement {
 
 	private boolean literal;
 
-	public GraphNode(String id) {
+	public GraphNode(Object id) {
 		super(id);
 	}
 

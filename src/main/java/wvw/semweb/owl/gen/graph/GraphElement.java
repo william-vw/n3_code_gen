@@ -2,19 +2,21 @@ package wvw.semweb.owl.gen.graph;
 
 import java.util.Objects;
 
+import wvw.utils.rdf.NS;
+
 public class GraphElement {
 
-	protected String id;
+	protected Object id;
 
-	public GraphElement(String id) {
+	public GraphElement(Object id) {
 		this.id = id;
 	}
 
-	public String getId() {
+	public Object getId() {
 		return id;
 	}
 
-	public void setId(String id) {
+	public void setId(Object id) {
 		this.id = id;
 	}
 
@@ -35,8 +37,12 @@ public class GraphElement {
 		return Objects.equals(id, other.id);
 	}
 
+	public String prettyPrint() {
+		return NS.toQname(id.toString());
+	}
+
 	@Override
 	public String toString() {
-		return id;
+		return prettyPrint();
 	}
 }
