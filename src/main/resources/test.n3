@@ -4,12 +4,12 @@
 @base <https://example.org/> .
 
 # regular "branching" pattern
-#{   ?x :p ?o ;
-#        :p2 ?o2 .
-#    ?o2 :p3 ?v .
-#    ?v math:greaterThan 10
-#
-#} => { ?x :p4 :y } .
+{   ?x :p ?o ;
+        :p2 ?o2 .
+    ?o2 :p3 ?v .
+    ?v math:greaterThan 10
+
+} => { ?x :p4 :y } .
 
 # multiple "roots" - requires an inverse property
 #{   ?x :p ?o .
@@ -29,8 +29,8 @@
 #} => { ?x :p4 :y } .
 
 # unreachable node from entry-term (x)
-{   ?x :p ?o .
-    ?o :p2 ?o2 .
-    ?k :p3 ?l .
-
-} => { ?x :p4 :y } .
+#{   ?x :p ?o .
+#    ?o :p2 ?o2 .
+#    ?k :p3 ?l .
+#
+#} => { ?x :p4 :y } .

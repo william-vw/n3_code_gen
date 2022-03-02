@@ -1,2 +1,25 @@
-@prefix owl: <http://www.w3.org/2002/07/owl#> .
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix : <https://example.org/> .
+@base <https://example.org/> .
+
+:p rdfs:domain :X ;
+    rdfs:range :O .
+:p2 rdfs:range :O2 .
+:p3 rdfs:range xsd:int .
+:p4 rdfs:range :Y .
+
+:q rdfs:domain :X ;
+    rdfs:range :O .
+:q2 rdfs:range :Y .
+
+:r rdfs:domain :X ;
+    rdfs:range :O .
+:r2 rdfs:domain :X2 ; rdfs:range :O2 .
+:r3 rdfs:range :Y .
+
+:s rdfs:domain :X .
+:s2 rdfs:domain :X ; rdfs:range :O2 .
+:s3 rdfs:range :Y .

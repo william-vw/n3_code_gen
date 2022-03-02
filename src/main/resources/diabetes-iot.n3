@@ -17,8 +17,9 @@
 {   ?p a DMTO:DMTO_0000021 ; # type patient
         DMTO:DMTO_0001667 ?profile . # has_patient_profile
     ?profile DDO:DDO_0000114 ?diagnosis . # has_diagnosis
-    ?diagnosis DMTO:DMTO_0001673 :DMTO_0001674 . # has_diabetes_type diabetes_mellitus
-    
+    ?diagnosis DMTO:DMTO_0001673 ?type . # has_diabetes_type 
+    ?type a DDO:DDO_0003905 . # type 2 diabetes mellitus
+
     ?profile DDO:DDO_0000139 ?demographic . # has_demographic
     ?demographic a DTO:DTO:0002078 . # type overweight
 

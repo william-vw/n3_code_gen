@@ -1,0 +1,41 @@
+@prefix math: <http://www.w3.org/2000/10/swap/math#> .
+@prefix math: <http://www.w3.org/2000/10/swap/math#> .
+@prefix : <https://example.org/> .
+@base <https://example.org/> .
+
+# default test
+{   ?x :p ?o ;
+        :p2 ?o2 .
+    ?o2 :p3 ?v .
+    ?v math:greaterThan 10
+
+} => { ?x :p4 :y } .
+
+# specify sub-type (:O_sub) of struct O
+# (O = range of property :q)
+{   ?x :q ?o .
+    ?o a :O_sub . 
+
+} => { ?x :q2 :y } .
+
+# specify value (:o) of struct O
+# (O = range of property :q)
+# also, get warning that value should be end-point
+{   ?x :q :o .
+    :o :somePrp :v .
+
+} => { ?x :q2 :y } .
+
+# get warning; two types (X, X2) given for ?x
+# (both are domains of properties :r, :r2)
+{   ?x :r ?o .
+    ?x :r2 ?o2 .
+
+} => { ?x :r3 :y } .
+
+# need to merge properties :s, :s2 into single struct
+# (domain of properties :s, :s2 is X)
+{   ?x :s ?o .
+    ?o :s2 ?o2 .
+
+} => { ?x :s3 :y } .
