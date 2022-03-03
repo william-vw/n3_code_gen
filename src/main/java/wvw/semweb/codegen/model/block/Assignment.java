@@ -1,4 +1,4 @@
-package wvw.semweb.codegen.model.op;
+package wvw.semweb.codegen.model.block;
 
 import wvw.semweb.codegen.model.Operand;
 

@@ -1,7 +1,7 @@
-package wvw.semweb.codegen.model.op;
+package wvw.semweb.codegen.model.block;
 
 import wvw.semweb.codegen.model.Operand;
-import wvw.semweb.codegen.model.code.ModelStruct;
+import wvw.semweb.codegen.model.struct.ModelStruct;
 
 public class CreateStruct implements Operand {
 

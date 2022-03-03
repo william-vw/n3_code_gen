@@ -3,7 +3,7 @@ package wvw.semweb.codegen.model;
 import java.util.LinkedList;
 import java.util.stream.Collectors;
 
-import wvw.semweb.codegen.model.code.ModelProperty;
+import wvw.semweb.codegen.model.struct.ModelProperty;
 
 public class NodePath implements Operand {
 

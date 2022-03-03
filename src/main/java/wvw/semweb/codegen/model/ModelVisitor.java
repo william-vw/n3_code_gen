@@ -4,9 +4,9 @@ import org.apache.jen3.n3.N3Model;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
-import wvw.semweb.codegen.model.code.CodeModel;
+import wvw.semweb.codegen.model.block.Block;
 import wvw.semweb.codegen.model.cond.Conjunction;
-import wvw.semweb.codegen.model.op.Block;
+import wvw.semweb.codegen.model.struct.CodeModel;
 import wvw.semweb.codegen.rule.GraphNode;
 
 public abstract class ModelVisitor {
@@ -17,7 +17,7 @@ public abstract class ModelVisitor {
 
 	protected CodeModel model = new CodeModel();
 	protected Conjunction cond = new Conjunction();
-	protected Block code = new Block();
+	protected Block block = new Block();
 
 	public ModelVisitor(N3Model ontology) {
 		this.ontology = ontology;
@@ -31,8 +31,8 @@ public abstract class ModelVisitor {
 		return cond;
 	}
 
-	public Block getCode() {
-		return code;
+	public Block getBlock() {
+		return block;
 	}
 
 	public abstract void visit(GraphNode entryNode);

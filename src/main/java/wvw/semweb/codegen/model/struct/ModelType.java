@@ -1,4 +1,4 @@
-package wvw.semweb.codegen.model.code;
+package wvw.semweb.codegen.model.struct;
 
 import org.apache.jen3.datatypes.RDFDatatype;
 

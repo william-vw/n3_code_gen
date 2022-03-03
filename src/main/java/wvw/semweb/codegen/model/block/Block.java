@@ -1,4 +1,4 @@
-package wvw.semweb.codegen.model.op;
+package wvw.semweb.codegen.model.block;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,6 +10,10 @@ public class Block {
 
 	public void add(Operation op) {
 		operations.add(op);
+	}
+
+	public List<Operation> getOperations() {
+		return operations;
 	}
 
 	@Override

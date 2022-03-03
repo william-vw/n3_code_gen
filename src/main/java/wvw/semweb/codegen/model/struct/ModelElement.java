@@ -1,4 +1,4 @@
-package wvw.semweb.codegen.model.code;
+package wvw.semweb.codegen.model.struct;
 
 import java.util.Objects;
 

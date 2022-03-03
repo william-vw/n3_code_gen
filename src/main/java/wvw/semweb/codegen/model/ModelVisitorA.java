@@ -17,14 +17,14 @@ import org.apache.jen3.vocabulary.N3Math;
 import org.apache.jen3.vocabulary.RDF;
 import org.apache.jen3.vocabulary.RDFS;
 
-import wvw.semweb.codegen.model.code.ModelElement;
-import wvw.semweb.codegen.model.code.ModelProperty;
-import wvw.semweb.codegen.model.code.ModelStruct;
-import wvw.semweb.codegen.model.code.ModelType;
+import wvw.semweb.codegen.model.block.Assignment;
+import wvw.semweb.codegen.model.block.CreateStruct;
 import wvw.semweb.codegen.model.cond.Comparison;
 import wvw.semweb.codegen.model.cond.Comparison.Comparators;
-import wvw.semweb.codegen.model.op.Assignment;
-import wvw.semweb.codegen.model.op.CreateStruct;
+import wvw.semweb.codegen.model.struct.ModelElement;
+import wvw.semweb.codegen.model.struct.ModelProperty;
+import wvw.semweb.codegen.model.struct.ModelStruct;
+import wvw.semweb.codegen.model.struct.ModelType;
 import wvw.semweb.codegen.rule.GraphEdge;
 import wvw.semweb.codegen.rule.GraphNode;
 import wvw.semweb.codegen.rule.RuleGraph.ClauseTypes;
@@ -142,6 +142,7 @@ public class ModelVisitorA extends ModelVisitor {
 				if (modelStruct != null) {
 
 					// if a URI, this node is a explicit type in the rule
+
 					if (target.getId() instanceof Node_URI) {
 						Node_URI typeUri = (Node_URI) target.getId();
 						ModelElement type = new ModelElement(typeUri.getLocalName());
@@ -150,6 +151,9 @@ public class ModelVisitorA extends ModelVisitor {
 //						log.debug("type: " + type);
 						// add as constant to our struct
 						modelStruct.addType(type);
+
+						// TODO should add all sub-types of the nodeType here
+						// since the input data could have any of those sub-types
 
 						typeNode(path, edge, clauseType2, modelStruct, type);
 					}
@@ -218,10 +222,10 @@ public class ModelVisitorA extends ModelVisitor {
 				CreateStruct cs = new CreateStruct(modelStruct);
 
 				Assignment asn2 = new Assignment(v, cs);
-				code.add(asn2);
+				block.add(asn2);
 
 				Assignment asn = new Assignment(path, v);
-				code.add(asn);
+				block.add(asn);
 
 				// new node path starts from variable
 
@@ -262,7 +266,7 @@ public class ModelVisitorA extends ModelVisitor {
 			else {
 				// create assignment with literal
 				Assignment assign = new Assignment(path, lit);
-				code.add(assign);
+				block.add(assign);
 			}
 
 			break;
@@ -286,7 +290,7 @@ public class ModelVisitorA extends ModelVisitor {
 
 		case HEAD:
 			Assignment asn = new Assignment(path, cnst);
-			code.add(asn);
+			block.add(asn);
 
 			break;
 		}
@@ -314,7 +318,7 @@ public class ModelVisitorA extends ModelVisitor {
 		case HEAD:
 
 			Assignment asn = new Assignment(path2, cnst);
-			code.add(asn);
+			block.add(asn);
 
 			break;
 		}

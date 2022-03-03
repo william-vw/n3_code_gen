@@ -15,31 +15,35 @@ import org.apache.jen3.util.IOUtils;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
+import wvw.semweb.codegen.model.CodeLogic;
+import wvw.semweb.codegen.model.CodeLogic.IfThen;
 import wvw.semweb.codegen.model.ModelVisitor;
 import wvw.semweb.codegen.model.ModelVisitorA;
-import wvw.semweb.codegen.model.code.CodeModel;
+import wvw.semweb.codegen.model.struct.CodeModel;
 import wvw.semweb.codegen.rule.GraphNode;
 import wvw.semweb.codegen.rule.RuleGraph;
 import wvw.semweb.codegen.rule.RuleGraphFactory;
 
-public class ParseClassModel implements N3EventListener {
+public class ParseModelLogic implements N3EventListener {
 
-	private static final Logger log = LogManager.getLogger(ParseClassModel.class);
+	private static final Logger log = LogManager.getLogger(ParseModelLogic.class);
 
 	private List<N3Rule> parsedRules = new ArrayList<>();
+
 	private CodeModel model = new CodeModel();
-
-	public static void main(String[] args) throws Exception {
-		ParseClassModel parser = new ParseClassModel();
-
-		parser.parseClassModel("diabetes-iot.n3", "p", "DMTO2.n3");
-//		parser.parseClassModel("test.n3", "x", "ontology.n3");
-//		parser.parseClassModel("test2.n3", "x", "ontology.n3");
-	}
+	private CodeLogic logic = new CodeLogic();
 
 	@Override
 	public void newRule(N3Rule r) {
 		parsedRules.add(r);
+	}
+
+	public CodeModel getModel() {
+		return model;
+	}
+
+	public CodeLogic getLogic() {
+		return logic;
 	}
 
 	public void parseClassModel(String rulesPath, String entry, String ontologyPath) throws Exception {
@@ -88,7 +92,11 @@ public class ParseClassModel implements N3EventListener {
 		log.debug("");
 
 		log.debug("- code:");
-		log.debug(visitor.getCode());
+		log.debug(visitor.getBlock());
 		log.debug("");
+
+		// TODO currently assuming that the rule ordering reflects the chaining sequence
+		IfThen it = new IfThen(visitor.getCondition(), visitor.getBlock());
+		logic.add(it);
 	}
 }

@@ -14,28 +14,6 @@
 @prefix math: <http://www.w3.org/2000/10/swap/math#> .
 @base <https://bioportal.bioontology.org/ontologies/DMTO.owl> .
 
-{   ?p a DMTO:DMTO_0000021 ; # type patient
-        DMTO:DMTO_0001667 ?profile . # has_patient_profile
-    ?profile DDO:DDO_0000114 ?diagnosis . # has_diagnosis
-    ?diagnosis DMTO:DMTO_0001673 ?type . # has_diabetes_type 
-    ?type a DDO:DDO_0003905 . # type 2 diabetes mellitus
-
-    ?profile DDO:DDO_0000139 ?demographic . # has_demographic
-    ?demographic a DTO:DTO:0002078 . # type overweight
-
-    ?profile DMTO:DMTO_0001671 ?plan .
-    ?plan DMTO:DMTO_0001701 ?part .
-    ?part a DMTO:DMTO_0001712 .
-
-} => {
-    ?profile DMTO:DMTO_0001671 [ # has_treatment_plan
-        DMTO:DMTO_0001701 [ # has_part
-            a DMTO:DMTO_0001712 ; # type lifestyle_subplan    
-            rdfs:label "Management and reduction of weight is important"
-        ]
-    ]
-} .
-
 
 {   ?p a DMTO:DMTO_0000021 ; # type patient
         DMTO:DMTO_0001667 ?profile . # has_patient_profile
@@ -47,5 +25,23 @@
 } => {
     ?profile DDO:DDO_0000139 [ # has_demographic
 		a DTO:DTO:0002078 # type overweight
+    ]
+} .
+
+{   ?p a DMTO:DMTO_0000021 ; # type patient
+        DMTO:DMTO_0001667 ?profile . # has_patient_profile
+    ?profile DDO:DDO_0000114 ?diagnosis . # has_diagnosis
+    ?diagnosis DMTO:DMTO_0001673 ?type . # has_diabetes_type 
+    ?type a DDO:DDO_0003905 . # type 2 diabetes mellitus
+
+    ?profile DDO:DDO_0000139 ?demographic . # has_demographic
+    ?demographic a DTO:DTO:0002078 . # type overweight
+
+} => {
+    ?profile DMTO:DMTO_0001671 [ # has_treatment_plan
+        DMTO:DMTO_0001701 [ # has_part
+            a DMTO:DMTO_0001712 ; # type lifestyle_subplan    
+            rdfs:label "Management and reduction of weight is important"
+        ]
     ]
 } .

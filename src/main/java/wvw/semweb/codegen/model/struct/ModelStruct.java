@@ -1,8 +1,10 @@
-package wvw.semweb.codegen.model.code;
+package wvw.semweb.codegen.model.struct;
 
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+
+import org.apache.jen3.datatypes.xsd.XSDDatatype;
 
 public class ModelStruct extends ModelElement {
 
@@ -12,6 +14,8 @@ public class ModelStruct extends ModelElement {
 
 	public ModelStruct(String name) {
 		super(name);
+
+		properties.add(new ModelProperty("type", new ModelType(XSDDatatype.XSDstring)));
 	}
 
 	public void addType(ModelElement type) {

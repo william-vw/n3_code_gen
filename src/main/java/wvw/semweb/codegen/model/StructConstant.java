@@ -1,7 +1,7 @@
 package wvw.semweb.codegen.model;
 
-import wvw.semweb.codegen.model.code.ModelElement;
-import wvw.semweb.codegen.model.code.ModelStruct;
+import wvw.semweb.codegen.model.struct.ModelElement;
+import wvw.semweb.codegen.model.struct.ModelStruct;
 
 public class StructConstant implements Operand {
 

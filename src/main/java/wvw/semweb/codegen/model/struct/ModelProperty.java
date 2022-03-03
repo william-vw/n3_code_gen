@@ -1,4 +1,4 @@
-package wvw.semweb.codegen.model.code;
+package wvw.semweb.codegen.model.struct;
 
 public class ModelProperty extends ModelElement {
 
@@ -6,6 +6,12 @@ public class ModelProperty extends ModelElement {
 
 	public ModelProperty(String name) {
 		super(name);
+	}
+	
+	public ModelProperty(String name, ModelType target) {
+		super(name);
+		
+		this.target = target;
 	}
 	
 	public boolean hasTarget() {
