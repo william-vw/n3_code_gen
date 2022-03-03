@@ -22,15 +22,8 @@ public class OntologyUtil {
 
 //		log.debug("finding domain for: " + properties);
 
-		List<Resource> allDomains = outPrp.stream()
-				.flatMap(p -> ontology.listStatements(ontology.createResource(p), RDFS.domain, (Resource) null).toList()
-						.stream().map(stmt -> stmt.getObject()))
-				.collect(Collectors.toList());
-
-		List<Resource> allRanges = inPrp.stream()
-				.flatMap(p -> ontology.listStatements(ontology.createResource(p), RDFS.range, (Resource) null).toList()
-						.stream().map(stmt -> stmt.getObject()))
-				.collect(Collectors.toList());
+		List<Resource> allDomains = getTypes(outPrp, RDFS.domain, ontology);
+		List<Resource> allRanges = getTypes(inPrp, RDFS.range, ontology);
 
 		List<Resource> allTypes = new ArrayList<>();
 		allTypes.addAll(allDomains);
@@ -53,6 +46,16 @@ public class OntologyUtil {
 //		log.debug("\n");
 
 		return allTypes;
+	}
+
+	// TODO not supporting property restrictions as types
+	// (need a type to be a URI)
+
+	private static List<Resource> getTypes(List<String> prps, Resource typePrp, N3Model ontology) {
+		return prps
+				.stream().flatMap(p -> ontology.listStatements(ontology.createResource(p), typePrp, (Resource) null)
+						.toList().stream().map(stmt -> stmt.getObject()))
+				.filter(n -> n.isURI()).collect(Collectors.toList());
 	}
 
 	protected static void filterSubClasses(List<Resource> clses) {

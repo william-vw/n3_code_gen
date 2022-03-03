@@ -8,6 +8,8 @@ public class GraphElement {
 
 	protected Object id;
 
+	protected Object data;
+
 	public GraphElement(Object id) {
 		this.id = id;
 	}
@@ -18,6 +20,14 @@ public class GraphElement {
 
 	public void setId(Object id) {
 		this.id = id;
+	}
+
+	public Object getData() {
+		return data;
+	}
+
+	public void setData(Object data) {
+		this.data = data;
 	}
 
 	@Override

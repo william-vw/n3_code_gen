@@ -9,6 +9,10 @@ import org.apache.jen3.graph.Node;
 
 public class RuleGraph {
 
+	public static enum ClauseTypes {
+		BODY, HEAD
+	}
+	
 	private Map<Node, GraphNode> termNode = new HashMap<>();
 
 	public void add(Node term, GraphNode node) {

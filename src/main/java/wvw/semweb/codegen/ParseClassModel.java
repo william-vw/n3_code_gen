@@ -15,8 +15,9 @@ import org.apache.jen3.util.IOUtils;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
-import wvw.semweb.codegen.model.CodeModel;
 import wvw.semweb.codegen.model.ModelVisitor;
+import wvw.semweb.codegen.model.ModelVisitorA;
+import wvw.semweb.codegen.model.code.CodeModel;
 import wvw.semweb.codegen.rule.GraphNode;
 import wvw.semweb.codegen.rule.RuleGraph;
 import wvw.semweb.codegen.rule.RuleGraphFactory;
@@ -26,13 +27,14 @@ public class ParseClassModel implements N3EventListener {
 	private static final Logger log = LogManager.getLogger(ParseClassModel.class);
 
 	private List<N3Rule> parsedRules = new ArrayList<>();
+	private CodeModel model = new CodeModel();
 
 	public static void main(String[] args) throws Exception {
 		ParseClassModel parser = new ParseClassModel();
 
-//		parser.parseClassModel("diabetes-iot.n3", "DMTO2.n3");
-//		parser.parseClassModel("test.n3", "ontology.n3");
-		parser.parseClassModel("test2.n3", "ontology.n3");
+		parser.parseClassModel("diabetes-iot.n3", "p", "DMTO2.n3");
+//		parser.parseClassModel("test.n3", "x", "ontology.n3");
+//		parser.parseClassModel("test2.n3", "x", "ontology.n3");
 	}
 
 	@Override
@@ -40,7 +42,7 @@ public class ParseClassModel implements N3EventListener {
 		parsedRules.add(r);
 	}
 
-	public void parseClassModel(String rulesPath, String ontologyPath) throws Exception {
+	public void parseClassModel(String rulesPath, String entry, String ontologyPath) throws Exception {
 		N3Model ontology = ModelFactory.createN3Model(N3ModelSpec.get(Types.N3_MEM_FP_INF));
 		ontology.read(IOUtils.getResourceInputStream(getClass(), ontologyPath), null);
 
@@ -55,9 +57,7 @@ public class ParseClassModel implements N3EventListener {
 		if (parsedRules.isEmpty())
 			log.error("no rules found in " + rulesPath);
 
-		// - put the "entry-term" here
-//		Node entryTerm = NodeFactory.createVariable("p");
-		Node entryTerm = NodeFactory.createVariable("x");
+		Node entryTerm = NodeFactory.createVariable(entry);
 
 		for (N3Rule r : parsedRules)
 			processRule(r, entryTerm, ontology);
@@ -72,14 +72,23 @@ public class ParseClassModel implements N3EventListener {
 		log.debug("");
 
 		GraphNode entryNode = ruleGraph.get(entryTerm);
-		CodeModel codeModel = new ModelVisitor(ontology).visit(entryNode);
+
+		ModelVisitor visitor = new ModelVisitorA(ontology);
+		visitor.visit(entryNode);
+
+		CodeModel newModel = visitor.getModel();
+		model.mergeWith(newModel);
 
 		log.debug("- code model:");
-		log.debug(codeModel);
+		log.debug(model);
+		log.debug("");
+
+		log.debug("- condition:");
+		log.debug(visitor.getCondition());
+		log.debug("");
+
+		log.debug("- code:");
+		log.debug(visitor.getCode());
 		log.debug("");
 	}
-
-//	private boolean isBuiltin(Node predicate) {
-//		return predicate.getURI().startsWith("http://www.w3.org/2000/10/swap/");
-//	}
 }

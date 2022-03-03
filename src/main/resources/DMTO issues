@@ -1,0 +1,2 @@
+often lists multiple values for domains/ranges but seemingly unaware that this implies an intersection
+	fixed this for e.g., for has_qualitative_value, has_quantitative_value
