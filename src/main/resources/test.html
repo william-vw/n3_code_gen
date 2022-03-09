@@ -1,6 +1,33 @@
 <html>
 <head>
 <script src="out.js"></script>
+
+<script>
+var exam = new DiabetesPhysicalExamination();
+exam.hasQuantitativeValue = 28;
+exam.type = DiabetesPhysicalExamination.bmi;
+
+var dm = new DiabetesMellitus();
+dm.type = DiabetesMellitus.type2DiabetesMellitus;
+
+var diagnosis = new Diagnosis();
+diagnosis.hasDiabetesType = dm;
+
+var profile = new PatientProfile();
+profile.hasPhysicalExamination = exam;
+profile.hasDiagnosis = diagnosis;
+
+var p = new Patient();
+p.type = Patient.patient;
+p.hasPatientProfile = profile;
+
+console.log(JSON.stringify(p, null, 4));
+
+doSomething(p);
+
+console.log(JSON.stringify(p, null, 4));
+</script>
+
 </head>
 <body>
 </body>

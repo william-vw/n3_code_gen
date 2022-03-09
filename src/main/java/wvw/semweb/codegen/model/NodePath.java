@@ -37,6 +37,7 @@ public class NodePath implements Operand {
 
 	@Override
 	public String toString() {
-		return start + "." + path.stream().map(p -> p.getString()).collect(Collectors.joining("."));
+		return start
+				+ (!path.isEmpty() ? "." + path.stream().map(p -> p.getString()).collect(Collectors.joining(".")) : "");
 	}
 }

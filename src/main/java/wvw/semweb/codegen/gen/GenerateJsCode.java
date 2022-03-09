@@ -35,7 +35,7 @@ public class GenerateJsCode implements GenerateCode {
 
 		logic.append("function doSomething(").append(entry).append(") {");
 		codeLogic.getIfThens().forEach(it -> genIfThen(it));
-		logic.append("}");
+		logic.append("\n}");
 
 		classes.append("\n\n");
 		logic.append("\n\n");
@@ -109,7 +109,7 @@ public class GenerateJsCode implements GenerateCode {
 
 		if (op instanceof NodePath) {
 			NodePath np = (NodePath) op;
-			return genOperand(np.getStart()) + "."
+			return genOperand(np.getStart()) + (!np.getPath().isEmpty() ? "." : "")
 					+ np.getPath().stream().map(p -> jsName(p, false)).collect(Collectors.joining("."));
 		}
 
@@ -130,7 +130,7 @@ public class GenerateJsCode implements GenerateCode {
 		case GT:
 			return ">";
 		case EX:
-			return "";
+			return "!==";
 		case NEQ:
 			return "!==";
 		case NGT:
@@ -150,13 +150,13 @@ public class GenerateJsCode implements GenerateCode {
 		classes.append("class ").append(clsName).append(" {\n");
 
 		for (ModelElement type : struct.getTypes())
-			classes.append("\tstatic ").append(jsName(type, false)).append(";\n");
+			genStaticField(type);
 
 		if (!struct.getTypes().isEmpty())
 			classes.append("\n");
 
 		for (ModelElement value : struct.getValues())
-			classes.append("\tstatic ").append(jsName(value, false)).append(";\n");
+			genStaticField(value);
 
 		if (!struct.getValues().isEmpty())
 			classes.append("\n");
@@ -165,6 +165,12 @@ public class GenerateJsCode implements GenerateCode {
 			classes.append("\t").append(jsName(prp, false)).append(";\n");
 
 		classes.append("\n}");
+	}
+
+	private void genStaticField(ModelElement el) {
+		String jsName = jsName(el, false);
+
+		classes.append("\tstatic ").append(jsName).append(" = '").append(jsName).append("';\n");
 	}
 
 	private String jsName(ModelElement el, boolean cls) {

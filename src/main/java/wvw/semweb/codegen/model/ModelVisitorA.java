@@ -47,12 +47,15 @@ public class ModelVisitorA extends ModelVisitor {
 		if (from != null)
 			clauseType = (ClauseTypes) from.getData();
 
+		boolean addedCond = false;
+
 		// - literal node
 		if (node.getId() instanceof Node_Literal) {
 			Node_Literal nl = (Node_Literal) node.getId();
 
 			Literal lit = new Literal(nl.getLiteralValue());
 			literalNode(node, from, path, clauseType, lit);
+			addedCond = true;
 
 			// return literal's datatype as target for prior property
 			return new ModelType(nl.getLiteralDatatype());
@@ -105,7 +108,7 @@ public class ModelVisitorA extends ModelVisitor {
 			ret = new ModelType(modelStruct);
 		}
 
-		// hook for doing things with the struct possibly created above
+		// hook for doing things with the struct that was (possibly) created above
 		path = structNode(node, from, path, clauseType, nodeType, modelStruct);
 
 		if (modelStruct != null) {
@@ -122,14 +125,20 @@ public class ModelVisitorA extends ModelVisitor {
 				modelStruct.addValue(value);
 
 				uriNode(node, from, path, clauseType, modelStruct, value);
+				addedCond = true;
 
 				return ret;
 			}
 		}
 
 		// - if no outgoing edges, then this node is an endpoint
-		if (node.getOut().isEmpty())
+		if (node.getOut().isEmpty()) {
 			endNode(path, clauseType);
+			addedCond = true;
+		}
+
+		if (!addedCond)
+			newPath(path, clauseType);
 
 		for (GraphEdge edge : node.getOut()) {
 			ClauseTypes clauseType2 = (ClauseTypes) edge.getData();
@@ -195,6 +204,15 @@ public class ModelVisitorA extends ModelVisitor {
 		List<String> out = node.getOut().stream().map(e -> e.getId().toString()).collect(Collectors.toList());
 
 		return OntologyUtil.findDomainRangeTypes(in, out, false, ontology);
+	}
+
+	// - these hooks will update cond and block
+
+	private void newPath(NodePath path, ClauseTypes clauseType) {
+		if (clauseType == ClauseTypes.BODY) {
+			Comparison con = new Comparison(path, Comparators.EX);
+			cond.add(con);
+		}
 	}
 
 	// currently meant to support existential rules
