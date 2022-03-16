@@ -14,17 +14,20 @@ var diagnosis = new Diagnosis();
 diagnosis.hasDiabetesType = dm;
 
 var profile = new PatientProfile();
-profile.hasPhysicalExamination = exam;
+// profile.hasPhysicalExamination = exam;
 profile.hasDiagnosis = diagnosis;
 
 var p = new Patient();
 p.type = Patient.patient;
 p.hasPatientProfile = profile;
 
+console.log("-- input:");
+console.log(JSON.stringify(exam, null, 4));
 console.log(JSON.stringify(p, null, 4));
 
-doSomething(p);
+doSomething(exam, p);
 
+console.log("-- output:");
 console.log(JSON.stringify(p, null, 4));
 </script>
 

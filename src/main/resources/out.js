@@ -3,7 +3,6 @@ class TreatmentSubplan {
 
 	label;
 	type;
-
 }
 
 class DiabetesPhysicalExamination {
@@ -11,20 +10,17 @@ class DiabetesPhysicalExamination {
 
 	type;
 	hasQuantitativeValue;
-
 }
 
 class DiabetesMellitus {
 	static type2DiabetesMellitus = 'type2DiabetesMellitus';
 
 	type;
-
 }
 
 class TreatmentPlan {
 	hasPart;
 	type;
-
 }
 
 class Patient {
@@ -32,7 +28,6 @@ class Patient {
 
 	hasPatientProfile;
 	type;
-
 }
 
 class PatientProfile {
@@ -40,31 +35,40 @@ class PatientProfile {
 	hasTreatmentPlan;
 	hasDiagnosis;
 	type;
-
 }
 
 class PatientDemographic {
 	static overweight = 'overweight';
 
 	type;
-
 }
 
 class Diagnosis {
 	hasDiabetesType;
 	type;
-
 }
 
-function doSomething() {
+function doSomething(exam, p) {
 
-	if (exam.hasQuantitativeValue !== null && exam.hasQuantitativeValue >= 25 && exam.type == DiabetesPhysicalExamination.bmi && p.hasPatientProfile !== null && p.type == Patient.patient) {
+	if (exam.hasQuantitativeValue !== null
+		&& exam.hasQuantitativeValue >= 25
+		&& exam.type == DiabetesPhysicalExamination.bmi
+		&& p.hasPatientProfile !== null
+		&& p.type == Patient.patient) {
+
 		var v0 = new PatientDemographic();
 		p.hasPatientProfile.hasDemographic = v0;
 		v0.type = PatientDemographic.overweight;
 	}
 
-	if (p.hasPatientProfile !== null && p.hasPatientProfile.hasDiagnosis !== null && p.hasPatientProfile.hasDiagnosis.hasDiabetesType !== null && p.hasPatientProfile.hasDiagnosis.hasDiabetesType.type == DiabetesMellitus.type2DiabetesMellitus && p.hasPatientProfile.hasDemographic !== null && p.hasPatientProfile.hasDemographic.type == PatientDemographic.overweight && p.type == Patient.patient) {
+	if (p.hasPatientProfile !== null
+		&& p.hasPatientProfile.hasDiagnosis !== null
+		&& p.hasPatientProfile.hasDiagnosis.hasDiabetesType !== null
+		&& p.hasPatientProfile.hasDiagnosis.hasDiabetesType.type == DiabetesMellitus.type2DiabetesMellitus
+		&& p.hasPatientProfile.hasDemographic !== null
+		&& p.hasPatientProfile.hasDemographic.type == PatientDemographic.overweight
+		&& p.type == Patient.patient) {
+
 		var v1 = new TreatmentPlan();
 		p.hasPatientProfile.hasTreatmentPlan = v1;
 		var v2 = new TreatmentSubplan();

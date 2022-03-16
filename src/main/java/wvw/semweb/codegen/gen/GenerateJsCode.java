@@ -1,6 +1,6 @@
 package wvw.semweb.codegen.gen;
 
-import java.util.Arrays;
+import java.util.Collection;
 import java.util.stream.Collectors;
 
 import org.apache.commons.text.CaseUtils;
@@ -31,10 +31,10 @@ public class GenerateJsCode implements GenerateCode {
 	private StringBuffer classes = new StringBuffer();
 	private StringBuffer logic = new StringBuffer();
 
-	public void generate(CodeModel codeModel, CodeLogic codeLogic, String... entries) {
+	public void generate(CodeModel codeModel, CodeLogic codeLogic, Collection<String> entryPoints) {
 		codeModel.getAllStructs().forEach(s -> genClass(s));
 
-		logic.append("function doSomething(").append(Arrays.stream(entries).collect(Collectors.joining(", ")))
+		logic.append("function doSomething(").append(entryPoints.stream().collect(Collectors.joining(", ")))
 				.append(") {");
 		codeLogic.getIfThens().forEach(it -> genIfThen(it));
 		logic.append("\n}");
@@ -56,14 +56,14 @@ public class GenerateJsCode implements GenerateCode {
 
 	private void genIfThen(IfThen ifThen) {
 		String ifContents = ifThen.getCondition().getConditions().stream().map(c -> genCondition(c))
-				.collect(Collectors.joining(" && "));
+				.collect(Collectors.joining("\n\t\t&& "));
 		String thenContents = ifThen.getBlock().getOperations().stream().map(o -> genOperation(o))
 				.collect(Collectors.joining("\n\t\t"));
 
 		if (!logic.isEmpty())
 			logic.append("\n\n");
 
-		logic.append("\tif (").append(ifContents).append(") {\n\t\t").append(thenContents).append("\n\t}");
+		logic.append("\tif (").append(ifContents).append(") {\n\n\t\t").append(thenContents).append("\n\t}");
 	}
 
 	private String genCondition(Comparison cmp) {
@@ -166,7 +166,7 @@ public class GenerateJsCode implements GenerateCode {
 		for (ModelElement prp : struct.getProperties())
 			classes.append("\t").append(jsName(prp, false)).append(";\n");
 
-		classes.append("\n}");
+		classes.append("}");
 	}
 
 	private void genStaticField(ModelElement el) {

@@ -1,6 +1,8 @@
 package wvw.semweb.codegen;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 
 import org.apache.jen3.graph.Node;
@@ -31,6 +33,7 @@ public class ParseModelLogic implements N3EventListener {
 	private static final Logger log = LogManager.getLogger(ParseModelLogic.class);
 
 	private List<N3Rule> parsedRules = new ArrayList<>();
+	private Collection<String> entryPoints = new HashSet<>();
 
 	private CodeModel model = new CodeModel();
 	private CodeLogic logic = new CodeLogic();
@@ -38,6 +41,10 @@ public class ParseModelLogic implements N3EventListener {
 	@Override
 	public void newRule(N3Rule r) {
 		parsedRules.add(r);
+	}
+
+	public Collection<String> getEntryPoints() {
+		return entryPoints;
 	}
 
 	public CodeModel getModel() {
@@ -67,6 +74,7 @@ public class ParseModelLogic implements N3EventListener {
 				throw new ParseModelException("no entry terms found for rule");
 
 			log.debug("\n- entry points: " + entryTerms);
+			entryTerms.stream().map(n -> n.getName()).forEach(e -> entryPoints.add(e));
 
 			processRule(r, ontology, entryTerms.toArray(Node[]::new));
 

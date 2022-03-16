@@ -25,7 +25,7 @@ public class CodeGen {
 		log.info("-- generating code");
 
 		GenerateCode genCode = new GenerateJsCode();
-		genCode.generate(parser.getModel(), parser.getLogic());
+		genCode.generate(parser.getModel(), parser.getLogic(), parser.getEntryPoints());
 
 		File output = new File("src/main/resources/out.js");
 		IOUtils.writeToFile(genCode.getClasses(), output);
