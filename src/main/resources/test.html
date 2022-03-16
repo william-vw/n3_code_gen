@@ -1,37 +1,57 @@
 <html>
+
 <head>
-<script src="out.js"></script>
+    <script src="out.js"></script>
 
-<script>
-var exam = new DiabetesPhysicalExamination();
-exam.hasQuantitativeValue = 28;
-exam.type = DiabetesPhysicalExamination.bmi;
+    <script>
+        const CircularReplacer = () => {
+            const seen = new WeakSet();
+            return (key, value) => {
+                if (typeof value === "object" && value !== null) {
+                    if (seen.has(value)) {
+                        return;
+                    }
+                    seen.add(value);
+                }
+                return value;
+            };
+        };
+    </script>
 
-var dm = new DiabetesMellitus();
-dm.type = DiabetesMellitus.type2DiabetesMellitus;
+    <script>
+        var exam = new DiabetesPhysicalExamination();
+        exam.hasQuantitativeValue = 28;
+        exam.type = DiabetesPhysicalExamination.bmi;
 
-var diagnosis = new Diagnosis();
-diagnosis.hasDiabetesType = dm;
+        var dm = new DiabetesMellitus();
+        dm.type = DiabetesMellitus.type2DiabetesMellitus;
 
-var profile = new PatientProfile();
-// profile.hasPhysicalExamination = exam;
-profile.hasDiagnosis = diagnosis;
+        var diagnosis = new DiabetesDiagnosis();
+        diagnosis.hasDiabetesType = dm;
 
-var p = new Patient();
-p.type = Patient.patient;
-p.hasPatientProfile = profile;
+        var profile = new PatientProfile();
+        profile.hasDiagnosis = diagnosis;
 
-console.log("-- input:");
-console.log(JSON.stringify(exam, null, 4));
-console.log(JSON.stringify(p, null, 4));
+        var p = new Patient();
+        p.hasPatientProfile = profile;
 
-doSomething(exam, p);
+        profile.isPatientProfileOf = p;
 
-console.log("-- output:");
-console.log(JSON.stringify(p, null, 4));
-</script>
+        exam.isPhysicalExaminationOf = profile;
+
+        console.log("-- input:");
+        console.log(JSON.stringify(exam, CircularReplacer(), 4));
+        console.log(JSON.stringify(p, CircularReplacer(), 4));
+
+        doSomething(exam, p);
+
+        console.log("-- output:");
+        console.log(JSON.stringify(p, CircularReplacer(), 4));
+    </script>
 
 </head>
+
 <body>
 </body>
+
 </html>

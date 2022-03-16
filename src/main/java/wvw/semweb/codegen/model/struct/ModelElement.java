@@ -35,6 +35,13 @@ public class ModelElement {
 		return (hasLabel() ? label : name);
 	}
 
+	public void setString(String str) {
+		if (hasLabel())
+			this.label = str;
+		else
+			this.name = str;
+	}
+
 	@Override
 	public int hashCode() {
 		return Objects.hash(name);

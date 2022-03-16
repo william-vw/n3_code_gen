@@ -1,6 +1,7 @@
 package wvw.semweb.codegen.rule;
 
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Set;
 
 import org.apache.jen3.graph.Node;
@@ -49,7 +50,6 @@ public class RuleGraphFactory {
 			edge.setSource(node);
 
 			edge.setData(type);
-			node.addOut(edge);
 
 			GraphNode node2 = null;
 			if (!tp.getObject().isLiteral())
@@ -58,6 +58,8 @@ public class RuleGraphFactory {
 				node2 = new GraphNode(tp.getObject());
 
 			edge.setTarget(node2);
+
+			node.addOut(edge);
 			node2.addIn(edge);
 		}
 	}
@@ -82,9 +84,16 @@ public class RuleGraphFactory {
 
 		found.add(cur);
 
-		for (GraphEdge in : cur.getIn()) {
+		Iterator<GraphEdge> ins = cur.getIn().iterator();
+		while (ins.hasNext()) {
+			GraphEdge in = ins.next();
+
 			// means we didn't get here via this edge
 			// (so, rule does not have a simple "path" structure)
+
+			// TODO look for actual inverse property in ontology (if any)
+			// would need to consider domains, properties of both properties
+			// (or, run some OWL2 RL rules to propagate those)
 
 			if (!found.contains(in.getSource())) {
 				GraphEdge inverse = new GraphEdge(in.getId(), cur, in.getSource());

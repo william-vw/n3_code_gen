@@ -8,6 +8,7 @@ class TreatmentSubplan {
 class DiabetesPhysicalExamination {
 	static bmi = 'bmi';
 
+	isPhysicalExaminationOf;
 	type;
 	hasQuantitativeValue;
 }
@@ -18,19 +19,23 @@ class DiabetesMellitus {
 	type;
 }
 
+class DiabetesDiagnosis {
+	hasDiabetesType;
+	type;
+}
+
 class TreatmentPlan {
 	hasPart;
 	type;
 }
 
 class Patient {
-	static patient = 'patient';
-
 	hasPatientProfile;
 	type;
 }
 
 class PatientProfile {
+	isPatientProfileOf;
 	hasDemographic;
 	hasTreatmentPlan;
 	hasDiagnosis;
@@ -43,21 +48,14 @@ class PatientDemographic {
 	type;
 }
 
-class Diagnosis {
-	hasDiabetesType;
-	type;
-}
-
 function doSomething(exam, p) {
 
 	if (exam.hasQuantitativeValue !== null
 		&& exam.hasQuantitativeValue >= 25
-		&& exam.type == DiabetesPhysicalExamination.bmi
-		&& p.hasPatientProfile !== null
-		&& p.type == Patient.patient) {
+		&& exam.type == DiabetesPhysicalExamination.bmi) {
 
 		var v0 = new PatientDemographic();
-		p.hasPatientProfile.hasDemographic = v0;
+		exam.isPhysicalExaminationOf.hasDemographic = v0;
 		v0.type = PatientDemographic.overweight;
 	}
 
@@ -66,15 +64,14 @@ function doSomething(exam, p) {
 		&& p.hasPatientProfile.hasDiagnosis.hasDiabetesType !== null
 		&& p.hasPatientProfile.hasDiagnosis.hasDiabetesType.type == DiabetesMellitus.type2DiabetesMellitus
 		&& p.hasPatientProfile.hasDemographic !== null
-		&& p.hasPatientProfile.hasDemographic.type == PatientDemographic.overweight
-		&& p.type == Patient.patient) {
+		&& p.hasPatientProfile.hasDemographic.type == PatientDemographic.overweight) {
 
 		var v1 = new TreatmentPlan();
 		p.hasPatientProfile.hasTreatmentPlan = v1;
 		var v2 = new TreatmentSubplan();
 		v1.hasPart = v2;
-		v2.type = TreatmentSubplan.lifestyleSubplan;
 		v2.label = "Management and reduction of weight is important";
+		v2.type = TreatmentSubplan.lifestyleSubplan;
 	}
 }
 

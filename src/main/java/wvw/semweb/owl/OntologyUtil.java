@@ -29,6 +29,8 @@ public class OntologyUtil {
 		allTypes.addAll(allDomains);
 		allTypes.addAll(allRanges);
 
+		allTypes = allTypes.stream().filter(t -> !t.isAnon()).collect(Collectors.toList());
+
 //		if (allTypes.size() > 1)
 //			log.debug("allTypes: " + allTypes);
 
@@ -43,22 +45,27 @@ public class OntologyUtil {
 //		log.debug("> class:\n" + cls);
 //		log.debug("> domains:\n" + allDomains);
 //		log.debug("> ranges:\n" + allRanges);
-//		log.debug("> most specific types:\n" + allTypes);
+//		log.debug("> selected types:\n" + allTypes);
 //		log.debug("\n");
 
 		return allTypes;
 	}
 
+	// TODO currently not supporting property restrictions as types
+	// (need a type to be a URI)
+
 	public static List<Resource> findSuperTypes(String resource, N3Model ontology) {
 		List<Resource> superTypes = ontology.createResource(resource).listProperties(RDFS.subClassOf).toList().stream()
 				.map(stmt -> stmt.getObject()).collect(Collectors.toList());
+
+		superTypes = superTypes.stream().filter(t -> !t.isAnon()).collect(Collectors.toList());
 
 		filterSubClasses(superTypes);
 
 		return superTypes;
 	}
 
-	// TODO not supporting property restrictions as types
+	// TODO currently not supporting property restrictions as types
 	// (need a type to be a URI)
 
 	private static List<Resource> getTypes(List<String> prps, Resource typePrp, N3Model ontology) {

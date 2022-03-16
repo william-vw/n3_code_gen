@@ -1,8 +1,10 @@
 package wvw.semweb.codegen.model;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
+import java.util.Set;
 
 import org.apache.jen3.datatypes.RDFDatatype;
 import org.apache.jen3.datatypes.TypeMapper;
@@ -43,10 +45,21 @@ public class ModelVisitorA extends ModelVisitor {
 	public void visit(GraphNode entryNode) {
 		Variable start = new Variable(((Node_Variable) entryNode.getId()).getName());
 
-		doVisit(entryNode, null, new NodePath(start));
+		doVisit(entryNode, null, new NodePath(start), new HashSet<>());
 	}
 
-	private ModelType doVisit(GraphNode node, GraphEdge from, NodePath path) {
+	private ModelType doVisit(GraphNode node, GraphEdge from, NodePath path, Set<GraphNode> found) {
+		// TODO this occurs in case of inverted properties; we could return object-type
+		// as model-struct here (since we're in a loop, we know the target node is an
+		// object; e.g., <profile> is_profile_of <patient> has_profile <profile>)
+		// but, we only need the property that was followed in our rule
+		// (and we start from our entry-point; see visit() method)
+
+		if (found.contains(node))
+			return null;
+
+		found.add(node);
+
 		ClauseTypes clauseType = null;
 		if (from != null)
 			clauseType = (ClauseTypes) from.getData();
@@ -87,7 +100,7 @@ public class ModelVisitorA extends ModelVisitor {
 		Resource nodeType = nodeTypes.get(0);
 
 		// - node has literal datatype
-		// (but not an actual literal; likely a variable)
+		// (but is not an actual literal; likely a variable)
 		if (nodeType.getURI().startsWith(XSDDatatype.XSD)) {
 			RDFDatatype dt = TypeMapper.getInstance().getTypeByName(nodeType.getURI());
 
@@ -161,37 +174,42 @@ public class ModelVisitorA extends ModelVisitor {
 						ModelElement type = new ModelElement(typeUri.getLocalName());
 						loadAnnotations(typeUri.getURI(), type);
 
-//						log.debug("type: " + type);
-						// add as constant to our struct
-						modelStruct.addType(type);
+						// e.g., Patient struct with 'patient' type
+						// doesn't make a lot of sense
+						if (type.getString() != modelStruct.getString()) {
+//							log.debug("type: " + type);
+							// add as constant to our struct
+							modelStruct.addType(type);
 
-						// TODO should add all sub-types of the nodeType here
-						// since the input data could have any of those sub-types
+							// TODO should add all sub-types of the nodeType here
+							// since the input data could have any of those sub-types
 
-						typeNode(path, edge, clauseType2, modelStruct, type);
+							typeNode(path, edge, clauseType2, modelStruct, type);
+						}
 					}
 				}
 
 			} else {
 				Node_URI nodePrp = (Node_URI) edge.getId();
 				String prpName = nodePrp.getLocalName();
-				// if this is an inverse edge, then "invert" its name
-				if (edge.isInverse())
-					prpName = invertProperty(prpName);
 
-				// log.debug("\nproperty: " + node.getId() + " - " + prpName);
+//				log.debug("\nproperty: " + node.getId() + " - " + prpName);
 
 				// copy our current path and add this property to it
 
 				ModelProperty modelPrp = new ModelProperty(prpName);
 				loadAnnotations(nodePrp.getURI(), modelPrp);
 
+				// if this is an inverse edge, then "invert" its name
+				if (edge.isInverse())
+					modelPrp.setString(invertProperty(modelPrp.getString()));
+
 				NodePath path2 = path.copy();
 				path2.add(modelPrp);
 
 				// then, recursively call this method on the edge target
 
-				ModelType prpType = doVisit(edge.getTarget(), edge, path2);
+				ModelType prpType = doVisit(edge.getTarget(), edge, path2, found);
 				// returned model-type will serve as type for our property
 				if (prpType != null && modelStruct != null) {
 					modelPrp.setTarget(prpType);
@@ -204,10 +222,28 @@ public class ModelVisitorA extends ModelVisitor {
 	}
 
 	private List<Resource> getNodeTypes(GraphNode node) {
-		List<String> in = node.getIn().stream().map(e -> e.getId().toString()).collect(Collectors.toList());
-		List<String> out = node.getOut().stream().map(e -> e.getId().toString()).collect(Collectors.toList());
+		List<String> in = new ArrayList<>();
+		List<String> out = new ArrayList<>();
 
-		List<Resource> types = OntologyUtil.findDomainRangeTypes(in, out, false, ontology);
+		// add incoming edges to appropriate list (may be inverse)
+		node.getIn().stream().forEach(e -> {
+			String id = e.getId().toString();
+			if (!e.isInverse())
+				in.add(id);
+			else
+				out.add(id);
+		});
+
+		// idem for outgoing edges
+		node.getOut().stream().forEach(e -> {
+			String id = e.getId().toString();
+			if (!e.isInverse())
+				out.add(id);
+			else
+				in.add(id);
+		});
+
+		List<Resource> types = OntologyUtil.findDomainRangeTypes(in, out, true, ontology);
 		if (types.isEmpty()) {
 			// get first specified type in rule
 			Optional<GraphEdge> found = node.getOut().stream().filter(edge -> edge.getId().equals(RDF.type.asNode()))
