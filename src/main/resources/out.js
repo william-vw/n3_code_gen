@@ -36,7 +36,6 @@ class Patient {
 }
 
 class PatientProfile {
-	hasPhysicalExamination;
 	hasDemographic;
 	hasTreatmentPlan;
 	hasDiagnosis;
@@ -57,9 +56,9 @@ class Diagnosis {
 
 }
 
-function doSomething(p) {
+function doSomething() {
 
-	if (p.hasPatientProfile !== null && p.hasPatientProfile.hasPhysicalExamination !== null && p.hasPatientProfile.hasPhysicalExamination.hasQuantitativeValue !== null && p.hasPatientProfile.hasPhysicalExamination.hasQuantitativeValue >= 25 && p.hasPatientProfile.hasPhysicalExamination.type == DiabetesPhysicalExamination.bmi && p.type == Patient.patient) {
+	if (exam.hasQuantitativeValue !== null && exam.hasQuantitativeValue >= 25 && exam.type == DiabetesPhysicalExamination.bmi && p.hasPatientProfile !== null && p.type == Patient.patient) {
 		var v0 = new PatientDemographic();
 		p.hasPatientProfile.hasDemographic = v0;
 		v0.type = PatientDemographic.overweight;

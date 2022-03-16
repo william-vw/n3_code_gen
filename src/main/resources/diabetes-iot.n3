@@ -10,6 +10,7 @@
 @prefix foaf: <http://xmlns.com/foaf/0.1/> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix cg: <http://niche.cs.dal.ca/codegen.owl#> .
 @prefix : <https://bioportal.bioontology.org/ontologies/DMTO.owl#> .
 @prefix math: <http://www.w3.org/2000/10/swap/math#> .
 @base <https://bioportal.bioontology.org/ontologies/DMTO.owl> .
@@ -17,7 +18,7 @@
 
 {   ?p a DMTO:DMTO_0000021 ; # type patient
         DMTO:DMTO_0001667 ?profile . # has_patient_profile
-    ?profile DDO:DDO_0000238 ?exam . # has_physical_examination
+    #?profile DDO:DDO_0000238 ?exam . # has_physical_examination
     ?exam a DDO:DDO_0000230 ; # type BMI
         DDO:DDO_0000134 ?value . # has_quantitative_value
     ?value math:notLessThan 25 .
@@ -26,7 +27,9 @@
     ?profile DDO:DDO_0000139 [ # has_demographic
 		a DTO:DTO:0002078 # type overweight
     ]
-} .
+
+} ; cg:entryPoint ?p, ?exam .
+
 
 {   ?p a DMTO:DMTO_0000021 ; # type patient
         DMTO:DMTO_0001667 ?profile . # has_patient_profile
@@ -44,4 +47,5 @@
             rdfs:label "Management and reduction of weight is important"
         ]
     ]
-} .
+
+} ; cg:entryPoint ?p .

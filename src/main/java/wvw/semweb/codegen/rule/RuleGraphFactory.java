@@ -19,11 +19,11 @@ public class RuleGraphFactory {
 
 	private RuleGraph graph = new RuleGraph();
 
-	public RuleGraph createGraph(N3Rule rule, Node entryTerm) throws ParseModelException {
+	public RuleGraph createGraph(N3Rule rule, Node... entryTerms) throws ParseModelException {
 		buildGraph(rule);
 
-		Set<GraphNode> found = expandGraph(entryTerm, rule);
-		checkGraph(found, entryTerm);
+		Set<GraphNode> found = expandGraph(rule, entryTerms);
+		checkGraph(found);
 
 		return graph;
 	}
@@ -62,13 +62,16 @@ public class RuleGraphFactory {
 		}
 	}
 
-	protected Set<GraphNode> expandGraph(Node entryTerm, N3Rule rule) throws ParseModelException {
-		GraphNode entryNode = graph.get(entryTerm);
-		if (entryNode == null)
-			throw new ParseModelException("entry term " + entryTerm + " not found in rule: " + rule);
-
+	protected Set<GraphNode> expandGraph(N3Rule rule, Node... entryTerms) throws ParseModelException {
 		Set<GraphNode> found = new HashSet<>();
-		expandGraph(found, entryNode);
+
+		for (Node entryTerm : entryTerms) {
+			GraphNode entryNode = graph.get(entryTerm);
+			if (entryNode == null)
+				throw new ParseModelException("entry term " + entryTerm + " not found in rule: " + rule);
+
+			expandGraph(found, entryNode);
+		}
 
 		return found;
 	}
@@ -99,10 +102,10 @@ public class RuleGraphFactory {
 		}
 	}
 
-	protected void checkGraph(Set<GraphNode> found, Node entryTerm) {
+	protected void checkGraph(Set<GraphNode> found) {
 		graph.getAllNodes().forEach(n -> {
 			if (!found.contains(n))
-				System.err.println("term " + n.prettyPrint() + " not reachable from entry point " + entryTerm);
+				System.err.println("term " + n.prettyPrint() + " not reachable from entry points");
 		});
 	}
 

@@ -13,7 +13,7 @@ public class RuleGraph {
 		BODY, HEAD
 	}
 	
-	private Map<Node, GraphNode> termNode = new HashMap<>();
+	public Map<Node, GraphNode> termNode = new HashMap<>();
 
 	public void add(Node term, GraphNode node) {
 		termNode.put(term, node);

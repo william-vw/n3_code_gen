@@ -1,6 +1,7 @@
 package wvw.semweb.codegen.model;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.apache.jen3.datatypes.RDFDatatype;
@@ -29,6 +30,9 @@ import wvw.semweb.codegen.rule.GraphEdge;
 import wvw.semweb.codegen.rule.GraphNode;
 import wvw.semweb.codegen.rule.RuleGraph.ClauseTypes;
 import wvw.semweb.owl.OntologyUtil;
+
+// TODO better parametrize this code (CodeLogicVisitor, CodeModelVisitor)
+// TODO support multiple values for n-ary properties
 
 public class ModelVisitorA extends ModelVisitor {
 
@@ -73,7 +77,7 @@ public class ModelVisitorA extends ModelVisitor {
 			log.warn("found multiple domain/range types for node " + node.getId() + " (using first one): " + nodeTypes);
 
 		else if (nodeTypes.size() == 0) {
-			log.error("did not find any domain/range types for node: " + node.getId());
+			log.error("did not find any domains/ranges or super-types for node: " + node.getId());
 			return null;
 		}
 
@@ -203,7 +207,19 @@ public class ModelVisitorA extends ModelVisitor {
 		List<String> in = node.getIn().stream().map(e -> e.getId().toString()).collect(Collectors.toList());
 		List<String> out = node.getOut().stream().map(e -> e.getId().toString()).collect(Collectors.toList());
 
-		return OntologyUtil.findDomainRangeTypes(in, out, false, ontology);
+		List<Resource> types = OntologyUtil.findDomainRangeTypes(in, out, false, ontology);
+		if (types.isEmpty()) {
+			// get first specified type in rule
+			Optional<GraphEdge> found = node.getOut().stream().filter(edge -> edge.getId().equals(RDF.type.asNode()))
+					.findFirst();
+
+			if (found.isPresent()) {
+				String res = found.get().getTarget().getId().toString();
+				types = OntologyUtil.findSuperTypes(res, ontology);
+			}
+		}
+
+		return types;
 	}
 
 	// - these hooks will update cond and block

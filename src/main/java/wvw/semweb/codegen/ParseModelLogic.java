@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.apache.jen3.graph.Node;
 import org.apache.jen3.graph.NodeFactory;
+import org.apache.jen3.graph.n3.Node_QuickVariable;
 import org.apache.jen3.n3.N3Model;
 import org.apache.jen3.n3.N3ModelSpec;
 import org.apache.jen3.n3.N3ModelSpec.Types;
@@ -23,6 +24,7 @@ import wvw.semweb.codegen.model.struct.CodeModel;
 import wvw.semweb.codegen.rule.GraphNode;
 import wvw.semweb.codegen.rule.RuleGraph;
 import wvw.semweb.codegen.rule.RuleGraphFactory;
+import wvw.utils.rdf.NS;
 
 public class ParseModelLogic implements N3EventListener {
 
@@ -46,7 +48,7 @@ public class ParseModelLogic implements N3EventListener {
 		return logic;
 	}
 
-	public void parseClassModel(String rulesPath, String entry, String ontologyPath) throws Exception {
+	public void parseClassModel(String rulesPath, String ontologyPath) throws Exception {
 		N3Model ontology = ModelFactory.createN3Model(N3ModelSpec.get(Types.N3_MEM_FP_INF));
 		ontology.read(IOUtils.getResourceInputStream(getClass(), ontologyPath), null);
 
@@ -54,31 +56,52 @@ public class ParseModelLogic implements N3EventListener {
 		ruleset.setListener(this);
 		ruleset.read(IOUtils.getResourceInputStream(getClass(), rulesPath), null);
 
-		log.debug("- parsed rules:");
-		parsedRules.forEach(r -> log.debug(r + "\n"));
-		log.debug("");
-
 		if (parsedRules.isEmpty())
 			log.error("no rules found in " + rulesPath);
 
-		Node entryTerm = NodeFactory.createVariable(entry);
+		for (N3Rule r : parsedRules) {
+			log.debug("- parsed rule:\n" + r);
 
-		for (N3Rule r : parsedRules)
-			processRule(r, entryTerm, ontology);
+			List<Node> entryTerms = findEntryPoints(r, ruleset);
+			if (entryTerms.isEmpty())
+				throw new ParseModelException("no entry terms found for rule");
+
+			log.debug("\n- entry points: " + entryTerms);
+
+			processRule(r, ontology, entryTerms.toArray(Node[]::new));
+
+			log.debug("");
+		}
 	}
 
-	private void processRule(N3Rule r, Node entryTerm, N3Model ontology) throws ParseModelException {
+	private List<Node> findEntryPoints(N3Rule r, N3Model ruleset) {
+		List<Node> ret = new ArrayList<>();
+
+		ruleset.getGraph().find(r.getBodyNode(), NodeFactory.createURI(NS.toUri("cg:entryPoint")), null)
+				.forEachRemaining(stmt -> {
+					Node n = stmt.getObject();
+					n = r.toRuleVar((Node_QuickVariable) n);
+
+					ret.add(n);
+				});
+
+		return ret;
+	}
+
+	private void processRule(N3Rule r, N3Model ontology, Node[] entryTerms) throws ParseModelException {
 		RuleGraphFactory graphFactory = new RuleGraphFactory();
-		RuleGraph ruleGraph = graphFactory.createGraph(r, entryTerm);
+		RuleGraph ruleGraph = graphFactory.createGraph(r, entryTerms);
 
 		log.debug("- rule graph:");
 		log.debug(ruleGraph);
 		log.debug("");
 
-		GraphNode entryNode = ruleGraph.get(entryTerm);
-
 		ModelVisitor visitor = new ModelVisitorA(ontology);
-		visitor.visit(entryNode);
+		for (Node entryTerm : entryTerms) {
+			GraphNode entryNode = ruleGraph.get(entryTerm);
+
+			visitor.visit(entryNode);
+		}
 
 		CodeModel newModel = visitor.getModel();
 		model.mergeWith(newModel);

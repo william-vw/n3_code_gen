@@ -33,6 +33,7 @@ public class OntologyUtil {
 //			log.debug("allTypes: " + allTypes);
 
 		// (also takes care of duplicates)
+
 		if (filterSuper)
 			filterSuperClasses(allTypes);
 		else
@@ -46,6 +47,15 @@ public class OntologyUtil {
 //		log.debug("\n");
 
 		return allTypes;
+	}
+
+	public static List<Resource> findSuperTypes(String resource, N3Model ontology) {
+		List<Resource> superTypes = ontology.createResource(resource).listProperties(RDFS.subClassOf).toList().stream()
+				.map(stmt -> stmt.getObject()).collect(Collectors.toList());
+
+		filterSubClasses(superTypes);
+
+		return superTypes;
 	}
 
 	// TODO not supporting property restrictions as types

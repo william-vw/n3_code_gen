@@ -1,5 +1,6 @@
 package wvw.semweb.codegen.gen;
 
+import java.util.Arrays;
 import java.util.stream.Collectors;
 
 import org.apache.commons.text.CaseUtils;
@@ -30,10 +31,11 @@ public class GenerateJsCode implements GenerateCode {
 	private StringBuffer classes = new StringBuffer();
 	private StringBuffer logic = new StringBuffer();
 
-	public void generate(CodeModel codeModel, CodeLogic codeLogic, String entry) {
+	public void generate(CodeModel codeModel, CodeLogic codeLogic, String... entries) {
 		codeModel.getAllStructs().forEach(s -> genClass(s));
 
-		logic.append("function doSomething(").append(entry).append(") {");
+		logic.append("function doSomething(").append(Arrays.stream(entries).collect(Collectors.joining(", ")))
+				.append(") {");
 		codeLogic.getIfThens().forEach(it -> genIfThen(it));
 		logic.append("\n}");
 

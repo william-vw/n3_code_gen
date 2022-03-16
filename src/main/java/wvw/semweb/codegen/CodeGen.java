@@ -17,18 +17,20 @@ public class CodeGen {
 		log.info("-- parsing model and logic");
 
 		ParseModelLogic parser = new ParseModelLogic();
-		parser.parseClassModel("diabetes-iot.n3", "p", "DMTO2.n3");
-//		parser.parseClassModel("test.n3", "x", "ontology.n3");
-//		parser.parseClassModel("test2.n3", "x", "ontology.n3");
+		parser.parseClassModel("diabetes-iot.n3", "DMTO2.n3");
+//		parser.parseClassModel("test.n3", "ontology.n3", "x");
+//		parser.parseClassModel("test2.n3", "ontology.n3", "x");
 
 		log.info("\n");
 		log.info("-- generating code");
 
 		GenerateCode genCode = new GenerateJsCode();
-		genCode.generate(parser.getModel(), parser.getLogic(), "p");
+		genCode.generate(parser.getModel(), parser.getLogic());
 
 		File output = new File("src/main/resources/out.js");
 		IOUtils.writeToFile(genCode.getClasses(), output);
 		IOUtils.writeToFile(genCode.getLogic(), output, true);
+
+		log.info("code written to: " + output.getAbsolutePath());
 	}
 }
