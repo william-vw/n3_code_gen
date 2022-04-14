@@ -17,6 +17,7 @@ import org.apache.jen3.n3.N3Model;
 import org.apache.jen3.rdf.model.Resource;
 import org.apache.jen3.reasoner.rulesys.Node_RuleVariable;
 import org.apache.jen3.vocabulary.N3Math;
+import org.apache.jen3.vocabulary.OWL;
 import org.apache.jen3.vocabulary.RDF;
 import org.apache.jen3.vocabulary.RDFS;
 
@@ -33,8 +34,10 @@ import wvw.semweb.codegen.rule.GraphNode;
 import wvw.semweb.codegen.rule.RuleGraph.ClauseTypes;
 import wvw.semweb.owl.OntologyUtil;
 
-// TODO better parametrize this code (CodeLogicVisitor, CodeModelVisitor)
-// TODO support multiple values for n-ary properties
+// TODO parametrize this code (CodeLogicVisitor, CodeModelVisitor)
+// TODO multiple values for n-ary properties
+// TODO post-processing where structs sharing a (non-trivial) superclass (i.e., not owl:Thing, entity, ..)
+// are merged together
 
 public class ModelVisitorA extends ModelVisitor {
 
@@ -49,11 +52,12 @@ public class ModelVisitorA extends ModelVisitor {
 	}
 
 	private ModelType doVisit(GraphNode node, GraphEdge from, NodePath path, Set<GraphNode> found) {
-		// TODO this occurs in case of inverted properties; we could return object-type
+		// this occurs in case of inverted properties; we could return object-type
 		// as model-struct here (since we're in a loop, we know the target node is an
 		// object; e.g., <profile> is_profile_of <patient> has_profile <profile>)
+
 		// but, we only need the property that was followed in our rule
-		// (and we start from our entry-point; see visit() method)
+		// (note that this process starts from our entry-point; see visit() method)
 
 		if (found.contains(node))
 			return null;
@@ -199,10 +203,15 @@ public class ModelVisitorA extends ModelVisitor {
 
 				ModelProperty modelPrp = new ModelProperty(prpName);
 				loadAnnotations(nodePrp.getURI(), modelPrp);
+				loadCardinality(nodePrp.getURI(), modelPrp);
 
 				// if this is an inverse edge, then "invert" its name
-				if (edge.isInverse())
+				if (edge.isInverse()) {
 					modelPrp.setString(invertProperty(modelPrp.getString()));
+					// TODO currently assuming a maxCardinality of 1 on inverse properties
+					// (i.e., a one-to-many)
+					modelPrp.setMaxCardinality(1);
+				}
 
 				NodePath path2 = path.copy();
 				path2.add(modelPrp);
@@ -416,6 +425,37 @@ public class ModelVisitorA extends ModelVisitor {
 
 		if (res.hasProperty(RDFS.label))
 			el.setLabel(res.getPropertyResourceValue(RDFS.label).asLiteral().getString());
+	}
+
+	private void loadCardinality(String uri, ModelProperty prp) {
+		// TODO assume maxCardinality of 1 for label
+		if (uri.equals(RDFS.label.getURI())) {
+			prp.setMaxCardinality(1);
+			return;
+		}
+
+		Resource prpRes = ontology.createResource(uri);
+
+		// ontology.createResource(OWL.onProperty)
+		ontology.listStatements(null, null, prpRes).forEachRemaining(stmt -> {
+
+			Resource restr = stmt.getSubject();
+
+			if (restr.hasProperty(OWL.maxCardinality)) {
+				if (prp.hasMaxCardinality())
+					log.warn("found multiple maxCardinality constraints for property " + uri);
+
+				int value = restr.getPropertyResourceValue(OWL.maxCardinality).asLiteral().getInt();
+				prp.setMaxCardinality(value);
+			}
+		});
+
+		if (prpRes.hasProperty(RDF.type, OWL.FunctionalProperty)) {
+			if (prp.hasMaxCardinality())
+				log.warn("found multiple cardinality-related constraints for property " + uri);
+
+			prp.setMaxCardinality(1);
+		}
 	}
 
 	private String invertProperty(String name) {

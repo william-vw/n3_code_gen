@@ -28,6 +28,9 @@ import wvw.semweb.codegen.rule.RuleGraph;
 import wvw.semweb.codegen.rule.RuleGraphFactory;
 import wvw.utils.rdf.NS;
 
+// TODO CDS use case: automatically configure 'exam' with corresponding & persisted 'patient'
+// if needed by the rules (i.e., a rule that references both the input exam & related patient)
+
 public class ParseModelLogic implements N3EventListener {
 
 	private static final Logger log = LogManager.getLogger(ParseModelLogic.class);

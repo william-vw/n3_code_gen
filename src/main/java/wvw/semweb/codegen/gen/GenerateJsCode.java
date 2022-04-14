@@ -22,6 +22,7 @@ import wvw.semweb.codegen.model.cond.Comparison;
 import wvw.semweb.codegen.model.cond.Comparison.Comparators;
 import wvw.semweb.codegen.model.struct.CodeModel;
 import wvw.semweb.codegen.model.struct.ModelElement;
+import wvw.semweb.codegen.model.struct.ModelProperty;
 import wvw.semweb.codegen.model.struct.ModelStruct;
 
 public class GenerateJsCode implements GenerateCode {
@@ -163,8 +164,12 @@ public class GenerateJsCode implements GenerateCode {
 		if (!struct.getValues().isEmpty())
 			classes.append("\n");
 
-		for (ModelElement prp : struct.getProperties())
-			classes.append("\t").append(jsName(prp, false)).append(";\n");
+		for (ModelProperty prp : struct.getProperties()) {
+			classes.append("\t").append(jsName(prp, false));
+			if (!prp.hasMaxCardinality() || prp.getMaxCardinality() != 1)
+				classes.append(" = []");
+			classes.append(";\n");
+		}
 
 		classes.append("}");
 	}

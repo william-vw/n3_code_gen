@@ -15,7 +15,7 @@ public class ModelStruct extends ModelElement {
 	public ModelStruct(String name) {
 		super(name);
 
-		properties.add(new ModelProperty("type", new ModelType(XSDDatatype.XSDstring)));
+		properties.add(new ModelProperty("type", new ModelType(XSDDatatype.XSDstring), 1));
 	}
 
 	public void addType(ModelElement type) {

@@ -25,7 +25,7 @@ class DiabetesDiagnosis {
 }
 
 class TreatmentPlan {
-	hasPart;
+	hasPart = [];
 	type;
 }
 
