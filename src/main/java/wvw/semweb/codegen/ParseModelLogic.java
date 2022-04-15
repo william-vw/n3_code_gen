@@ -19,17 +19,28 @@ import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
 import wvw.semweb.codegen.model.CodeLogic;
-import wvw.semweb.codegen.model.CodeLogic.IfThen;
-import wvw.semweb.codegen.model.ModelVisitor;
-import wvw.semweb.codegen.model.ModelVisitorA;
+import wvw.semweb.codegen.model.IfThen;
 import wvw.semweb.codegen.model.struct.CodeModel;
+import wvw.semweb.codegen.model.visit.ModelVisitor;
+import wvw.semweb.codegen.model.visit.ModelVisitorA;
 import wvw.semweb.codegen.rule.GraphNode;
 import wvw.semweb.codegen.rule.RuleGraph;
 import wvw.semweb.codegen.rule.RuleGraphFactory;
 import wvw.utils.rdf.NS;
 
+// (major)
+
 // TODO CDS use case: automatically configure 'exam' with corresponding & persisted 'patient'
 // if needed by the rules (i.e., a rule that references both the input exam & related patient)
+
+// TODO currently assuming that the rule ordering reflects the chaining sequence
+
+// (minor)
+
+//TODO parametrize ModelVisitorImpl code (e.g., CodeLogicVisitor, CodeModelVisitor)
+
+//TODO post-processing where structs sharing a (non-trivial) superclass (i.e., not owl:Thing, entity, ..)
+//are merged together
 
 public class ParseModelLogic implements N3EventListener {
 
@@ -110,7 +121,6 @@ public class ParseModelLogic implements N3EventListener {
 		ModelVisitor visitor = new ModelVisitorA(ontology);
 		for (Node entryTerm : entryTerms) {
 			GraphNode entryNode = ruleGraph.get(entryTerm);
-
 			visitor.visit(entryNode);
 		}
 
@@ -129,7 +139,6 @@ public class ParseModelLogic implements N3EventListener {
 		log.debug(visitor.getBlock());
 		log.debug("");
 
-		// TODO currently assuming that the rule ordering reflects the chaining sequence
 		IfThen it = new IfThen(visitor.getCondition(), visitor.getBlock());
 		logic.add(it);
 	}

@@ -36,7 +36,7 @@ class Patient {
 
 class PatientProfile {
 	isPatientProfileOf;
-	hasDemographic;
+	hasDemographic = [];
 	hasTreatmentPlan;
 	hasDiagnosis;
 	type;
@@ -49,29 +49,31 @@ class PatientDemographic {
 }
 
 function doSomething(exam, p) {
-
-	if (exam.hasQuantitativeValue !== null
+	if (exam.hasQuantitativeValue !== undefined
 		&& exam.hasQuantitativeValue >= 25
-		&& exam.type == DiabetesPhysicalExamination.bmi) {
-
+		&& exam.type === DiabetesPhysicalExamination.bmi) {
+	
 		var v0 = new PatientDemographic();
-		exam.isPhysicalExaminationOf.hasDemographic = v0;
+		exam.isPhysicalExaminationOf.hasDemographic.push(v0);
+		
 		v0.type = PatientDemographic.overweight;
 	}
-
-	if (p.hasPatientProfile !== null
-		&& p.hasPatientProfile.hasDiagnosis !== null
-		&& p.hasPatientProfile.hasDiagnosis.hasDiabetesType !== null
-		&& p.hasPatientProfile.hasDiagnosis.hasDiabetesType.type == DiabetesMellitus.type2DiabetesMellitus
-		&& p.hasPatientProfile.hasDemographic !== null
-		&& p.hasPatientProfile.hasDemographic.type == PatientDemographic.overweight) {
-
-		var v1 = new TreatmentPlan();
-		p.hasPatientProfile.hasTreatmentPlan = v1;
+	
+	if (p.hasPatientProfile !== undefined
+		&& p.hasPatientProfile.hasDiagnosis !== undefined
+		&& p.hasPatientProfile.hasDiagnosis.hasDiabetesType !== undefined
+		&& p.hasPatientProfile.hasDiagnosis.hasDiabetesType.type === DiabetesMellitus.type2DiabetesMellitus
+		&& p.hasPatientProfile.hasDemographic.some((e) => e.type === PatientDemographic.overweight)) {
+	
+		if (p.hasPatientProfile.hasTreatmentPlan === undefined) {
+			p.hasPatientProfile.hasTreatmentPlan = new TreatmentPlan();
+		}
+		var v1 = p.hasPatientProfile.hasTreatmentPlan;
+		
 		var v2 = new TreatmentSubplan();
-		v1.hasPart = v2;
+		v1.hasPart.push(v2);
+		
 		v2.label = "Management and reduction of weight is important";
 		v2.type = TreatmentSubplan.lifestyleSubplan;
 	}
 }
-

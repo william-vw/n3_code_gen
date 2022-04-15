@@ -9,6 +9,12 @@ public class ModelProperty extends ModelElement {
 		super(name);
 	}
 
+	public ModelProperty(String name, Integer maxCardinality) {
+		super(name);
+		
+		this.maxCardinality = maxCardinality;
+	}
+
 	public ModelProperty(String name, ModelType target) {
 		super(name);
 
@@ -17,7 +23,7 @@ public class ModelProperty extends ModelElement {
 
 	public ModelProperty(String name, ModelType target, Integer maxCardinality) {
 		super(name);
-		
+
 		this.target = target;
 		this.maxCardinality = maxCardinality;
 	}

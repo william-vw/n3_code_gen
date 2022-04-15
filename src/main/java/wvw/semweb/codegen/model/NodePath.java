@@ -31,8 +31,21 @@ public class NodePath implements Operand {
 		return path;
 	}
 
+	public int size() {
+		return path.size();
+	}
+
 	public NodePath copy() {
 		return new NodePath(start, new LinkedList<>(path));
+	}
+
+	public NodePath subPath(int end) {
+		return new NodePath(start, new LinkedList<>(path.subList(0, end)));
+	}
+
+	@Override
+	public Operands getType() {
+		return Operands.NODE_PATH;
 	}
 
 	@Override

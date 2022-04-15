@@ -13,6 +13,11 @@ public class Literal implements Operand {
 	}
 
 	@Override
+	public Operands getType() {
+		return Operands.LITERAL;
+	}
+
+	@Override
 	public String toString() {
 		return value.toString();
 	}

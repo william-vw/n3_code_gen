@@ -22,6 +22,11 @@ public class StructConstant implements Operand {
 	}
 
 	@Override
+	public Operands getType() {
+		return Operands.STRUCT_CONSTANT;
+	}
+
+	@Override
 	public String toString() {
 		return struct.getString() + ":" + constant.getString();
 	}

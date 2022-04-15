@@ -19,6 +19,11 @@ public class Variable implements Operand {
 	}
 
 	@Override
+	public Operands getType() {
+		return Operands.VAR;
+	}
+
+	@Override
 	public String toString() {
 		return name;
 	}
