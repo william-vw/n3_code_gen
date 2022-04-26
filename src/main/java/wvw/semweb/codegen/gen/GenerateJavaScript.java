@@ -1,11 +1,12 @@
 package wvw.semweb.codegen.gen;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.stream.Collectors;
 
 import org.apache.commons.text.CaseUtils;
-import org.apache.log4j.LogManager;
-import org.apache.log4j.Logger;
+import org.apache.jen3.util.IOUtils;
 
 import wvw.semweb.codegen.model.Assignment;
 import wvw.semweb.codegen.model.Block;
@@ -27,16 +28,16 @@ import wvw.semweb.codegen.model.struct.CodeModel;
 import wvw.semweb.codegen.model.struct.ModelElement;
 import wvw.semweb.codegen.model.struct.ModelProperty;
 import wvw.semweb.codegen.model.struct.ModelStruct;
-import wvw.semweb.codegen.model.visit.ModelVisitorA;
 
-public class GenerateJsCode extends GenerateCode {
-
-	protected static final Logger log = LogManager.getLogger(ModelVisitorA.class);
+public class GenerateJavaScript extends GenerateCode {
 
 	private StringBuffer classes = new StringBuffer();
 	private StringBuffer logic = new StringBuffer();
 
-	public void generate(CodeModel codeModel, CodeLogic codeLogic, Collection<String> entryPoints) {
+	@Override
+	public void generate(CodeModel codeModel, CodeLogic codeLogic, Collection<String> entryPoints, File output)
+			throws IOException {
+
 		codeModel.getAllStructs().forEach(s -> genClass(s));
 
 		logic.append("function doSomething(").append(entryPoints.stream().collect(Collectors.joining(", ")))
@@ -50,18 +51,11 @@ public class GenerateJsCode extends GenerateCode {
 
 		logic.append("\n}");
 
-		classes.append("\n\n");
-
 //		log.info(classes);
 //		log.info(ifThens);
-	}
 
-	public String getClasses() {
-		return classes.toString();
-	}
-
-	public String getLogic() {
-		return logic.toString();
+		IOUtils.writeToFile(classes.toString() + "\n\n", output);
+		IOUtils.writeToFile(logic.toString(), output, true);
 	}
 
 	private String genStatement(CodeStatement stmt) {
@@ -211,13 +205,13 @@ public class GenerateJsCode extends GenerateCode {
 		case LE:
 			return "<=";
 		case EQ:
-			return "===";
+			return "==";
 		case GE:
 			return ">=";
 		case GT:
 			return ">";
 		case NEQ:
-			return "!==";
+			return "!=";
 		case NGT:
 			return "<=";
 		case NLT:

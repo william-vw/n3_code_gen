@@ -2,9 +2,11 @@ package wvw.semweb.codegen.model.struct;
 
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Optional;
 import java.util.Set;
 
-import org.apache.jen3.datatypes.xsd.XSDDatatype;
+import org.apache.jen3.util.iterator.WrappedIterator;
 
 public class ModelStruct extends ModelElement {
 
@@ -15,7 +17,7 @@ public class ModelStruct extends ModelElement {
 	public ModelStruct(String name) {
 		super(name);
 
-		properties.add(new ModelProperty("type", new ModelType(XSDDatatype.XSDstring), 1));
+		properties.add(ModelProperty.typeProperty());
 	}
 
 	public void addType(ModelElement type) {
@@ -35,12 +37,20 @@ public class ModelStruct extends ModelElement {
 		return values;
 	}
 
+	public Iterator<ModelElement> getConstants() {
+		return WrappedIterator.create(types.iterator()).andThen(values.iterator());
+	}
+
 	public void addProperty(ModelProperty prp) {
 		properties.add(prp);
 	}
 
 	public Collection<ModelProperty> getProperties() {
 		return properties;
+	}
+
+	public Optional<ModelProperty> getKeyProperty() {
+		return properties.stream().filter(p -> p.isKey()).findAny();
 	}
 
 	public void replacing(ModelStruct struct2) {

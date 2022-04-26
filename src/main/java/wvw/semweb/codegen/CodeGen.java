@@ -2,12 +2,11 @@ package wvw.semweb.codegen;
 
 import java.io.File;
 
-import org.apache.jen3.util.IOUtils;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
 import wvw.semweb.codegen.gen.GenerateCode;
-import wvw.semweb.codegen.gen.GenerateJsCode;
+import wvw.semweb.codegen.gen.GenerateSolidity;
 
 public class CodeGen {
 
@@ -17,20 +16,21 @@ public class CodeGen {
 		log.info("-- parsing model and logic");
 
 		ParseModelLogic parser = new ParseModelLogic();
-		parser.parseClassModel("diabetes-iot.n3", "DMTO2.n3");
-//		parser.parseClassModel("test.n3", "ontology.n3", "x");
-//		parser.parseClassModel("test2.n3", "ontology.n3", "x");
+		parser.parseClassModel(new File("diabetes-iot.n3"), new File("DMTO2.n3"));
+//		parser.parseClassModel(new File("test.n3"), new File("ontology.n3"));
+//		parser.parseClassModel(new File("test2.n3"), new File("ontology.n3"));
 
 		log.info("\n");
 		log.info("-- generating code");
 
-		GenerateCode genCode = new GenerateJsCode();
-		genCode.generate(parser.getModel(), parser.getLogic(), parser.getEntryPoints());
+//		GenerateCode genCode = new GenerateJavaScript();
+//		File output = new File("src/main/resources/out.js");
 
-		File output = new File("src/main/resources/out.js");
-		IOUtils.writeToFile(genCode.getClasses(), output);
-		IOUtils.writeToFile(genCode.getLogic(), output, true);
+		GenerateCode genCode = new GenerateSolidity();
+		File output = new File("src/main/resources/out.sol");
 
-		log.info("code written to: " + output.getAbsolutePath());
+		genCode.generate(parser.getModel(), parser.getLogic(), parser.getEntryPoints(), output);
+
+		log.info("\n\ncode written to: " + output.getAbsolutePath());
 	}
 }

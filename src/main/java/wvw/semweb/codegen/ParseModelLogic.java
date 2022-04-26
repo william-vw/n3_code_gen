@@ -1,10 +1,12 @@
 package wvw.semweb.codegen;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 
+import org.apache.commons.io.FilenameUtils;
 import org.apache.jen3.graph.Node;
 import org.apache.jen3.graph.NodeFactory;
 import org.apache.jen3.graph.n3.Node_QuickVariable;
@@ -69,16 +71,18 @@ public class ParseModelLogic implements N3EventListener {
 		return logic;
 	}
 
-	public void parseClassModel(String rulesPath, String ontologyPath) throws Exception {
+	public void parseClassModel(File rulesFile, File ontologyFile) throws Exception {
+		logic.setRulesName(FilenameUtils.removeExtension(rulesFile.getName()));
+
 		N3Model ontology = ModelFactory.createN3Model(N3ModelSpec.get(Types.N3_MEM_FP_INF));
-		ontology.read(IOUtils.getResourceInputStream(getClass(), ontologyPath), null);
+		ontology.read(IOUtils.getResourceInputStream(getClass(), ontologyFile.getPath()), null);
 
 		N3Model ruleset = ModelFactory.createN3Model(N3ModelSpec.get(Types.N3_MEM_FP_INF));
 		ruleset.setListener(this);
-		ruleset.read(IOUtils.getResourceInputStream(getClass(), rulesPath), null);
+		ruleset.read(IOUtils.getResourceInputStream(getClass(), rulesFile.getPath()), null);
 
 		if (parsedRules.isEmpty())
-			log.error("no rules found in " + rulesPath);
+			log.error("no rules found in " + rulesFile.getPath());
 
 		for (N3Rule r : parsedRules) {
 			log.debug("- parsed rule:\n" + r);

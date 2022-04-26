@@ -4,6 +4,8 @@ public class ModelProperty extends ModelElement {
 
 	private ModelType target;
 	private Integer maxCardinality;
+	private boolean isKey;
+	private boolean isTypePrp;
 
 	public ModelProperty(String name) {
 		super(name);
@@ -11,8 +13,15 @@ public class ModelProperty extends ModelElement {
 
 	public ModelProperty(String name, Integer maxCardinality) {
 		super(name);
-		
+
 		this.maxCardinality = maxCardinality;
+	}
+
+	public static ModelProperty typeProperty() {
+		ModelProperty typePrp = new ModelProperty("type", 1);
+		typePrp.setTypePrp(true);
+
+		return typePrp;
 	}
 
 	public ModelProperty(String name, ModelType target) {
@@ -26,6 +35,14 @@ public class ModelProperty extends ModelElement {
 
 		this.target = target;
 		this.maxCardinality = maxCardinality;
+	}
+
+	public ModelProperty(String name, ModelType target, Integer maxCardinality, boolean isKey) {
+		super(name);
+
+		this.target = target;
+		this.maxCardinality = maxCardinality;
+		this.isKey = isKey;
 	}
 
 	public boolean hasTarget() {
@@ -54,6 +71,18 @@ public class ModelProperty extends ModelElement {
 
 	public boolean hasMaxCardinality() {
 		return maxCardinality != null;
+	}
+
+	public boolean isKey() {
+		return isKey;
+	}
+
+	public void setTypePrp(boolean isTypePrp) {
+		this.isTypePrp = isTypePrp;
+	}
+
+	public boolean isTypePrp() {
+		return isTypePrp;
 	}
 
 	@Override
