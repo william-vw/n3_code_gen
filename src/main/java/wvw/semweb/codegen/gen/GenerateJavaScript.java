@@ -242,7 +242,7 @@ public class GenerateJavaScript extends GenerateCode {
 
 		for (ModelProperty prp : struct.getProperties()) {
 			classes.append("\t").append(jsName(prp, false));
-			if (Util.involvesArray(prp))
+			if (prp.requiresArray())
 				classes.append(" = []");
 			classes.append(";\n");
 		}

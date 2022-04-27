@@ -15,20 +15,12 @@ contract DiabetesIot {
 		message = initMessage;
 	}
 	
-	function containsWithType(list, el) {
-		for (uint i = 0; i < list.length; i++) {
-			if (el == list[i].type) {
-				return true;
-			}
-		}
-		return false;
-	}
-	
 	enum TreatmentSubplanConstants{ LifestyleSubplan }
 	
 	struct TreatmentSubplan {
 		string label;
 		TreatmentSubplanConstants type;
+		bool exists;
 	}
 	
 	enum DiabetesPhysicalExaminationConstants{ Bmi }
@@ -37,41 +29,44 @@ contract DiabetesIot {
 		PatientProfile isPhysicalExaminationOf;
 		DiabetesPhysicalExaminationConstants type;
 		int hasQuantitativeValue;
+		bool exists;
 	}
 	
 	enum DiabetesMellitusConstants{ Type2DiabetesMellitus }
 	
 	struct DiabetesMellitus {
 		DiabetesMellitusConstants type;
+		bool exists;
 	}
 	
 	struct TreatmentPlan {
-		TreatmentSubplan[] hasPart;
-		TreatmentPlanConstants type;
+		mapping(TreatmentSubplanConstants => TreatmentSubplan) hasPart;
+		bool exists;
 	}
 	
 	struct DiabetesDiagnosis {
 		DiabetesMellitus hasDiabetesType;
-		DiabetesDiagnosisConstants type;
+		bool exists;
 	}
 	
 	struct Patient {
 		PatientProfile hasPatientProfile;
-		PatientConstants type;
+		bool exists;
 	}
 	
 	struct PatientProfile {
 		Patient isPatientProfileOf;
-		PatientDemographic[] hasDemographic;
+		mapping(PatientDemographicConstants => PatientDemographic) hasDemographic;
 		TreatmentPlan hasTreatmentPlan;
 		DiabetesDiagnosis hasDiagnosis;
-		PatientProfileConstants type;
+		bool exists;
 	}
 	
 	enum PatientDemographicConstants{ Overweight }
 	
 	struct PatientDemographic {
 		PatientDemographicConstants type;
+		bool exists;
 	}
 	
 	function doSomething(exam, p) {
@@ -79,28 +74,26 @@ contract DiabetesIot {
 			&& exam.hasQuantitativeValue >= 25
 			&& exam.type == DiabetesPhysicalExaminationConstants.Bmi) {
 		
-			PatientDemographic memory v0 = PatientDemographic();
-			exam.isPhysicalExaminationOf.hasDemographic.push(v0);
-			
+			PatientDemographic memory v0 = PatientDemographic({ exists: true });
 			v0.type = PatientDemographicConstants.Overweight;
+			exam.isPhysicalExaminationOf.hasDemographic[v0.type] = v0;
 		}
 		
 		if (p.hasPatientProfile != false
 			&& p.hasPatientProfile.hasDiagnosis != false
 			&& p.hasPatientProfile.hasDiagnosis.hasDiabetesType != false
 			&& p.hasPatientProfile.hasDiagnosis.hasDiabetesType.type == DiabetesMellitusConstants.Type2DiabetesMellitus
-			&& containsWithType(p.hasPatientProfile.hasDemographic, PatientDemographicConstants.Overweight)) {
+			&& p.hasPatientProfile.hasDemographic[PatientDemographicConstants.Overweight].exists) {
 		
 			if (p.hasPatientProfile.hasTreatmentPlan == false) {
-				p.hasPatientProfile.hasTreatmentPlan = TreatmentPlan();
+				p.hasPatientProfile.hasTreatmentPlan = TreatmentPlan({ exists: true });
 			}
 			TreatmentPlan memory v1 = p.hasPatientProfile.hasTreatmentPlan;
 			
-			TreatmentSubplan memory v2 = TreatmentSubplan();
-			v1.hasPart.push(v2);
-			
+			TreatmentSubplan memory v2 = TreatmentSubplan({ exists: true });
 			v2.label = "Management and reduction of weight is important";
 			v2.type = TreatmentSubplanConstants.LifestyleSubplan;
+			v1.hasPart[v2.type] = v2;
 		}
 	}
 	

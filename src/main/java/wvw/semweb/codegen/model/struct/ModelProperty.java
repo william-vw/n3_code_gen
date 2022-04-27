@@ -73,6 +73,10 @@ public class ModelProperty extends ModelElement {
 		return maxCardinality != null;
 	}
 
+	public boolean requiresArray() {
+		return !hasMaxCardinality() || getMaxCardinality() > 1;
+	}
+
 	public boolean isKey() {
 		return isKey;
 	}

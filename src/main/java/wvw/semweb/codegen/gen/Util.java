@@ -7,17 +7,13 @@ import wvw.semweb.codegen.model.struct.ModelProperty;
 
 public class Util {
 
-	public static boolean involvesArray(ModelProperty prp) {
-		return !prp.hasMaxCardinality() || prp.getMaxCardinality() > 1;
-	}
-
 	public static boolean involvesArrayCheck(Operand op1) {
 		if (op1.getType() == Operands.NODE_PATH) {
 			NodePath path = (NodePath) op1;
 
 			if (path.size() > 1) {
 				ModelProperty prp = path.getPath().get(path.size() - 2);
-				return involvesArray(prp);
+				return prp.requiresArray();
 			}
 		}
 
@@ -27,7 +23,7 @@ public class Util {
 	public static boolean involvesArrayAssign(Operand op1) {
 		if (op1.getType() == Operands.NODE_PATH) {
 			ModelProperty lastPrp = ((NodePath) op1).getPath().getLast();
-			return involvesArray(lastPrp);
+			return lastPrp.requiresArray();
 		}
 
 		return false;

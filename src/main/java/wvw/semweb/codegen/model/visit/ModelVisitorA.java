@@ -177,7 +177,7 @@ public class ModelVisitorA extends ModelVisitor {
 
 				if (modelStruct != null) {
 
-					// if a URI, this node is a explicit type in the rule
+					// if a URI, this node is an explicit type in the rule
 
 					if (target.getId() instanceof Node_URI) {
 						Node_URI typeUri = (Node_URI) target.getId();
@@ -203,11 +203,12 @@ public class ModelVisitorA extends ModelVisitor {
 				Node_URI nodePrp = (Node_URI) edge.getId();
 				String prpName = nodePrp.getLocalName();
 
-//				log.debug("\nproperty: " + node.getId() + " - " + prpName);
+				log.debug("\nproperty: " + node.getId() + " - " + prpName);
 
 				// copy our current path and add this property to it
 
 				ModelProperty modelPrp = new ModelProperty(prpName);
+
 				loadAnnotations(nodePrp.getURI(), modelPrp);
 				loadCardinality(nodePrp.getURI(), modelPrp);
 
@@ -277,7 +278,7 @@ public class ModelVisitorA extends ModelVisitor {
 
 	private void newPath(NodePath path, ClauseTypes clauseType) {
 		if (clauseType == ClauseTypes.BODY) {
-			if (!Util.involvesArray(path.getPath().getLast())) {
+			if (!path.getPath().getLast().requiresArray()) {
 				Comparison con = new Comparison(path, Comparators.EX);
 				cond.add(con);
 			}
@@ -302,7 +303,6 @@ public class ModelVisitorA extends ModelVisitor {
 			if (or.isBlank()) {
 				if (modelStruct == null)
 					log.error("should create new instance but non object-type found: " + nodeType);
-				// (note: this may be extended by ParseModelLogic#postProcess)
 
 				Block subBlock = new Block();
 				block.add(subBlock);
@@ -394,7 +394,7 @@ public class ModelVisitorA extends ModelVisitor {
 		Operand cnst = new StructConstant(modelStruct, type);
 
 		NodePath path2 = path.copy();
-		path2.add(new ModelProperty("type", 1));
+		path2.add(ModelProperty.typeProperty());
 
 		switch (clauseType) {
 
@@ -534,7 +534,7 @@ public class ModelVisitorA extends ModelVisitor {
 
 			} else {
 				subBlock.clear();
-				
+
 				// check whether struct at current path exists
 				// if not, create new struct and assign to path
 

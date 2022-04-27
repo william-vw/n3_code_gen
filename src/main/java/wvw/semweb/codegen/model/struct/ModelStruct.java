@@ -37,6 +37,10 @@ public class ModelStruct extends ModelElement {
 		return values;
 	}
 
+	public boolean hasConstants() {
+		return !types.isEmpty() || !values.isEmpty();
+	}
+
 	public Iterator<ModelElement> getConstants() {
 		return WrappedIterator.create(types.iterator()).andThen(values.iterator());
 	}

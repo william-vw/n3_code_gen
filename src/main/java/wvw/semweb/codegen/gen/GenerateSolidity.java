@@ -2,8 +2,10 @@ package wvw.semweb.codegen.gen;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
@@ -64,16 +66,6 @@ public class GenerateSolidity extends GenerateCode {
 			.append("	// Accepts a string argument `initMessage` and sets the value into the contract's `message` storage variable).\n")
 			.append("	message = initMessage;\n")
 			.append("}");
-		contents.append("\n\n");
-		
-		contents.append("function containsWithType(list, el) {\n");
-		contents.append("	for (uint i = 0; i < list.length; i++) {\n");
-		contents.append("		if (el == list[i].type) {\n");
-		contents.append("			return true;\n");
-		contents.append("		}\n");
-		contents.append("	}\n");
-		contents.append("	return false;\n");
-		contents.append("}");
 		contents.append("\n\n");
 		
 		contents.append(structs).append("\n\n").append(logic).append("\n\n");
@@ -173,13 +165,13 @@ public class GenerateSolidity extends GenerateCode {
 			NodePath path = (NodePath) cmp.getOp1();
 
 			String subPath = genOperand(path.subPath(path.size() - 1));
-			String prp = fieldName(path.getPath().getLast());
+			ModelProperty lastPrp = path.getPath().getLast();
 
-			if (prp.equals("type"))
-				return "containsWithType(" + subPath + ", " + op2 + ")";
+			if (lastPrp.isTypePrp())
+				return subPath + "[" + op2 + "].exists";
 
 			else {
-				log.error("unsupported property for contains: " + prp);
+				log.error("unsupported property for contains: " + fieldName(lastPrp));
 				return "null";
 			}
 
@@ -206,7 +198,55 @@ public class GenerateSolidity extends GenerateCode {
 	}
 
 	private String genBlock(Block block) {
-		return block.getStatements().stream().map(stmt -> genStatement(stmt)).collect(Collectors.joining("\n")) + "\n";
+		// save array assignments for last
+		// for solidity, these rely on type properties that need to be initialized first
+		List<CodeStatement> arrayAssigns = extractArrayAssigns(block);
+
+		StringBuffer out = new StringBuffer();
+
+		out.append(block.getStatements().stream().map(stmt -> genStatement(stmt)).collect(Collectors.joining("\n")));
+		if (block.getStatements().size() > 1)
+			out.append("\n");
+
+		if (!arrayAssigns.isEmpty()) {
+			out.append(arrayAssigns.stream().map(stmt -> genStatement(stmt)).collect(Collectors.joining("\n")));
+			out.append("\n");
+		}
+
+		return out.toString();
+	}
+
+	private List<CodeStatement> extractArrayAssigns(Block block) {
+		List<CodeStatement> arrayAssigns = new ArrayList<>();
+		extractArrayAssigns(block, arrayAssigns);
+
+		return arrayAssigns;
+	}
+
+	private void extractArrayAssigns(Block block, List<CodeStatement> arrayAssigns) {
+		Iterator<CodeStatement> it = block.getStatements().iterator();
+
+		while (it.hasNext()) {
+			CodeStatement stmt = it.next();
+
+			switch (stmt.getStatementType()) {
+
+			case BLOCK:
+				extractArrayAssigns((Block) stmt, arrayAssigns);
+				break;
+
+			case ASSIGN:
+				Assignment assign = (Assignment) stmt;
+				if (Util.involvesArrayAssign(assign.getOp1())) {
+					it.remove();
+					arrayAssigns.add(stmt);
+				}
+				break;
+
+			default:
+				break;
+			}
+		}
 	}
 
 	private String genAssignment(Assignment assign) {
@@ -247,7 +287,7 @@ public class GenerateSolidity extends GenerateCode {
 		String op2 = genOperand(assign.getOp2());
 
 		if (Util.involvesArrayAssign(assign.getOp1()))
-			return op1 + ".push(" + op2 + ");";
+			return op1 + "[" + op2 + ".type] = " + op2 + ";";
 		else
 			return op1 + " = " + op2 + ";";
 	}
@@ -278,7 +318,7 @@ public class GenerateSolidity extends GenerateCode {
 
 		case CREATE_STRUCT:
 			CreateStruct cstr = (CreateStruct) op;
-			return structName(cstr.getStruct()) + "()";
+			return structName(cstr.getStruct()) + "({ exists: true })";
 
 		case NODE_PATH:
 			NodePath np = (NodePath) op;
@@ -345,26 +385,51 @@ public class GenerateSolidity extends GenerateCode {
 		for (ModelProperty prp : struct.getProperties())
 			genField(prp, struct);
 
+		// yes this is actually needed
+		structs.append("\tbool exists;\n");
+
 		structs.append("}");
 	}
 
 	private void genField(ModelProperty prp, ModelStruct ofStruct) {
+		// type property only needed/ possible if struct has constants
+		// (these will be added to a separate enum)
+
+		if (prp.isTypePrp() && !ofStruct.hasConstants())
+			return;
+
 		structs.append("\t");
+
+		String typeName = null;
 
 		if (prp.isTypePrp()) {
 			String structName = enumName(ofStruct);
-			structs.append(structName);
+			typeName = structName;
 
 		} else {
 			ModelType target = prp.getTarget();
 			if (target.hasObjectType())
-				structs.append(structName(target.getObjectType()));
+				typeName = structName(target.getObjectType());
 			else
-				structs.append(solDatatype(target.getDataType()));
+				typeName = solDatatype(target.getDataType());
 		}
 
-		if (Util.involvesArray(prp))
-			structs.append("[]");
+		if (prp.requiresArray()) {
+			String keyName = null;
+
+			ModelType target = prp.getTarget();
+			// key will be the type property of the target struct
+			// so put the type property's static type (i.e., the constants enum)
+			if (target.hasObjectType())
+				keyName = enumName(target.getObjectType());
+			// key will be literal
+			else
+				keyName = solDatatype(target.getDataType());
+
+			structs.append("mapping(").append(keyName).append(" => ").append(typeName).append(")");
+
+		} else
+			structs.append(typeName);
 
 		structs.append(" ").append(fieldName(prp));
 
@@ -374,7 +439,7 @@ public class GenerateSolidity extends GenerateCode {
 	private String contractName(String name) {
 		return solName(name, true);
 	}
-	
+
 	private String structName(ModelStruct struct) {
 		return solName(struct, true);
 	}
@@ -388,7 +453,7 @@ public class GenerateSolidity extends GenerateCode {
 	}
 
 	private String enumFieldName(ModelElement el) {
-		return StringUtils.capitalize(fieldName(el)); //.toUpperCase();
+		return StringUtils.capitalize(fieldName(el)); // .toUpperCase();
 	}
 
 	private String varName(Variable var) {
