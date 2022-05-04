@@ -64,6 +64,22 @@ public class RuleGraphFactory {
 		}
 	}
 
+	// so, inverse triples kind of suck
+	// (inverse as in having the entry-point as object)
+
+	// initially we inverted the actual property and added it as an "out" edge;
+	// (in code generation, we regenerated an inverse name for it)
+	// so all code paths originated nicely from the entry-point
+
+	// this worked but was unintuitive - it also caused issues in solidity:
+	// e.g., exam.isPhysicalExaminationOf .. caused the following error: "TypeError:
+	// Types in storage containing (nested) mappings cannot be assigned to."
+
+	// so we find additional entry-points here (i.e., other graph roots) and add
+	// them to the given list; these will invariably introduce cycles (uncess the
+	// graph is not well connected, which flags an error).
+	// client code (e.g., ModelVisitorA) will have to avoid cycles manually.
+
 	protected void checkGraph(N3Rule rule, List<Node> allEntries) throws ParseModelException {
 		Set<GraphNode> found = new HashSet<>();
 
