@@ -120,7 +120,7 @@ public class GenerateJavaScript extends GenerateCode {
 			NodePath path = (NodePath) cmp.getOp1();
 
 			String subPath = genOperand(path.subPath(path.size() - 1));
-			String prp = jsName(path.getPath().getLast().getString(), false);
+			String prp = fieldName(path.getPath().getLast());
 
 			return subPath + ".some((e) => e." + prp + " " + part2 + ")";
 
@@ -157,10 +157,13 @@ public class GenerateJavaScript extends GenerateCode {
 
 		String op2 = genOperand(assign.getOp2());
 
+		String ret = null;
 		if (Util.involvesArrayAssign(assign.getOp1()))
-			return op1 + ".push(" + op2 + ");";
+			ret = op1 + ".push(" + op2 + ");";
 		else
-			return op1 + " = " + op2 + ";";
+			ret = op1 + " = " + op2 + ";";
+
+		return ret;
 	}
 
 	private String genOperand(Operand op) {
@@ -184,14 +187,17 @@ public class GenerateJavaScript extends GenerateCode {
 			return jsName(cnst.getStruct(), true) + "." + jsName(cnst.getConstant(), false);
 
 		case CREATE_STRUCT:
-			CreateStruct cstr = (CreateStruct) op;
-			return "new " + jsName(cstr.getStruct(), true) + "()";
+			CreateStruct cnstr = (CreateStruct) op;
+
+			String params = cnstr.getConstructParams().stream().map(p -> genOperand(p.getOp2()))
+					.collect(Collectors.joining(", "));
+			return "new " + jsName(cnstr.getStruct(), true) + "(" + params + ")";
 
 		case NODE_PATH:
 			NodePath np = (NodePath) op;
 
 			return genOperand(np.getStart()) + (!np.getPath().isEmpty() ? "." : "")
-					+ np.getPath().stream().map(p -> jsName(p, false)).collect(Collectors.joining("."));
+					+ np.getPath().stream().map(p -> fieldName(p)).collect(Collectors.joining("."));
 
 		default:
 			return null;
@@ -240,11 +246,31 @@ public class GenerateJavaScript extends GenerateCode {
 		if (!struct.getValues().isEmpty())
 			classes.append("\n");
 
-		for (ModelProperty prp : struct.getProperties()) {
-			classes.append("\t").append(jsName(prp, false));
-			if (prp.requiresArray())
-				classes.append(" = []");
-			classes.append(";\n");
+		if (!struct.getProperties().isEmpty()) {
+			// @formatter:off
+			String params = struct.getProperties().stream()
+					.filter(p -> isInitField(p, struct))
+					.map(p -> fieldName(p))
+					.collect(Collectors.joining(", "));
+			if (!params.isEmpty()) {
+				classes.append("\tconstructor(").append(params).append(") {\n")
+					.append(
+						struct.getProperties().stream()
+							.filter(p -> isInitField(p, struct))
+							.map(p -> {
+								String field = fieldName(p);
+								return "\t\tthis." + field + " = " + field + ";";
+							
+							}).collect(Collectors.joining("\n"))
+					)
+					.append("\n\t}\n");
+			}
+			// @formatter:on
+
+			classes.append("\n");
+
+			for (ModelProperty prp : struct.getProperties())
+				genField(prp, struct);
 		}
 
 		classes.append("}");
@@ -254,6 +280,23 @@ public class GenerateJavaScript extends GenerateCode {
 		String jsName = jsName(el, false);
 
 		classes.append("\tstatic ").append(jsName).append(" = '").append(jsName).append("';\n");
+	}
+
+	private void genField(ModelProperty prp, ModelStruct ofStruct) {
+		if (!includeField(prp, ofStruct))
+			return;
+
+		classes.append("\t").append(fieldName(prp));
+		if (prp.requiresArray())
+			classes.append(" = []");
+		classes.append(";\n");
+	}
+
+	private String fieldName(ModelProperty prp) {
+		if (prp.isTypePrp()) {
+			return "type";
+		} else
+			return jsName(prp, false);
 	}
 
 	private String jsName(ModelElement el, boolean cls) {

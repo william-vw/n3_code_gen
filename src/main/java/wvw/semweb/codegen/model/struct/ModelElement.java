@@ -34,6 +34,11 @@ public class ModelElement {
 	public String getString() {
 		return (hasLabel() ? label : name);
 	}
+	
+	// for debugging
+	public String print() {
+		return getString();
+	}
 
 	public void setString(String str) {
 		if (hasLabel())

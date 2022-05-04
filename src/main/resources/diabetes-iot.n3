@@ -41,12 +41,12 @@
     ?profile DDO:DDO_0000139 ?demographic . # has_demographic
     ?demographic a DTO:DTO:0002078 . # type overweight
 
+    ?profile DMTO:DMTO_0001671 ?treatment_plan . # has_treatment_plan
+
 } => {
-    ?profile DMTO:DMTO_0001671 [ # has_treatment_plan
-        DMTO:DMTO_0001701 [ # has_part
-            a DMTO:DMTO_0001712 ; # type lifestyle_subplan    
-            rdfs:label "Management and reduction of weight is important"
-        ]
+    ?treatment_plan DMTO:DMTO_0001701 [ # has_part
+        a DMTO:DMTO_0001712 ; # type lifestyle_subplan    
+        rdfs:label "Management and reduction of weight is important"
     ]
 
 } ; cg:entryPoint ?p .

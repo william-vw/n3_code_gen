@@ -1,12 +1,23 @@
 class TreatmentSubplan {
 	static lifestyleSubplan = 'lifestyleSubplan';
 
+	constructor(label, type) {
+		this.label = label;
+		this.type = type;
+	}
+
 	label;
 	type;
 }
 
 class DiabetesPhysicalExamination {
 	static bmi = 'bmi';
+
+	constructor(isPhysicalExaminationOf, type, hasQuantitativeValue) {
+		this.isPhysicalExaminationOf = isPhysicalExaminationOf;
+		this.type = type;
+		this.hasQuantitativeValue = hasQuantitativeValue;
+	}
 
 	isPhysicalExaminationOf;
 	type;
@@ -16,34 +27,53 @@ class DiabetesPhysicalExamination {
 class DiabetesMellitus {
 	static type2DiabetesMellitus = 'type2DiabetesMellitus';
 
-	type;
-}
+	constructor(type) {
+		this.type = type;
+	}
 
-class DiabetesDiagnosis {
-	hasDiabetesType;
 	type;
 }
 
 class TreatmentPlan {
+
 	hasPart = [];
-	type;
+}
+
+class DiabetesDiagnosis {
+	constructor(hasDiabetesType) {
+		this.hasDiabetesType = hasDiabetesType;
+	}
+
+	hasDiabetesType;
 }
 
 class Patient {
+	constructor(hasPatientProfile) {
+		this.hasPatientProfile = hasPatientProfile;
+	}
+
 	hasPatientProfile;
-	type;
 }
 
 class PatientProfile {
+	constructor(isPatientProfileOf, hasTreatmentPlan, hasDiagnosis) {
+		this.isPatientProfileOf = isPatientProfileOf;
+		this.hasTreatmentPlan = hasTreatmentPlan;
+		this.hasDiagnosis = hasDiagnosis;
+	}
+
 	isPatientProfileOf;
 	hasDemographic = [];
 	hasTreatmentPlan;
 	hasDiagnosis;
-	type;
 }
 
 class PatientDemographic {
 	static overweight = 'overweight';
+
+	constructor(type) {
+		this.type = type;
+	}
 
 	type;
 }
@@ -53,27 +83,18 @@ function doSomething(exam, p) {
 		&& exam.hasQuantitativeValue >= 25
 		&& exam.type == DiabetesPhysicalExamination.bmi) {
 	
-		var v0 = new PatientDemographic();
+		var v0 = new PatientDemographic(PatientDemographic.overweight);
 		exam.isPhysicalExaminationOf.hasDemographic.push(v0);
-		
-		v0.type = PatientDemographic.overweight;
 	}
 	
 	if (p.hasPatientProfile != undefined
+		&& p.hasPatientProfile.hasTreatmentPlan != undefined
 		&& p.hasPatientProfile.hasDiagnosis != undefined
 		&& p.hasPatientProfile.hasDiagnosis.hasDiabetesType != undefined
 		&& p.hasPatientProfile.hasDiagnosis.hasDiabetesType.type == DiabetesMellitus.type2DiabetesMellitus
 		&& p.hasPatientProfile.hasDemographic.some((e) => e.type == PatientDemographic.overweight)) {
 	
-		if (p.hasPatientProfile.hasTreatmentPlan == undefined) {
-			p.hasPatientProfile.hasTreatmentPlan = new TreatmentPlan();
-		}
-		var v1 = p.hasPatientProfile.hasTreatmentPlan;
-		
-		var v2 = new TreatmentSubplan();
-		v1.hasPart.push(v2);
-		
-		v2.label = "Management and reduction of weight is important";
-		v2.type = TreatmentSubplan.lifestyleSubplan;
+		var v1 = new TreatmentSubplan("Management and reduction of weight is important", TreatmentSubplan.lifestyleSubplan);
+		p.hasPatientProfile.hasTreatmentPlan.hasPart.push(v1);
 	}
 }

@@ -19,22 +19,15 @@
     </script>
 
     <script>
-        var exam = new DiabetesPhysicalExamination();
-        exam.hasQuantitativeValue = 28;
-        exam.type = DiabetesPhysicalExamination.bmi;
+        var exam = new DiabetesPhysicalExamination(null, DiabetesPhysicalExamination.bmi, 28);
+        var diabetesType = new DiabetesMellitus(DiabetesMellitus.type2DiabetesMellitus);
+        var diagnosis = new DiabetesDiagnosis(diabetesType);
 
-        var dm = new DiabetesMellitus();
-        dm.type = DiabetesMellitus.type2DiabetesMellitus;
+        var treatmentPlan = new TreatmentPlan();
+        
+        var profile = new PatientProfile(null, treatmentPlan, diagnosis);
 
-        var diagnosis = new DiabetesDiagnosis();
-        diagnosis.hasDiabetesType = dm;
-
-        var profile = new PatientProfile();
-        profile.hasDiagnosis = diagnosis;
-
-        var p = new Patient();
-        p.hasPatientProfile = profile;
-
+        var p = new Patient(profile);
         profile.isPatientProfileOf = p;
 
         exam.isPhysicalExaminationOf = profile;

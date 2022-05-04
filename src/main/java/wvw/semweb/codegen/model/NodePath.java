@@ -10,6 +10,9 @@ public class NodePath implements Operand {
 	private Operand start;
 	private LinkedList<ModelProperty> path = new LinkedList<>();
 
+	public NodePath() {
+	}
+
 	public NodePath(Operand start) {
 		this.start = start;
 	}
@@ -17,6 +20,10 @@ public class NodePath implements Operand {
 	private NodePath(Operand start, LinkedList<ModelProperty> path) {
 		this.start = start;
 		this.path = path;
+	}
+
+	public boolean hasStart() {
+		return start != null;
 	}
 
 	public Operand getStart() {
@@ -50,7 +57,7 @@ public class NodePath implements Operand {
 
 	@Override
 	public String toString() {
-		return start
-				+ (!path.isEmpty() ? "." + path.stream().map(p -> p.getString()).collect(Collectors.joining(".")) : "");
+		return (start != null ? start + "." : "")
+				+ path.stream().map(p -> p.print()).collect(Collectors.joining("."));
 	}
 }

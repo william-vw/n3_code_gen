@@ -2,10 +2,8 @@ package wvw.semweb.codegen.gen;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.List;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
@@ -27,6 +25,7 @@ import wvw.semweb.codegen.model.IfThen;
 import wvw.semweb.codegen.model.Literal;
 import wvw.semweb.codegen.model.NodePath;
 import wvw.semweb.codegen.model.Operand;
+import wvw.semweb.codegen.model.Operand.Operands;
 import wvw.semweb.codegen.model.StructConstant;
 import wvw.semweb.codegen.model.Variable;
 import wvw.semweb.codegen.model.struct.CodeModel;
@@ -149,11 +148,11 @@ public class GenerateSolidity extends GenerateCode {
 		switch (cmp.getCmp()) {
 
 		case EX:
-			part2 = genCmp(Comparators.NEQ) + " " + "false";
+			part2 = genCmp(Comparators.NEQ) + " " + "0";
 			break;
 
 		case NEX:
-			part2 = genCmp(Comparators.EQ) + " " + "false";
+			part2 = genCmp(Comparators.EQ) + " " + "0";
 			break;
 
 		default:
@@ -198,55 +197,13 @@ public class GenerateSolidity extends GenerateCode {
 	}
 
 	private String genBlock(Block block) {
-		// save array assignments for last
-		// for solidity, these rely on type properties that need to be initialized first
-		List<CodeStatement> arrayAssigns = extractArrayAssigns(block);
-
 		StringBuffer out = new StringBuffer();
 
 		out.append(block.getStatements().stream().map(stmt -> genStatement(stmt)).collect(Collectors.joining("\n")));
 		if (block.getStatements().size() > 1)
 			out.append("\n");
 
-		if (!arrayAssigns.isEmpty()) {
-			out.append(arrayAssigns.stream().map(stmt -> genStatement(stmt)).collect(Collectors.joining("\n")));
-			out.append("\n");
-		}
-
 		return out.toString();
-	}
-
-	private List<CodeStatement> extractArrayAssigns(Block block) {
-		List<CodeStatement> arrayAssigns = new ArrayList<>();
-		extractArrayAssigns(block, arrayAssigns);
-
-		return arrayAssigns;
-	}
-
-	private void extractArrayAssigns(Block block, List<CodeStatement> arrayAssigns) {
-		Iterator<CodeStatement> it = block.getStatements().iterator();
-
-		while (it.hasNext()) {
-			CodeStatement stmt = it.next();
-
-			switch (stmt.getStatementType()) {
-
-			case BLOCK:
-				extractArrayAssigns((Block) stmt, arrayAssigns);
-				break;
-
-			case ASSIGN:
-				Assignment assign = (Assignment) stmt;
-				if (Util.involvesArrayAssign(assign.getOp1())) {
-					it.remove();
-					arrayAssigns.add(stmt);
-				}
-				break;
-
-			default:
-				break;
-			}
-		}
 	}
 
 	private String genAssignment(Assignment assign) {
@@ -287,7 +244,7 @@ public class GenerateSolidity extends GenerateCode {
 		String op2 = genOperand(assign.getOp2());
 
 		if (Util.involvesArrayAssign(assign.getOp1()))
-			return op1 + "[" + op2 + ".type] = " + op2 + ";";
+			return op1 + "[" + op2 + "." + fieldName(ModelProperty.typeProperty()) + "] = " + op2 + ";";
 		else
 			return op1 + " = " + op2 + ";";
 	}
@@ -317,8 +274,18 @@ public class GenerateSolidity extends GenerateCode {
 			return enumName + "." + enumFieldName(cnst.getConstant());
 
 		case CREATE_STRUCT:
-			CreateStruct cstr = (CreateStruct) op;
-			return structName(cstr.getStruct()) + "({ exists: true })";
+			CreateStruct cnstr = (CreateStruct) op;
+			String params = cnstr.getConstructParams().stream().map(p -> {
+				if (p.getOp1().getType() != Operands.NODE_PATH)
+					log.error("expecting nodepath of size 1 for constructor parameter: " + p.getOp1());
+
+				String prpName = fieldName(((NodePath) p.getOp1()).getPath().getFirst());
+				return prpName + ": " + genOperand(p.getOp2());
+
+			}).collect(Collectors.joining(", "));
+			params += ", exists: true";
+
+			return structName(cnstr.getStruct()) + "({ " + params + " })";
 
 		case NODE_PATH:
 			NodePath np = (NodePath) op;
@@ -392,10 +359,7 @@ public class GenerateSolidity extends GenerateCode {
 	}
 
 	private void genField(ModelProperty prp, ModelStruct ofStruct) {
-		// type property only needed/ possible if struct has constants
-		// (these will be added to a separate enum)
-
-		if (prp.isTypePrp() && !ofStruct.hasConstants())
+		if (!includeField(prp, ofStruct))
 			return;
 
 		structs.append("\t");
@@ -448,12 +412,15 @@ public class GenerateSolidity extends GenerateCode {
 		return structName(struct) + "Constants";
 	}
 
-	private String fieldName(ModelElement el) {
-		return solName(el, false);
+	private String fieldName(ModelProperty prp) {
+		if (prp.isTypePrp())
+			return "hasType";
+		else
+			return solName(prp, false);
 	}
 
 	private String enumFieldName(ModelElement el) {
-		return StringUtils.capitalize(fieldName(el)); // .toUpperCase();
+		return StringUtils.capitalize(solName(el, false)); // .toUpperCase();
 	}
 
 	private String varName(Variable var) {

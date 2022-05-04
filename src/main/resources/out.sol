@@ -19,7 +19,7 @@ contract DiabetesIot {
 	
 	struct TreatmentSubplan {
 		string label;
-		TreatmentSubplanConstants type;
+		TreatmentSubplanConstants hasType;
 		bool exists;
 	}
 	
@@ -27,7 +27,7 @@ contract DiabetesIot {
 	
 	struct DiabetesPhysicalExamination {
 		PatientProfile isPhysicalExaminationOf;
-		DiabetesPhysicalExaminationConstants type;
+		DiabetesPhysicalExaminationConstants hasType;
 		int hasQuantitativeValue;
 		bool exists;
 	}
@@ -35,7 +35,7 @@ contract DiabetesIot {
 	enum DiabetesMellitusConstants{ Type2DiabetesMellitus }
 	
 	struct DiabetesMellitus {
-		DiabetesMellitusConstants type;
+		DiabetesMellitusConstants hasType;
 		bool exists;
 	}
 	
@@ -65,35 +65,28 @@ contract DiabetesIot {
 	enum PatientDemographicConstants{ Overweight }
 	
 	struct PatientDemographic {
-		PatientDemographicConstants type;
+		PatientDemographicConstants hasType;
 		bool exists;
 	}
 	
 	function doSomething(exam, p) {
-		if (exam.hasQuantitativeValue != false
+		if (exam.hasQuantitativeValue != 0
 			&& exam.hasQuantitativeValue >= 25
-			&& exam.type == DiabetesPhysicalExaminationConstants.Bmi) {
+			&& exam.hasType == DiabetesPhysicalExaminationConstants.Bmi) {
 		
-			PatientDemographic memory v0 = PatientDemographic({ exists: true });
-			v0.type = PatientDemographicConstants.Overweight;
-			exam.isPhysicalExaminationOf.hasDemographic[v0.type] = v0;
+			PatientDemographic memory v0 = PatientDemographic({ hasType: PatientDemographicConstants.Overweight, exists: true });
+			exam.isPhysicalExaminationOf.hasDemographic[v0.hasType] = v0;
 		}
 		
-		if (p.hasPatientProfile != false
-			&& p.hasPatientProfile.hasDiagnosis != false
-			&& p.hasPatientProfile.hasDiagnosis.hasDiabetesType != false
-			&& p.hasPatientProfile.hasDiagnosis.hasDiabetesType.type == DiabetesMellitusConstants.Type2DiabetesMellitus
+		if (p.hasPatientProfile != 0
+			&& p.hasPatientProfile.hasTreatmentPlan != 0
+			&& p.hasPatientProfile.hasDiagnosis != 0
+			&& p.hasPatientProfile.hasDiagnosis.hasDiabetesType != 0
+			&& p.hasPatientProfile.hasDiagnosis.hasDiabetesType.hasType == DiabetesMellitusConstants.Type2DiabetesMellitus
 			&& p.hasPatientProfile.hasDemographic[PatientDemographicConstants.Overweight].exists) {
 		
-			if (p.hasPatientProfile.hasTreatmentPlan == false) {
-				p.hasPatientProfile.hasTreatmentPlan = TreatmentPlan({ exists: true });
-			}
-			TreatmentPlan memory v1 = p.hasPatientProfile.hasTreatmentPlan;
-			
-			TreatmentSubplan memory v2 = TreatmentSubplan({ exists: true });
-			v2.label = "Management and reduction of weight is important";
-			v2.type = TreatmentSubplanConstants.LifestyleSubplan;
-			v1.hasPart[v2.type] = v2;
+			TreatmentSubplan memory v1 = TreatmentSubplan({ label: "Management and reduction of weight is important", hasType: TreatmentSubplanConstants.LifestyleSubplan, exists: true });
+			p.hasPatientProfile.hasTreatmentPlan.hasPart[v1.hasType] = v1;
 		}
 	}
 	

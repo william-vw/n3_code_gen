@@ -2,6 +2,7 @@ package wvw.semweb.codegen.model.visit;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -25,6 +26,7 @@ import org.apache.jen3.vocabulary.RDFS;
 import wvw.semweb.codegen.gen.Util;
 import wvw.semweb.codegen.model.Assignment;
 import wvw.semweb.codegen.model.Block;
+import wvw.semweb.codegen.model.CodeStatement.Codes;
 import wvw.semweb.codegen.model.Comparison;
 import wvw.semweb.codegen.model.Comparison.Comparators;
 import wvw.semweb.codegen.model.CreateStruct;
@@ -34,7 +36,6 @@ import wvw.semweb.codegen.model.NodePath;
 import wvw.semweb.codegen.model.Operand;
 import wvw.semweb.codegen.model.StructConstant;
 import wvw.semweb.codegen.model.Variable;
-import wvw.semweb.codegen.model.CodeStatement.Codes;
 import wvw.semweb.codegen.model.struct.ModelElement;
 import wvw.semweb.codegen.model.struct.ModelProperty;
 import wvw.semweb.codegen.model.struct.ModelStruct;
@@ -54,7 +55,8 @@ public class ModelVisitorA extends ModelVisitor {
 		Variable start = new Variable(((Node_Variable) entryNode.getId()).getName());
 		doVisit(entryNode, null, new NodePath(start), new HashSet<>());
 
-		postprocess();
+		// TODO leaving this out for now ..
+//		postprocess();
 	}
 
 	private ModelType doVisit(GraphNode node, GraphEdge from, NodePath path, Set<GraphNode> found) {
@@ -167,6 +169,7 @@ public class ModelVisitorA extends ModelVisitor {
 		if (!addedCond)
 			newPath(path, clauseType);
 
+		nodePropertiesStart();
 		for (GraphEdge edge : node.getOut()) {
 			ClauseTypes clauseType2 = (ClauseTypes) edge.getData();
 
@@ -203,8 +206,6 @@ public class ModelVisitorA extends ModelVisitor {
 				Node_URI nodePrp = (Node_URI) edge.getId();
 				String prpName = nodePrp.getLocalName();
 
-				log.debug("\nproperty: " + node.getId() + " - " + prpName);
-
 				// copy our current path and add this property to it
 
 				ModelProperty modelPrp = new ModelProperty(prpName);
@@ -233,6 +234,7 @@ public class ModelVisitorA extends ModelVisitor {
 				}
 			}
 		}
+		nodePropertiesEnd();
 
 		return ret;
 	}
@@ -274,7 +276,23 @@ public class ModelVisitorA extends ModelVisitor {
 		return types;
 	}
 
-	// - these hooks will update cond and block
+	// keep track of current struct constructors
+	// (any property will be added as constructor parameter)
+
+	private LinkedList<CreateStruct> newStructs = new LinkedList<>();
+
+	private void nodePropertiesStart() {
+	}
+
+	private void nodePropertiesEnd() {
+		// only consider direct properties as constructor parameters
+		// (see #structNode())
+		if (!newStructs.isEmpty()) {
+			newStructs.removeLast();
+		}
+	}
+
+	// - these hooks will update the logic - i.e., cond and block
 
 	private void newPath(NodePath path, ClauseTypes clauseType) {
 		if (clauseType == ClauseTypes.BODY) {
@@ -301,6 +319,8 @@ public class ModelVisitorA extends ModelVisitor {
 			// if the (original) node is a blank node
 
 			if (or.isBlank()) {
+				NodePath ret = null;
+
 				if (modelStruct == null)
 					log.error("should create new instance but non object-type found: " + nodeType);
 
@@ -309,16 +329,49 @@ public class ModelVisitorA extends ModelVisitor {
 
 				Variable v = new Variable();
 
-				// create new struct and assign to var
-				Assignment asn = new Assignment(v, new CreateStruct(modelStruct));
-				subBlock.add(asn);
+				// create new struct
+				CreateStruct newStruct = new CreateStruct(modelStruct);
 
-				// assign end of path to newly created struct
-				Assignment asn2 = new Assignment(path, v);
-				subBlock.add(asn2);
+				// use as constructor parameter
+				// (this is a bit more involved, so don't use new[..] methods)
 
-				// new node path starts from variable
-				return new NodePath(v);
+				if (!newStructs.isEmpty()) {
+					CreateStruct curStruct = newStructs.getLast();
+					curStruct.add(new Assignment(path, newStruct));
+
+					// properties of blank node will serve as constructor parameters
+					// add this struct to the stack; use new assignments as parameters
+
+					// (node path doesn't matter here)
+					newStructs.add(newStruct);
+
+					// following struct parameters will have "empty" path
+					// (params are identified by predicates)
+					ret = new NodePath();
+
+					// treat as regular statement
+				} else {
+					// assign to var
+					Assignment asn = new Assignment(v, newStruct);
+					subBlock.add(asn);
+
+					// assign end of path to newly created struct
+					Assignment asn2 = new Assignment(path, v);
+					subBlock.add(asn2);
+					
+					// properties of blank node will serve as constructor parameters
+					// add this struct to the stack; use new assignments as parameters
+					// (see first option above)
+
+					// (once constructor is done, new node path starts from variable)
+					newStructs.add(newStruct);
+
+					// but, following struct parameters, will have "empty" path
+					// (params are identified by predicates)
+					ret = new NodePath();
+				}
+
+				return ret;
 			}
 		}
 
@@ -332,19 +385,19 @@ public class ModelVisitorA extends ModelVisitor {
 		switch (clauseType) {
 
 		case BODY:
+			Comparison con = null;
 			if (cmp != null) {
 				// if so, then remove the property as it's really a builtin
 				path.getPath().removeLast();
 
 				// create comparison
-				Comparison con = new Comparison(path, lit, cmp);
-				cond.add(con);
+				con = new Comparison(path, lit, cmp);
 
 			} else {
 				// if not, then we're checking equality with this literal
-				Comparison con = new Comparison(path, lit, Comparators.EQ);
-				cond.add(con);
+				con = new Comparison(path, lit, Comparators.EQ);
 			}
+			newComparison(con);
 
 			break;
 
@@ -355,7 +408,7 @@ public class ModelVisitorA extends ModelVisitor {
 			else {
 				// create assignment with literal
 				Assignment assign = new Assignment(path, lit);
-				block.add(assign);
+				newAssignment(assign);
 			}
 
 			break;
@@ -373,13 +426,13 @@ public class ModelVisitorA extends ModelVisitor {
 
 		case BODY:
 			Comparison con = new Comparison(path, cnst, Comparators.EQ);
-			cond.add(con);
+			newComparison(con);
 
 			break;
 
 		case HEAD:
 			Assignment asn = new Assignment(path, cnst);
-			block.add(asn);
+			newAssignment(asn);
 
 			break;
 		}
@@ -400,14 +453,13 @@ public class ModelVisitorA extends ModelVisitor {
 
 		case BODY:
 			Comparison con = new Comparison(path2, cnst, Comparators.EQ);
-			cond.add(con);
+			newComparison(con);
 
 			break;
 
 		case HEAD:
-
 			Assignment asn = new Assignment(path2, cnst);
-			block.add(asn);
+			newAssignment(asn);
 
 			break;
 		}
@@ -421,13 +473,28 @@ public class ModelVisitorA extends ModelVisitor {
 
 		case BODY:
 			Comparison con = new Comparison(path, Comparators.EX);
-			cond.add(con);
+			newComparison(con);
+
 			break;
 
 		case HEAD:
 			log.error("not expecting an endpoint in rule head: " + path);
 			break;
 		}
+	}
+
+	private void newAssignment(Assignment assn) {
+		if (!newStructs.isEmpty()) {
+			CreateStruct curStruct = newStructs.getLast();
+			curStruct.add(assn);
+
+		} else {
+			block.add(assn);
+		}
+	}
+
+	private void newComparison(Comparison con) {
+		cond.add(con);
 	}
 
 	private void loadAnnotations(String uri, ModelElement el) {
@@ -509,13 +576,12 @@ public class ModelVisitorA extends ModelVisitor {
 	// modify the code block to check whether something already exists at end of
 	// path (visitor code will simply assign a new struct each time)
 
-	// difficult to do this in visitor since we should only do this for intermediary
-	// assignments (i.e., not for the last assignment)
+	// (difficult to do this in visitor since we should only do this for intermediary
+	// assignments (i.e., not for the last assignment))
 
-	private void postprocess() {
+	protected void postprocess() {
 		// TODO currently only blocks will be created for create-struct assignment
-		// blocks
-		// should somehow tag these blocks for extensibility ..
+		// blocks; should somehow tag these blocks for extensibility ..
 
 		List<Block> subBlocks = block.getStatements().stream().filter(stmt -> stmt.getStatementType() == Codes.BLOCK)
 				.map(stmt -> (Block) stmt).collect(Collectors.toList());

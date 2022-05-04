@@ -11,6 +11,12 @@ public class ModelProperty extends ModelElement {
 		super(name);
 	}
 
+	public ModelProperty(Integer maxCardinality) {
+		super(null);
+
+		this.maxCardinality = maxCardinality;
+	}
+
 	public ModelProperty(String name, Integer maxCardinality) {
 		super(name);
 
@@ -18,7 +24,7 @@ public class ModelProperty extends ModelElement {
 	}
 
 	public static ModelProperty typeProperty() {
-		ModelProperty typePrp = new ModelProperty("type", 1);
+		ModelProperty typePrp = new ModelProperty(1);
 		typePrp.setTypePrp(true);
 
 		return typePrp;
@@ -89,10 +95,16 @@ public class ModelProperty extends ModelElement {
 		return isTypePrp;
 	}
 
+	// for debugging
+	@Override
+	public String print() {
+		return (isTypePrp ? "#type" : super.toString());
+	}
+
 	@Override
 	public String toString() {
 		String cardStr = (hasMaxCardinality() && maxCardinality == 1 ? "[1]" : "");
 
-		return super.toString() + cardStr + (hasTarget() ? " -> " + target : "");
+		return print() + cardStr + (hasTarget() ? " -> " + target : "");
 	}
 }
