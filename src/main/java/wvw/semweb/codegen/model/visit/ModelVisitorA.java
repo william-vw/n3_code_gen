@@ -2,6 +2,7 @@ package wvw.semweb.codegen.model.visit;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
@@ -34,6 +35,7 @@ import wvw.semweb.codegen.model.IfThen;
 import wvw.semweb.codegen.model.Literal;
 import wvw.semweb.codegen.model.NodePath;
 import wvw.semweb.codegen.model.Operand;
+import wvw.semweb.codegen.model.Operand.Operands;
 import wvw.semweb.codegen.model.StructConstant;
 import wvw.semweb.codegen.model.Variable;
 import wvw.semweb.codegen.model.struct.ModelElement;
@@ -59,8 +61,8 @@ public class ModelVisitorA extends ModelVisitor {
 			doVisit(entryNode, null, new NodePath(start), found);
 		}
 
-		// TODO
 //		post_checkForStructExist();
+		post_removeExistChecksForLiterals();
 	}
 
 	private ModelType doVisit(GraphNode node, GraphEdge from, NodePath path, Set<GraphNode> found) {
@@ -77,6 +79,7 @@ public class ModelVisitorA extends ModelVisitor {
 		boolean addedCond = false;
 
 		// - literal node
+		log.info("literal? " + node.getId());
 		if (node.getId() instanceof Node_Literal) {
 			Node_Literal nl = (Node_Literal) node.getId();
 
@@ -161,7 +164,6 @@ public class ModelVisitorA extends ModelVisitor {
 		// - if no outgoing edges (and not a URI or literal),
 		// then this node is an endpoint
 		if (node.getOut().isEmpty()) {
-			log.info("endpoint: " + node);
 			endNode(path, clauseType);
 			addedCond = true;
 		}
@@ -215,10 +217,11 @@ public class ModelVisitorA extends ModelVisitor {
 				loadCardinality(nodePrp.getURI(), modelPrp);
 
 				// if this is an inverse edge, then "invert" its name
+				// (NOTE currently no longer used)
 				if (edge.isInverse()) {
 					modelPrp.setString(invertProperty(modelPrp.getString()));
-					// TODO assuming a maxCardinality of 1 on inverse properties
-					// (i.e., a one-to-many)
+					// (assuming a maxCardinality of 1 on inverse properties
+					// (i.e., a one-to-many))
 					modelPrp.setMaxCardinality(1);
 				}
 
@@ -298,6 +301,7 @@ public class ModelVisitorA extends ModelVisitor {
 	private void newPath(NodePath path, ClauseTypes clauseType) {
 		if (clauseType == ClauseTypes.BODY) {
 			if (!path.getPath().getLast().requiresArray()) {
+				log.info("newPath: " + path);
 				Comparison con = new Comparison(path, Comparators.EX);
 				cond.add(con);
 			}
@@ -574,6 +578,34 @@ public class ModelVisitorA extends ModelVisitor {
 	}
 
 	// - hooks for post-processing
+
+	// comparisons are separate statements; another separate statement will refer to
+	// a variable to be used in this comparison; an "exists" condition will
+	// be added for the latter. but, this check is redundant, so remove those here.
+
+	protected void post_removeExistChecksForLiterals() {
+		List<Operand> toRemove = new ArrayList<>();
+		// check for literal comparisons & keep found paths
+		cond.getConditions().forEach(c -> {
+			if (c.getCmp() != Comparators.EX && c.getOp1().getType() == Operands.NODE_PATH
+					&& c.getOp2().getType() == Operands.LITERAL)
+				toRemove.add(c.getOp1());
+		});
+
+		if (toRemove.isEmpty())
+			return;
+
+		Iterator<Comparison> it = cond.getConditions().iterator();
+		while (it.hasNext()) {
+			Comparison c = it.next();
+
+			// remove "exists" checks for paths found in literal comparisons
+			if (c.getCmp() == Comparators.EX && c.getOp1().getType() == Operands.NODE_PATH
+					&& toRemove.contains(c.getOp1()))
+
+				it.remove();
+		}
+	}
 
 	// for create-struct assignment blocks:
 	// modify the code block to check whether something already exists at end of

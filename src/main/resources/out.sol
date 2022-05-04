@@ -55,7 +55,6 @@ contract DiabetesIot {
 	
 	struct PatientProfile {
 		mapping(PatientDemographicConstants => PatientDemographic) hasDemographic;
-		mapping(DiabetesPhysicalExaminationConstants => DiabetesPhysicalExamination) hasPhysicalExamination;
 		TreatmentPlan hasTreatmentPlan;
 		DiabetesDiagnosis hasDiagnosis;
 		bool exists;
@@ -68,14 +67,10 @@ contract DiabetesIot {
 		bool exists;
 	}
 	
-	function doSomething(p, exam) {
-		if (p.hasPatientProfile != 0
-			&& null
-			&& null
-			&& p.hasPatientProfile.hasPhysicalExamination[DiabetesPhysicalExaminationConstants.Bmi].exists
-			&& exam.hasQuantitativeValue != 0
-			&& exam.hasQuantitativeValue >= 25
-			&& exam.hasType == DiabetesPhysicalExaminationConstants.Bmi) {
+	function doSomething(exam, p) {
+		if (exam.hasQuantitativeValue >= 25
+			&& exam.hasType == DiabetesPhysicalExaminationConstants.Bmi
+			&& p.hasPatientProfile != 0) {
 		
 			PatientDemographic memory v0 = PatientDemographic({ hasType: PatientDemographicConstants.Overweight, exists: true });
 			p.hasPatientProfile.hasDemographic[v0.hasType] = v0;

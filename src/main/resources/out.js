@@ -75,8 +75,7 @@ class PatientDemographic {
 }
 
 function doSomething(exam, p) {
-	if (exam.hasQuantitativeValue != undefined
-		&& exam.hasQuantitativeValue >= 25
+	if (exam.hasQuantitativeValue >= 25
 		&& exam.type == DiabetesPhysicalExamination.bmi
 		&& p.hasPatientProfile != undefined) {
 	

@@ -1,6 +1,7 @@
 package wvw.semweb.codegen.model;
 
 import java.util.LinkedList;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import wvw.semweb.codegen.model.struct.ModelProperty;
@@ -53,6 +54,23 @@ public class NodePath implements Operand {
 	@Override
 	public Operands getType() {
 		return Operands.NODE_PATH;
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(path, start);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		NodePath other = (NodePath) obj;
+		return Objects.equals(path, other.path) && Objects.equals(start, other.start);
 	}
 
 	@Override
