@@ -26,7 +26,6 @@ contract DiabetesIot {
 	enum DiabetesPhysicalExaminationConstants{ Bmi }
 	
 	struct DiabetesPhysicalExamination {
-		PatientProfile isPhysicalExaminationOf;
 		DiabetesPhysicalExaminationConstants hasType;
 		int hasQuantitativeValue;
 		bool exists;
@@ -55,8 +54,8 @@ contract DiabetesIot {
 	}
 	
 	struct PatientProfile {
-		Patient isPatientProfileOf;
 		mapping(PatientDemographicConstants => PatientDemographic) hasDemographic;
+		mapping(DiabetesPhysicalExaminationConstants => DiabetesPhysicalExamination) hasPhysicalExamination;
 		TreatmentPlan hasTreatmentPlan;
 		DiabetesDiagnosis hasDiagnosis;
 		bool exists;
@@ -69,13 +68,17 @@ contract DiabetesIot {
 		bool exists;
 	}
 	
-	function doSomething(exam, p) {
-		if (exam.hasQuantitativeValue != 0
+	function doSomething(p, exam) {
+		if (p.hasPatientProfile != 0
+			&& null
+			&& null
+			&& p.hasPatientProfile.hasPhysicalExamination[DiabetesPhysicalExaminationConstants.Bmi].exists
+			&& exam.hasQuantitativeValue != 0
 			&& exam.hasQuantitativeValue >= 25
 			&& exam.hasType == DiabetesPhysicalExaminationConstants.Bmi) {
 		
 			PatientDemographic memory v0 = PatientDemographic({ hasType: PatientDemographicConstants.Overweight, exists: true });
-			exam.isPhysicalExaminationOf.hasDemographic[v0.hasType] = v0;
+			p.hasPatientProfile.hasDemographic[v0.hasType] = v0;
 		}
 		
 		if (p.hasPatientProfile != 0

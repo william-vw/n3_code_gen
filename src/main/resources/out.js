@@ -13,13 +13,11 @@ class TreatmentSubplan {
 class DiabetesPhysicalExamination {
 	static bmi = 'bmi';
 
-	constructor(isPhysicalExaminationOf, type, hasQuantitativeValue) {
-		this.isPhysicalExaminationOf = isPhysicalExaminationOf;
+	constructor(type, hasQuantitativeValue) {
 		this.type = type;
 		this.hasQuantitativeValue = hasQuantitativeValue;
 	}
 
-	isPhysicalExaminationOf;
 	type;
 	hasQuantitativeValue;
 }
@@ -56,13 +54,11 @@ class Patient {
 }
 
 class PatientProfile {
-	constructor(isPatientProfileOf, hasTreatmentPlan, hasDiagnosis) {
-		this.isPatientProfileOf = isPatientProfileOf;
+	constructor(hasTreatmentPlan, hasDiagnosis) {
 		this.hasTreatmentPlan = hasTreatmentPlan;
 		this.hasDiagnosis = hasDiagnosis;
 	}
 
-	isPatientProfileOf;
 	hasDemographic = [];
 	hasTreatmentPlan;
 	hasDiagnosis;
@@ -81,10 +77,11 @@ class PatientDemographic {
 function doSomething(exam, p) {
 	if (exam.hasQuantitativeValue != undefined
 		&& exam.hasQuantitativeValue >= 25
-		&& exam.type == DiabetesPhysicalExamination.bmi) {
+		&& exam.type == DiabetesPhysicalExamination.bmi
+		&& p.hasPatientProfile != undefined) {
 	
 		var v0 = new PatientDemographic(PatientDemographic.overweight);
-		exam.isPhysicalExaminationOf.hasDemographic.push(v0);
+		p.hasPatientProfile.hasDemographic.push(v0);
 	}
 	
 	if (p.hasPatientProfile != undefined

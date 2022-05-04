@@ -6,7 +6,7 @@ import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
 import wvw.semweb.codegen.gen.GenerateCode;
-import wvw.semweb.codegen.gen.GenerateSolidity;
+import wvw.semweb.codegen.gen.GenerateJavaScript;
 
 public class CodeGen {
 
@@ -23,11 +23,11 @@ public class CodeGen {
 		log.info("\n");
 		log.info("-- generating code");
 
-//		GenerateCode genCode = new GenerateJavaScript();
-//		File output = new File("src/main/resources/out.js");
+		GenerateCode genCode = new GenerateJavaScript();
+		File output = new File("src/main/resources/out.js");
 
-		GenerateCode genCode = new GenerateSolidity();
-		File output = new File("src/main/resources/out.sol");
+//		GenerateCode genCode = new GenerateSolidity();
+//		File output = new File("src/main/resources/out.sol");
 
 		genCode.generate(parser.getModel(), parser.getLogic(), parser.getEntryPoints(), output);
 

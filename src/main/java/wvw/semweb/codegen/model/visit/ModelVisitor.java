@@ -1,5 +1,7 @@
 package wvw.semweb.codegen.model.visit;
 
+import java.util.List;
+
 import org.apache.jen3.n3.N3Model;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
@@ -35,5 +37,5 @@ public abstract class ModelVisitor {
 		return block;
 	}
 
-	public abstract void visit(GraphNode entryNode);
+	public abstract void visit(List<GraphNode> entryNodes);
 }

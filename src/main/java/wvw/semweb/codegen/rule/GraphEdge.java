@@ -2,6 +2,8 @@ package wvw.semweb.codegen.rule;
 
 import java.util.Objects;
 
+import wvw.semweb.codegen.rule.RuleGraph.ClauseTypes;
+
 public class GraphEdge extends GraphElement {
 
 	private GraphNode source;
@@ -12,10 +14,12 @@ public class GraphEdge extends GraphElement {
 		super(id);
 	}
 
-	public GraphEdge(Object id, GraphNode source, GraphNode target) {
+	public GraphEdge(Object id, GraphNode source, GraphNode target, ClauseTypes clauseType) {
 		super(id);
 		this.source = source;
 		this.target = target;
+
+		setData(clauseType);
 	}
 
 	public GraphNode getSource() {
@@ -64,6 +68,7 @@ public class GraphEdge extends GraphElement {
 
 	@Override
 	public String toString() {
-		return "--" + super.toString() + (inverse ? "(i)" : "") + "-> " + target.prettyPrint();
+		return source.prettyPrint() + "--" + super.toString() + (isInverse() ? "(i)" : "") + "-> "
+				+ target.prettyPrint();
 	}
 }

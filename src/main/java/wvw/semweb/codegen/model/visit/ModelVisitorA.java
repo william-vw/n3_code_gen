@@ -51,22 +51,20 @@ public class ModelVisitorA extends ModelVisitor {
 		super(ontology);
 	}
 
-	public void visit(GraphNode entryNode) {
-		Variable start = new Variable(((Node_Variable) entryNode.getId()).getName());
-		doVisit(entryNode, null, new NodePath(start), new HashSet<>());
+	public void visit(List<GraphNode> entryNodes) {
+		Set<GraphNode> found = new HashSet<>();
 
-		// TODO leaving this out for now ..
-//		postprocess();
+		for (GraphNode entryNode : entryNodes) {
+			Variable start = new Variable(((Node_Variable) entryNode.getId()).getName());
+			doVisit(entryNode, null, new NodePath(start), found);
+		}
+
+		// TODO
+//		post_checkForStructExist();
 	}
 
 	private ModelType doVisit(GraphNode node, GraphEdge from, NodePath path, Set<GraphNode> found) {
-		// this occurs in case of inverted properties; we could return object-type
-		// as model-struct here (since we're in a loop, we know the target node is an
-		// object; e.g., <profile> is_profile_of <patient> has_profile <profile>)
-
-		// but, we only need the property that was followed in our rule
-		// (note that this process starts from our entry-point; see visit() method)
-
+		// this occurs in case of inverted properties
 		if (found.contains(node))
 			return null;
 
@@ -160,8 +158,10 @@ public class ModelVisitorA extends ModelVisitor {
 			}
 		}
 
-		// - if no outgoing edges, then this node is an endpoint
+		// - if no outgoing edges (and not a URI or literal),
+		// then this node is an endpoint
 		if (node.getOut().isEmpty()) {
+			log.info("endpoint: " + node);
 			endNode(path, clauseType);
 			addedCond = true;
 		}
@@ -172,6 +172,7 @@ public class ModelVisitorA extends ModelVisitor {
 		nodePropertiesStart();
 		for (GraphEdge edge : node.getOut()) {
 			ClauseTypes clauseType2 = (ClauseTypes) edge.getData();
+			log.info("out? " + node.getId() + " - " + edge + " ? " + clauseType2);
 
 			GraphNode target = edge.getTarget();
 
@@ -216,7 +217,7 @@ public class ModelVisitorA extends ModelVisitor {
 				// if this is an inverse edge, then "invert" its name
 				if (edge.isInverse()) {
 					modelPrp.setString(invertProperty(modelPrp.getString()));
-					// NOTE assuming a maxCardinality of 1 on inverse properties
+					// TODO assuming a maxCardinality of 1 on inverse properties
 					// (i.e., a one-to-many)
 					modelPrp.setMaxCardinality(1);
 				}
@@ -292,7 +293,7 @@ public class ModelVisitorA extends ModelVisitor {
 		}
 	}
 
-	// - these hooks will update the logic - i.e., cond and block
+	// - hooks for updating the logic - i.e., cond and block
 
 	private void newPath(NodePath path, ClauseTypes clauseType) {
 		if (clauseType == ClauseTypes.BODY) {
@@ -358,7 +359,7 @@ public class ModelVisitorA extends ModelVisitor {
 					// assign end of path to newly created struct
 					Assignment asn2 = new Assignment(path, v);
 					subBlock.add(asn2);
-					
+
 					// properties of blank node will serve as constructor parameters
 					// add this struct to the stack; use new assignments as parameters
 					// (see first option above)
@@ -572,14 +573,17 @@ public class ModelVisitorA extends ModelVisitor {
 		return null;
 	}
 
+	// - hooks for post-processing
+
 	// for create-struct assignment blocks:
 	// modify the code block to check whether something already exists at end of
 	// path (visitor code will simply assign a new struct each time)
 
-	// (difficult to do this in visitor since we should only do this for intermediary
+	// (difficult to do this in visitor since we should only do this for
+	// intermediary
 	// assignments (i.e., not for the last assignment))
 
-	protected void postprocess() {
+	protected void post_checkForStructExist() {
 		// TODO currently only blocks will be created for create-struct assignment
 		// blocks; should somehow tag these blocks for extensibility ..
 

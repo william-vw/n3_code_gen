@@ -2,9 +2,11 @@ package wvw.semweb.codegen;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.jen3.graph.Node;
@@ -116,17 +118,18 @@ public class ParseModelLogic implements N3EventListener {
 
 	private void processRule(N3Rule r, N3Model ontology, Node[] entryTerms) throws ParseModelException {
 		RuleGraphFactory graphFactory = new RuleGraphFactory();
-		RuleGraph ruleGraph = graphFactory.createGraph(r, entryTerms);
+
+		List<Node> allEntries = new ArrayList<>(Arrays.asList(entryTerms));
+		RuleGraph ruleGraph = graphFactory.createGraph(r, allEntries);
 
 		log.debug("- rule graph:");
 		log.debug(ruleGraph);
 		log.debug("");
 
+		List<GraphNode> entryNodes = allEntries.stream().map(t -> ruleGraph.get(t)).collect(Collectors.toList());
+
 		ModelVisitor visitor = new ModelVisitorA(ontology);
-		for (Node entryTerm : entryTerms) {
-			GraphNode entryNode = ruleGraph.get(entryTerm);
-			visitor.visit(entryNode);
-		}
+		visitor.visit(entryNodes);
 
 		CodeModel newModel = visitor.getModel();
 		model.mergeWith(newModel);

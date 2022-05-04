@@ -1,7 +1,8 @@
 package wvw.semweb.codegen.rule;
 
+import java.util.Collection;
 import java.util.HashSet;
-import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 
 import org.apache.jen3.graph.Node;
@@ -20,11 +21,10 @@ public class RuleGraphFactory {
 
 	private RuleGraph graph = new RuleGraph();
 
-	public RuleGraph createGraph(N3Rule rule, Node... entryTerms) throws ParseModelException {
+	public RuleGraph createGraph(N3Rule rule, List<Node> allEntries) throws ParseModelException {
 		buildGraph(rule);
 
-		Set<GraphNode> found = expandGraph(rule, entryTerms);
-		checkGraph(found);
+		checkGraph(rule, allEntries);
 
 		return graph;
 	}
@@ -44,7 +44,7 @@ public class RuleGraphFactory {
 			if (!tp.getPredicate().isURI())
 				log.error("found non-URI predicate: " + tp.getPredicate());
 
-			GraphNode node = uniqueGraphNode(tp.getSubject());
+			GraphNode node = graph.getOrCreate(tp.getSubject());
 
 			GraphEdge edge = new GraphEdge(tp.getPredicate());
 			edge.setSource(node);
@@ -53,7 +53,7 @@ public class RuleGraphFactory {
 
 			GraphNode node2 = null;
 			if (!tp.getObject().isLiteral())
-				node2 = uniqueGraphNode(tp.getObject());
+				node2 = graph.getOrCreate(tp.getObject(), true);
 			else
 				node2 = new GraphNode(tp.getObject());
 
@@ -64,68 +64,45 @@ public class RuleGraphFactory {
 		}
 	}
 
-	protected Set<GraphNode> expandGraph(N3Rule rule, Node... entryTerms) throws ParseModelException {
+	protected void checkGraph(N3Rule rule, List<Node> allEntries) throws ParseModelException {
 		Set<GraphNode> found = new HashSet<>();
 
-		for (Node entryTerm : entryTerms) {
-			GraphNode entryNode = graph.get(entryTerm);
-			if (entryNode == null)
+		for (Node entryTerm : allEntries) {
+			if (!graph.contains(entryTerm))
 				throw new ParseModelException("entry term " + entryTerm + " not found in rule: " + rule);
 
-			expandGraph(found, entryNode);
+			GraphNode node = graph.get(entryTerm);
+			coverGraph(found, node);
 		}
 
-		return found;
-	}
+		Collection<Node> roots = graph.getRoots();
+		for (Node root : roots) {
+			GraphNode node = graph.get(root);
 
-	protected void expandGraph(Set<GraphNode> found, GraphNode cur) {
-		if (cur.isLiteral())
-			return;
-
-		found.add(cur);
-
-		Iterator<GraphEdge> ins = cur.getIn().iterator();
-		while (ins.hasNext()) {
-			GraphEdge in = ins.next();
-
-			// means we didn't get here via this edge
-			// (so, rule does not have a simple "path" structure)
-
-			// TODO look for actual inverse property in ontology (if any)
-			// would need to consider domains, properties of both properties
-			// (or, run some OWL2 RL rules to propagate those)
-
-			if (!found.contains(in.getSource())) {
-				GraphEdge inverse = new GraphEdge(in.getId(), cur, in.getSource());
-				inverse.setInverse(true);
-
-				log.debug("adding inverse: " + inverse);
-				cur.addOut(inverse);
+			if (!allEntries.contains(root)) {
+				log.info("found root that is not entry term (" + root + ") - adding as entry term");
+				allEntries.add(root);
 			}
+
+			coverGraph(found, node);
 		}
 
-		for (GraphEdge out : cur.getOut()) {
-
-			if (!found.contains(out.getTarget()))
-				expandGraph(found, out.getTarget());
-		}
-	}
-
-	protected void checkGraph(Set<GraphNode> found) {
 		graph.getAllNodes().forEach(n -> {
 			if (!found.contains(n))
-				System.err.println("term " + n.prettyPrint() + " not reachable from entry points");
+				log.error("term " + n.prettyPrint() + " not reachable from entry points");
 		});
 	}
 
-	protected GraphNode uniqueGraphNode(Node term) {
-		GraphNode node = graph.get(term);
+	protected void coverGraph(Set<GraphNode> found, GraphNode curNode) {
+		if (curNode.isLiteral())
+			return;
 
-		if (node == null) {
-			node = new GraphNode(term);
-			graph.add(term, node);
+		found.add(curNode);
+
+		for (GraphEdge out : curNode.getOut()) {
+
+			if (!found.contains(out.getTarget()))
+				coverGraph(found, out.getTarget());
 		}
-
-		return node;
 	}
 }
