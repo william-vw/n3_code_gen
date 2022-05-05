@@ -14,7 +14,7 @@ public class CodeGen {
 
 	public static void main(String[] args) throws Exception {
 		log.info("-- parsing model and logic");
-
+		
 		ParseModelLogic parser = new ParseModelLogic();
 		parser.parseClassModel(new File("diabetes-iot.n3"), new File("DMTO2.n3"));
 //		parser.parseClassModel(new File("test.n3"), new File("ontology.n3"));

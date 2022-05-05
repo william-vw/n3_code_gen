@@ -66,7 +66,7 @@ public class ModelVisitorA extends ModelVisitor {
 	}
 
 	private ModelType doVisit(GraphNode node, GraphEdge from, NodePath path, Set<GraphNode> found) {
-		// this occurs in case of inverted properties
+		// this occurs in case of inverted properties (see RuleGraphFactory)
 		if (found.contains(node))
 			return null;
 
@@ -138,7 +138,7 @@ public class ModelVisitorA extends ModelVisitor {
 			ret = new ModelType(modelStruct);
 		}
 
-		// hook for doing things with the struct that was (possibly) created above
+		// do things with the struct that was (possibly) created above
 		path = structNode(node, from, path, clauseType, nodeType, modelStruct);
 
 		if (modelStruct != null) {

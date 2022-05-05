@@ -1,15 +1,3 @@
-class TreatmentSubplan {
-	static lifestyleSubplan = 'lifestyleSubplan';
-
-	constructor(label, type) {
-		this.label = label;
-		this.type = type;
-	}
-
-	label;
-	type;
-}
-
 class DiabetesPhysicalExamination {
 	static bmi = 'bmi';
 
@@ -20,29 +8,6 @@ class DiabetesPhysicalExamination {
 
 	type;
 	hasQuantitativeValue;
-}
-
-class DiabetesMellitus {
-	static type2DiabetesMellitus = 'type2DiabetesMellitus';
-
-	constructor(type) {
-		this.type = type;
-	}
-
-	type;
-}
-
-class TreatmentPlan {
-
-	hasPart = [];
-}
-
-class DiabetesDiagnosis {
-	constructor(hasDiabetesType) {
-		this.hasDiabetesType = hasDiabetesType;
-	}
-
-	hasDiabetesType;
 }
 
 class Patient {
@@ -66,6 +31,41 @@ class PatientProfile {
 
 class PatientDemographic {
 	static overweight = 'overweight';
+
+	constructor(type) {
+		this.type = type;
+	}
+
+	type;
+}
+
+class TreatmentPlan {
+
+	hasPart = [];
+}
+
+class TreatmentSubplan {
+	static lifestyleSubplan = 'lifestyleSubplan';
+
+	constructor(label, type) {
+		this.label = label;
+		this.type = type;
+	}
+
+	label;
+	type;
+}
+
+class DiabetesDiagnosis {
+	constructor(hasDiabetesType) {
+		this.hasDiabetesType = hasDiabetesType;
+	}
+
+	hasDiabetesType;
+}
+
+class DiabetesMellitus {
+	static type2DiabetesMellitus = 'type2DiabetesMellitus';
 
 	constructor(type) {
 		this.type = type;

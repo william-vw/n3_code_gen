@@ -34,17 +34,14 @@ import wvw.utils.rdf.NS;
 
 // (major)
 
-// TODO CDS use case: automatically configure 'exam' with corresponding & persisted 'patient'
-// if needed by the rules (i.e., a rule that references both the input exam & related patient)
-
 // TODO currently assuming that the rule ordering reflects the chaining sequence
 
 // (minor)
 
-//TODO parametrize ModelVisitorImpl code (e.g., CodeLogicVisitor, CodeModelVisitor)
+// TODO properly parametrize ModelVisitorImpl code (e.g., CodeLogicVisitor, CodeModelVisitor)
 
-//TODO post-processing where structs sharing a (non-trivial) superclass (i.e., not owl:Thing, entity, ..)
-//are merged together
+// TODO post-processing where structs sharing a (non-trivial) superclass (i.e., not owl:Thing, entity, ..)
+// are merged together
 
 public class ParseModelLogic implements N3EventListener {
 

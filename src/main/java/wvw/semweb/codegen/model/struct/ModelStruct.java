@@ -8,16 +8,23 @@ import java.util.Set;
 
 import org.apache.jen3.util.iterator.WrappedIterator;
 
-public class ModelStruct extends ModelElement {
+public class ModelStruct extends ModelElement implements Comparable<ModelStruct> {
+
+	private int order;
 
 	private Set<ModelElement> types = new HashSet<>();
 	private Set<ModelElement> values = new HashSet<>();
 	private Set<ModelProperty> properties = new HashSet<>();
 
-	public ModelStruct(String name) {
+	public ModelStruct(String name, int order) {
 		super(name);
 
+		this.order = order;
 		properties.add(ModelProperty.typeProperty());
+	}
+
+	public int getOrder() {
+		return order;
 	}
 
 	public void addType(ModelElement type) {
@@ -73,6 +80,11 @@ public class ModelStruct extends ModelElement {
 		// (i.e., with this struct as target) with the given struct
 		// but that requires a bit more housekeeping and doesn't seem needed for code
 		// generation
+	}
+
+	@Override
+	public int compareTo(ModelStruct o) {
+		return Integer.valueOf(order).compareTo(o.getOrder());
 	}
 
 	@Override

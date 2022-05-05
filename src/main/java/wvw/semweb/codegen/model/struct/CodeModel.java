@@ -1,18 +1,22 @@
 package wvw.semweb.codegen.model.struct;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 public class CodeModel {
 
+	private static int structCnt = 0;
+	
 	private Map<String, ModelStruct> structs = new HashMap<>();
 
 	public ModelStruct getStruct(String name) {
 		ModelStruct ret = structs.get(name);
 		if (ret == null) {
-			ret = new ModelStruct(name);
+			ret = new ModelStruct(name, structCnt++);
 			structs.put(name, ret);
 		}
 
@@ -38,7 +42,10 @@ public class CodeModel {
 	}
 
 	public Collection<ModelStruct> getAllStructs() {
-		return structs.values();
+		List<ModelStruct> sorted = new ArrayList<>(structs.values());
+		sorted.sort(null);
+		
+		return sorted;
 	}
 
 	@Override
