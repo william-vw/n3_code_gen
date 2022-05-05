@@ -78,8 +78,7 @@ public class ModelStruct extends ModelElement implements Comparable<ModelStruct>
 	private void replaceWith(ModelStruct struct) {
 		// TODO ideally we update all "incoming" properties
 		// (i.e., with this struct as target) with the given struct
-		// but that requires a bit more housekeeping and doesn't seem needed for code
-		// generation
+		// but that requires more housekeeping and is currently not needed
 	}
 
 	@Override

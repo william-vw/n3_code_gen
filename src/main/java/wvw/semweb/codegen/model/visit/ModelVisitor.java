@@ -9,6 +9,7 @@ import org.apache.log4j.Logger;
 import wvw.semweb.codegen.model.Block;
 import wvw.semweb.codegen.model.Conjunction;
 import wvw.semweb.codegen.model.struct.CodeModel;
+import wvw.semweb.codegen.parse.post.ModelPostprocessor.PostprocessTypes;
 import wvw.semweb.codegen.rule.GraphNode;
 
 public abstract class ModelVisitor {
@@ -37,5 +38,5 @@ public abstract class ModelVisitor {
 		return block;
 	}
 
-	public abstract void visit(List<GraphNode> entryNodes);
+	public abstract void visit(List<GraphNode> roots, PostprocessTypes... postprocesses);
 }

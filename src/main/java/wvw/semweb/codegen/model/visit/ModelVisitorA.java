@@ -2,12 +2,10 @@ package wvw.semweb.codegen.model.visit;
 
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.apache.jen3.datatypes.RDFDatatype;
 import org.apache.jen3.datatypes.TypeMapper;
@@ -24,24 +22,21 @@ import org.apache.jen3.vocabulary.OWL;
 import org.apache.jen3.vocabulary.RDF;
 import org.apache.jen3.vocabulary.RDFS;
 
-import wvw.semweb.codegen.gen.Util;
 import wvw.semweb.codegen.model.Assignment;
 import wvw.semweb.codegen.model.Block;
-import wvw.semweb.codegen.model.CodeStatement.Codes;
 import wvw.semweb.codegen.model.Comparison;
 import wvw.semweb.codegen.model.Comparison.Comparators;
 import wvw.semweb.codegen.model.CreateStruct;
-import wvw.semweb.codegen.model.IfThen;
 import wvw.semweb.codegen.model.Literal;
 import wvw.semweb.codegen.model.NodePath;
 import wvw.semweb.codegen.model.Operand;
-import wvw.semweb.codegen.model.Operand.Operands;
 import wvw.semweb.codegen.model.StructConstant;
 import wvw.semweb.codegen.model.Variable;
 import wvw.semweb.codegen.model.struct.ModelElement;
 import wvw.semweb.codegen.model.struct.ModelProperty;
 import wvw.semweb.codegen.model.struct.ModelStruct;
 import wvw.semweb.codegen.model.struct.ModelType;
+import wvw.semweb.codegen.parse.post.ModelPostprocessor;
 import wvw.semweb.codegen.rule.GraphEdge;
 import wvw.semweb.codegen.rule.GraphNode;
 import wvw.semweb.codegen.rule.RuleGraph.ClauseTypes;
@@ -53,16 +48,14 @@ public class ModelVisitorA extends ModelVisitor {
 		super(ontology);
 	}
 
-	public void visit(List<GraphNode> entryNodes) {
+	@Override
+	public void visit(List<GraphNode> roots, ModelPostprocessor.PostprocessTypes... postprocesses) {
 		Set<GraphNode> found = new HashSet<>();
 
-		for (GraphNode entryNode : entryNodes) {
-			Variable start = new Variable(((Node_Variable) entryNode.getId()).getName());
-			doVisit(entryNode, null, new NodePath(start), found);
+		for (GraphNode root : roots) {
+			Variable start = new Variable(((Node_Variable) root.getId()).getName());
+			doVisit(root, null, new NodePath(start), found);
 		}
-
-//		post_checkForStructExist();
-		post_removeExistChecksForLiterals();
 	}
 
 	private ModelType doVisit(GraphNode node, GraphEdge from, NodePath path, Set<GraphNode> found) {
@@ -79,7 +72,6 @@ public class ModelVisitorA extends ModelVisitor {
 		boolean addedCond = false;
 
 		// - literal node
-		log.info("literal? " + node.getId());
 		if (node.getId() instanceof Node_Literal) {
 			Node_Literal nl = (Node_Literal) node.getId();
 
@@ -131,7 +123,7 @@ public class ModelVisitorA extends ModelVisitor {
 
 			// add a new struct to our model
 			// (or get previously created one)
-			modelStruct = model.getStruct(nodeName);
+			modelStruct = model.getOrCreateStruct(nodeName, node);
 			loadAnnotations(nodeType.getURI(), modelStruct);
 
 			// return struct as target
@@ -174,7 +166,6 @@ public class ModelVisitorA extends ModelVisitor {
 		nodePropertiesStart();
 		for (GraphEdge edge : node.getOut()) {
 			ClauseTypes clauseType2 = (ClauseTypes) edge.getData();
-			log.info("out? " + node.getId() + " - " + edge + " ? " + clauseType2);
 
 			GraphNode target = edge.getTarget();
 
@@ -301,7 +292,7 @@ public class ModelVisitorA extends ModelVisitor {
 	private void newPath(NodePath path, ClauseTypes clauseType) {
 		if (clauseType == ClauseTypes.BODY) {
 			if (!path.getPath().getLast().requiresArray()) {
-				log.info("newPath: " + path);
+				
 				Comparison con = new Comparison(path, Comparators.EX);
 				cond.add(con);
 			}
@@ -579,77 +570,11 @@ public class ModelVisitorA extends ModelVisitor {
 
 	// - hooks for post-processing
 
-	// comparisons are separate statements; another separate statement will refer to
-	// a variable to be used in this comparison; an "exists" condition will
-	// be added for the latter. but, this check is redundant, so remove those here.
+	// starting from a root struct, recursively merge all linked structs with
+	// properties that have cardinality > 1 (i.e., array-like) into the root struct
 
-	protected void post_removeExistChecksForLiterals() {
-		List<Operand> toRemove = new ArrayList<>();
-		// check for literal comparisons & keep found paths
-		cond.getConditions().forEach(c -> {
-			if (c.getCmp() != Comparators.EX && c.getOp1().getType() == Operands.NODE_PATH
-					&& c.getOp2().getType() == Operands.LITERAL)
-				toRemove.add(c.getOp1());
-		});
+	protected void post_mergeStructsWithArraysIntoRoot(List<GraphNode> roots) {
 
-		if (toRemove.isEmpty())
-			return;
-
-		Iterator<Comparison> it = cond.getConditions().iterator();
-		while (it.hasNext()) {
-			Comparison c = it.next();
-
-			// remove "exists" checks for paths found in literal comparisons
-			if (c.getCmp() == Comparators.EX && c.getOp1().getType() == Operands.NODE_PATH
-					&& toRemove.contains(c.getOp1()))
-
-				it.remove();
-		}
 	}
 
-	// for create-struct assignment blocks:
-	// modify the code block to check whether something already exists at end of
-	// path (visitor code will simply assign a new struct each time)
-
-	// (difficult to do this in visitor since we should only do this for
-	// intermediary
-	// assignments (i.e., not for the last assignment))
-
-	protected void post_checkForStructExist() {
-		// TODO currently only blocks will be created for create-struct assignment
-		// blocks; should somehow tag these blocks for extensibility ..
-
-		List<Block> subBlocks = block.getStatements().stream().filter(stmt -> stmt.getStatementType() == Codes.BLOCK)
-				.map(stmt -> (Block) stmt).collect(Collectors.toList());
-
-		for (int i = 0; i < subBlocks.size() - 1; i++) {
-			Block subBlock = subBlocks.get(i);
-
-			Assignment asn = (Assignment) subBlock.getStatements().get(0);
-			Assignment asn2 = (Assignment) subBlock.getStatements().get(1);
-
-			Variable var = (Variable) asn.getOp1();
-			CreateStruct createStruct = (CreateStruct) asn.getOp2();
-			NodePath path = (NodePath) asn2.getOp1();
-
-			if (Util.involvesArrayAssign(path)) {
-
-			} else {
-				subBlock.clear();
-
-				// check whether struct at current path exists
-				// if not, create new struct and assign to path
-
-				Comparison notExists = new Comparison(path, Comparators.NEX);
-				Assignment newAsn = new Assignment(path, createStruct);
-
-				subBlock.add(new IfThen(notExists, newAsn));
-
-				// assign (possibly new) struct at end of path to variable
-
-				Assignment newAsn2 = new Assignment(var, path);
-				subBlock.add(newAsn2);
-			}
-		}
-	}
 }

@@ -1,4 +1,4 @@
-package wvw.semweb.codegen;
+package wvw.semweb.codegen.parse;
 
 public class ParseModelException extends Exception {
 

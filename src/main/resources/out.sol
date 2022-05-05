@@ -15,14 +15,6 @@ contract DiabetesIot {
 		message = initMessage;
 	}
 	
-	enum TreatmentSubplanConstants{ LifestyleSubplan }
-	
-	struct TreatmentSubplan {
-		string label;
-		TreatmentSubplanConstants hasType;
-		bool exists;
-	}
-	
 	enum DiabetesPhysicalExaminationConstants{ Bmi }
 	
 	struct DiabetesPhysicalExamination {
@@ -31,31 +23,9 @@ contract DiabetesIot {
 		bool exists;
 	}
 	
-	enum DiabetesMellitusConstants{ Type2DiabetesMellitus }
-	
-	struct DiabetesMellitus {
-		DiabetesMellitusConstants hasType;
-		bool exists;
-	}
-	
-	struct TreatmentPlan {
-		mapping(TreatmentSubplanConstants => TreatmentSubplan) hasPart;
-		bool exists;
-	}
-	
-	struct DiabetesDiagnosis {
-		DiabetesMellitus hasDiabetesType;
-		bool exists;
-	}
-	
 	struct Patient {
-		PatientProfile hasPatientProfile;
-		bool exists;
-	}
-	
-	struct PatientProfile {
+		mapping(TreatmentSubplanConstants => TreatmentSubplan) hasPart;
 		mapping(PatientDemographicConstants => PatientDemographic) hasDemographic;
-		TreatmentPlan hasTreatmentPlan;
 		DiabetesDiagnosis hasDiagnosis;
 		bool exists;
 	}
@@ -64,6 +34,26 @@ contract DiabetesIot {
 	
 	struct PatientDemographic {
 		PatientDemographicConstants hasType;
+		bool exists;
+	}
+	
+	enum TreatmentSubplanConstants{ LifestyleSubplan }
+	
+	struct TreatmentSubplan {
+		string label;
+		TreatmentSubplanConstants hasType;
+		bool exists;
+	}
+	
+	struct DiabetesDiagnosis {
+		DiabetesMellitus hasDiabetesType;
+		bool exists;
+	}
+	
+	enum DiabetesMellitusConstants{ Type2DiabetesMellitus }
+	
+	struct DiabetesMellitus {
+		DiabetesMellitusConstants hasType;
 		bool exists;
 	}
 	

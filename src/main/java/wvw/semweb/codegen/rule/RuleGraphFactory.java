@@ -12,7 +12,7 @@ import org.apache.jen3.reasoner.rulesys.ClauseEntry;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
-import wvw.semweb.codegen.ParseModelException;
+import wvw.semweb.codegen.parse.ParseModelException;
 import wvw.semweb.codegen.rule.RuleGraph.ClauseTypes;
 
 public class RuleGraphFactory {

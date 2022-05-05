@@ -11,10 +11,45 @@ import wvw.semweb.codegen.model.CodeLogic;
 import wvw.semweb.codegen.model.struct.CodeModel;
 import wvw.semweb.codegen.model.struct.ModelProperty;
 import wvw.semweb.codegen.model.struct.ModelStruct;
+import wvw.semweb.codegen.parse.post.ModelPostprocessor.PostprocessTypes;
 
 public abstract class GenerateCode {
 
 	protected static final Logger log = LogManager.getLogger(GenerateCode.class);
+
+	public enum CodeTypes {
+
+		JAVASCRIPT("js"), SOLIDITY("sol", PostprocessTypes.MERGE_STRUCTS_W_ARRAYS_IN_ROOT);
+
+		private String ext;
+		private PostprocessTypes[] requirements;
+
+		private CodeTypes(String ext, PostprocessTypes... requirements) {
+			this.ext = ext;
+			this.requirements = requirements;
+		}
+
+		public String getExt() {
+			return ext;
+		}
+
+		public PostprocessTypes[] getRequirements() {
+			return requirements;
+		}
+	}
+
+	public static GenerateCode create(CodeTypes type) {
+		switch (type) {
+
+		case JAVASCRIPT:
+			return new GenerateJavaScript();
+
+		case SOLIDITY:
+			return new GenerateSolidity();
+		}
+
+		return null;
+	}
 
 	public abstract void generate(CodeModel model, CodeLogic logic, Collection<String> entryPoints, File output)
 			throws IOException;

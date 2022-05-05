@@ -1,6 +1,8 @@
-package wvw.semweb.codegen;
+package wvw.semweb.codegen.parse;
 
 import java.io.File;
+import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -27,6 +29,8 @@ import wvw.semweb.codegen.model.IfThen;
 import wvw.semweb.codegen.model.struct.CodeModel;
 import wvw.semweb.codegen.model.visit.ModelVisitor;
 import wvw.semweb.codegen.model.visit.ModelVisitorA;
+import wvw.semweb.codegen.parse.post.ModelPostprocessor;
+import wvw.semweb.codegen.parse.post.ModelPostprocessor.PostprocessTypes;
 import wvw.semweb.codegen.rule.GraphNode;
 import wvw.semweb.codegen.rule.RuleGraph;
 import wvw.semweb.codegen.rule.RuleGraphFactory;
@@ -70,7 +74,9 @@ public class ParseModelLogic implements N3EventListener {
 		return logic;
 	}
 
-	public void parseClassModel(File rulesFile, File ontologyFile) throws Exception {
+	public void parseClassModel(File rulesFile, File ontologyFile, PostprocessTypes... postprocesses)
+			throws IOException, URISyntaxException, ParseModelException {
+
 		logic.setRulesName(FilenameUtils.removeExtension(rulesFile.getName()));
 
 		N3Model ontology = ModelFactory.createN3Model(N3ModelSpec.get(Types.N3_MEM_FP_INF));
@@ -90,12 +96,9 @@ public class ParseModelLogic implements N3EventListener {
 			if (entryTerms.isEmpty())
 				throw new ParseModelException("no entry terms found for rule");
 
-			log.debug("\n- entry points: " + entryTerms);
 			entryTerms.stream().map(n -> n.getName()).forEach(e -> entryPoints.add(e));
 
-			processRule(r, ontology, entryTerms.toArray(Node[]::new));
-
-			log.debug("");
+			processRule(r, ontology, entryTerms.toArray(Node[]::new), postprocesses);
 		}
 	}
 
@@ -113,37 +116,54 @@ public class ParseModelLogic implements N3EventListener {
 		return ret;
 	}
 
-	private void processRule(N3Rule r, N3Model ontology, Node[] entryTerms) throws ParseModelException {
+	private void processRule(N3Rule r, N3Model ontology, Node[] entryTerms, PostprocessTypes... postprocesses)
+			throws ParseModelException {
+
 		RuleGraphFactory graphFactory = new RuleGraphFactory();
 
 		List<Node> allEntries = new ArrayList<>(Arrays.asList(entryTerms));
 		RuleGraph ruleGraph = graphFactory.createGraph(r, allEntries);
 
-		log.debug("- rule graph:");
-		log.debug(ruleGraph);
-		log.debug("");
+		log.info("> processing new rule");
+		
+		log.info("- rule graph:");
+		log.info(ruleGraph);
+		log.info("");
 
-		List<GraphNode> entryNodes = allEntries.stream().map(t -> ruleGraph.get(t)).collect(Collectors.toList());
+		List<GraphNode> roots = allEntries.stream().map(t -> ruleGraph.get(t)).collect(Collectors.toList());
+		log.info("\n- roots: " + allEntries);
 
 		ModelVisitor visitor = new ModelVisitorA(ontology);
-		visitor.visit(entryNodes);
+		visitor.visit(roots);
 
 		CodeModel newModel = visitor.getModel();
+		IfThen newIt = new IfThen(visitor.getCondition(), visitor.getBlock());
+
+		postprocess(newModel, newIt, roots, postprocesses);
+
 		model.mergeWith(newModel);
+		logic.add(newIt);
 
-		log.debug("- code model:");
-		log.debug(model);
-		log.debug("");
+		log.info("- code model:");
+		log.info(model);
+		log.info("");
 
-		log.debug("- condition:");
-		log.debug(visitor.getCondition());
-		log.debug("");
+		log.info("- condition:");
+		log.info(visitor.getCondition());
+		log.info("");
 
-		log.debug("- code:");
-		log.debug(visitor.getBlock());
-		log.debug("");
+		log.info("- code:");
+		log.info(visitor.getBlock());
+		log.info("\n");
+	}
 
-		IfThen it = new IfThen(visitor.getCondition(), visitor.getBlock());
-		logic.add(it);
+	private void postprocess(CodeModel newModel, IfThen newIt, List<GraphNode> roots,
+			PostprocessTypes... postprocesses) {
+
+		// do this by default
+		ModelPostprocessor.create(PostprocessTypes.REMOVE_EXISTS_CHECK_LITERALS).postprocess(newModel, newIt, roots);
+
+		for (PostprocessTypes type : postprocesses)
+			ModelPostprocessor.create(type).postprocess(newModel, newIt, roots);
 	}
 }
