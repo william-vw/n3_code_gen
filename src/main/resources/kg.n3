@@ -14,47 +14,17 @@
 @prefix math: <http://www.w3.org/2000/10/swap/math#> .
 @base <https://bioportal.bioontology.org/ontologies/DMTO.owl> .
 
-_:p0 a DMTO:DMTO_0000021 ; # type patient
-    DMTO:DMTO_0001667 [ # has_patient_profile
-        DDO:DDO_0000238 [ # has_physical_examination
-            a DDO:DDO_0000230 ; # type BMI
-            DDO:DDO_0000134 28 # has_quantitative_value
-        ] ;
-        DDO:DDO_0000114 [ # has_diagnosis
-            DMTO:DMTO_0001673 [ # has_diabetes_type 
-                a DDO:DDO_0003905 # type 2 diabetes mellitus
-            ]
+:exam0 a DDO:DDO_0000230 ; # type BMI
+    DDO:DDO_0000134 27 . # has_quantitative_value
+
+:patient0 a DMTO:DMTO_0000021 ; # type patient
+    DMTO:DMTO_0001667 :patient0_profile . # has_patient_profile
+        
+:patient0_profile 
+    DDO:DDO_0000114 [ # has_diagnosis
+        DMTO:DMTO_0001673 [ # has_diabetes_type 
+            a DDO:DDO_0003905 # type 2 diabetes mellitus
         ]
-    ] .
-
-
-{   ?p a DMTO:DMTO_0000021 ; # type patient
-        DMTO:DMTO_0001667 ?profile . # has_patient_profile
-    ?profile DDO:DDO_0000238 ?exam . # has_physical_examination
-    ?exam a DDO:DDO_0000230 ; # type BMI
-        DDO:DDO_0000134 ?value . # has_quantitative_value
-    ?value math:notLessThan 25 .
-
-} => {
-    ?profile DDO:DDO_0000139 [ # has_demographic
-		a DTO:DTO:0002078 # type overweight
-    ]
-} .
-
-{   ?p a DMTO:DMTO_0000021 ; # type patient
-        DMTO:DMTO_0001667 ?profile . # has_patient_profile
-    ?profile DDO:DDO_0000114 ?diagnosis . # has_diagnosis
-    ?diagnosis DMTO:DMTO_0001673 ?type . # has_diabetes_type 
-    ?type a DDO:DDO_0003905 . # type 2 diabetes mellitus
-
-    ?profile DDO:DDO_0000139 ?demographic . # has_demographic
-    ?demographic a DTO:DTO:0002078 . # type overweight
-
-} => {
-    ?profile DMTO:DMTO_0001671 [ # has_treatment_plan
-        DMTO:DMTO_0001701 [ # has_part
-            a DMTO:DMTO_0001712 ; # type lifestyle_subplan    
-            rdfs:label "Management and reduction of weight is important"
-        ]
-    ]
-} .
+    ] ;
+    
+    DMTO:DMTO_0001671 :patient0_plan . # has_treatment_plan

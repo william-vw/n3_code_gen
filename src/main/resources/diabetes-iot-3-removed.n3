@@ -1,0 +1,26 @@
+{   ?sys1 a DDO:DDO_0000239 ; # type systolic blood pressure
+        DMTO:DMTO_0001700 ?date1 . # has_date
+    ?sys1 DDO:DDO_0000134!math:greaterThan 140 . # has_quantitative_value
+    ?dias1 a DDO:DDO_0000241 ; # type diastolic blood pressure
+        DMTO:DMTO_0001700 ?date1 . # has_date
+    ?dias1 DDO:DDO_0000134!math:greaterThan 80 . # has_quantitative_value
+
+    ?sys2 a DDO:DDO_0000239 ; # type systolic blood pressure
+        DMTO:DMTO_0001700 ?date2 . # has_date
+    ?sys2 DDO:DDO_0000134!math:greaterThan 140 . # has_quantitative_value
+    ?dias2 a DDO:DDO_0000241 ; # type diastolic blood pressure
+        DMTO:DMTO_0001700 ?date2 . # has_date
+    ?dias2 DDO:DDO_0000134!math:greaterThan 80 . # has_quantitative_value
+
+    ?date1 string:notEqualTo ?date2 .
+
+    ?profile DMTO:DMTO_0001671 ?treatment_plan . # has_treatment_plan
+
+} => {
+    ?treatment_plan DMTO:DMTO_0001701 [ # has_part
+        a DMTO:DMTO_0001710 ; # type drug subplan    
+        rdfs:label """in addition to lifestyle therapy, 
+        have prompt initiation and timely titration of pharmacologic therapy 
+        to achieve blood pressure goals"""
+    ]
+}

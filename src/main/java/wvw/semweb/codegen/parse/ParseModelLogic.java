@@ -163,7 +163,9 @@ public class ParseModelLogic implements N3EventListener {
 		// do this by default
 		ModelPostprocessor.create(PostprocessTypes.REMOVE_EXISTS_CHECK_LITERALS).postprocess(newModel, newIt, roots);
 
-		for (PostprocessTypes type : postprocesses)
+		for (PostprocessTypes type : postprocesses) {
+			log.info("(postprocess: " + type + ")");
 			ModelPostprocessor.create(type).postprocess(newModel, newIt, roots);
+		}
 	}
 }

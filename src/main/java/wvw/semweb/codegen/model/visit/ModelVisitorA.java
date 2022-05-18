@@ -77,7 +77,6 @@ public class ModelVisitorA extends ModelVisitor {
 
 			Literal lit = new Literal(nl.getLiteralValue());
 			literalNode(node, from, path, clauseType, lit);
-			addedCond = true;
 
 			// return literal's datatype as target for prior property
 			return new ModelType(nl.getLiteralDatatype());
@@ -115,6 +114,7 @@ public class ModelVisitorA extends ModelVisitor {
 
 			} else
 				// return datatype as target
+				// TODO can't we just return directly here?
 				ret = new ModelType(dt);
 
 			// - node has object type
@@ -160,6 +160,7 @@ public class ModelVisitorA extends ModelVisitor {
 			addedCond = true;
 		}
 
+		// TODO is this needed? (cfr. the code above)
 		if (!addedCond)
 			newPath(path, clauseType);
 
@@ -304,7 +305,7 @@ public class ModelVisitorA extends ModelVisitor {
 
 	private NodePath structNode(GraphNode node, GraphEdge from, NodePath path, ClauseTypes clauseType,
 			Resource nodeType, ModelStruct modelStruct) {
-
+		
 		if (clauseType != ClauseTypes.HEAD)
 			return path;
 
@@ -320,11 +321,6 @@ public class ModelVisitorA extends ModelVisitor {
 				if (modelStruct == null)
 					log.error("should create new instance but non object-type found: " + nodeType);
 
-				Block subBlock = new Block();
-				block.add(subBlock);
-
-				Variable v = new Variable();
-
 				// create new struct
 				CreateStruct newStruct = new CreateStruct(modelStruct);
 
@@ -337,7 +333,7 @@ public class ModelVisitorA extends ModelVisitor {
 
 					// properties of blank node will serve as constructor parameters
 					// add this struct to the stack; use new assignments as parameters
-
+					
 					// (node path doesn't matter here)
 					newStructs.add(newStruct);
 
@@ -347,6 +343,11 @@ public class ModelVisitorA extends ModelVisitor {
 
 					// treat as regular statement
 				} else {
+					Block subBlock = new Block();
+					block.add(subBlock);
+
+					Variable v = new Variable();
+					
 					// assign to var
 					Assignment asn = new Assignment(v, newStruct);
 					subBlock.add(asn);
@@ -567,14 +568,4 @@ public class ModelVisitorA extends ModelVisitor {
 
 		return null;
 	}
-
-	// - hooks for post-processing
-
-	// starting from a root struct, recursively merge all linked structs with
-	// properties that have cardinality > 1 (i.e., array-like) into the root struct
-
-	protected void post_mergeStructsWithArraysIntoRoot(List<GraphNode> roots) {
-
-	}
-
 }
