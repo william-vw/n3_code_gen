@@ -39,8 +39,7 @@ public class GenerateJavaScript extends GenerateCode {
 		codeModel.getAllStructs().forEach(s -> genClass(s));
 
 		// also include load-param type (in JS, this is also given as input parameter)
-		String fnParams = codeLogic.getAnnotations()
-				.getAll().stream().filter(a -> a.getType() == AnnotationTypes.PARAM)
+		String fnParams = codeLogic.getAnnotations().getAll().stream().filter(a -> a.getType() == AnnotationTypes.PARAM)
 				.map(a -> a.getNode().getName()).collect(Collectors.joining(", "));
 
 		logic.append("function execute(").append(fnParams).append(") {\n");
@@ -175,11 +174,7 @@ public class GenerateJavaScript extends GenerateCode {
 		switch (op.getType()) {
 
 		case LITERAL:
-			Object o = ((Literal) op).getValue();
-			if (o instanceof String)
-				return "\"" + o + "\"";
-			else
-				return o.toString();
+			return printLiteral(((Literal) op).getValue());
 
 		case VAR:
 			return jsName(((Variable) op).getName(), false);

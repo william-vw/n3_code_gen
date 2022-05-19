@@ -37,17 +37,6 @@ import wvw.semweb.codegen.visit.ModelVisitor;
 import wvw.semweb.codegen.visit.ModelVisitorA;
 import wvw.utils.rdf.NS;
 
-// (major)
-
-// TODO currently assuming that the rule ordering reflects the chaining sequence
-
-// (minor)
-
-// TODO properly parametrize ModelVisitorImpl code (e.g., CodeLogicVisitor, CodeModelVisitor)
-
-// TODO post-processing where structs sharing a (non-trivial) superclass (i.e., not owl:Thing, entity, ..)
-// are merged together
-
 public class ParseModelLogic implements N3EventListener {
 
 	private static final Logger log = LogManager.getLogger(ParseModelLogic.class);
@@ -86,7 +75,7 @@ public class ParseModelLogic implements N3EventListener {
 			log.error("no rules found in " + rulesFile.getPath());
 
 		for (N3Rule r : parsedRules) {
-			log.debug("- parsed rule:\n" + r);
+//			log.debug("- parsed rule:\n" + r);
 
 			List<RuleAnnotation> annotations = getRuleAnnotations(r, ruleset);
 			checkAnnotations(annotations, r);
@@ -147,8 +136,8 @@ public class ParseModelLogic implements N3EventListener {
 
 		log.info("> processing new rule");
 
-		log.info("- rule graph:\n");
-		log.info(ruleGraph + "\n");
+//		log.info("- rule graph:\n");
+//		log.info(ruleGraph + "\n");
 
 		log.info("- annotations: " + annotations);
 

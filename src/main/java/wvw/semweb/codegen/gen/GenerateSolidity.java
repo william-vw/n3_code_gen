@@ -287,11 +287,7 @@ public class GenerateSolidity extends GenerateCode {
 		switch (op.getType()) {
 
 		case LITERAL:
-			Object o = ((Literal) op).getValue();
-			if (o instanceof String)
-				return "\"" + o + "\"";
-			else
-				return o.toString();
+			return printLiteral(((Literal) op).getValue());
 
 		case VAR:
 			return varName((Variable) op);

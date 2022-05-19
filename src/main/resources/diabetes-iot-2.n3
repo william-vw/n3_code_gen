@@ -45,10 +45,10 @@
     ?profile DDO:DDO_0000139 ?obese_demo . # has_demographic
     ?obese_demo a DTO:DTO:0002079 . # type obese class I
 
-    ?profile DDO:DDO_0000311 ?pfc_test . # has_lab_test
-    ?pfc_test a DDO:DDO_0000244 ; # plasma fasting glucose 
-        DDO:DDO_0000134 ?pfc_value . # has_quantitative_value
-    ?pfc_value math:notLessThan 110 .
+    ?profile DDO:DDO_0000311 ?pfg_test . # has_lab_test
+    ?pfg_test a DDO:DDO_0000244 ; # plasma fasting glucose 
+        DDO:DDO_0000134 ?pfg_value . # has_quantitative_value
+    ?pfg_value math:notLessThan 110 .
 
     ?profile DDO:DDO_0000311 ?a1c_test . # has_lab_test
     ?a1c_test a DDO:DDO_0000243 ; # Hemoglobin A1c level

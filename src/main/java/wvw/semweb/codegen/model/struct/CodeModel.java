@@ -20,10 +20,11 @@ public class CodeModel {
 		ModelStruct ret = nameStructs.get(name);
 		if (ret == null) {
 			ret = new ModelStruct(name, structCnt++);
-
+			
 			nameStructs.put(name, ret);
-			nodeStructs.put(node, ret);
 		}
+
+		nodeStructs.put(node, ret);
 
 		return ret;
 	}

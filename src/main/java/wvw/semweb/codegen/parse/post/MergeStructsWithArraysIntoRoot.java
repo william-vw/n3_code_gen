@@ -33,6 +33,7 @@ public class MergeStructsWithArraysIntoRoot extends ModelPostprocessor {
 		for (GraphNode root : ruleGraph.getGraphRoots()) {
 			ModelStruct struct = model.getStruct(root);
 
+			log.info("got: " + root + " !! " + struct);
 			consumeStructsRecursively(struct, new ArrayList<>(), new ArrayList<>(), mergePred,
 					new MergeConsumer(struct, it));
 		}
@@ -54,7 +55,7 @@ public class MergeStructsWithArraysIntoRoot extends ModelPostprocessor {
 				structPath.clear();
 			}
 		}
-
+		
 		// avoid concurrent modification error
 		List<ModelProperty> curPrps = new ArrayList<>(curStruct.getProperties());
 

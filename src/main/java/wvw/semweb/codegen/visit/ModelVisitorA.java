@@ -86,8 +86,8 @@ public class ModelVisitorA extends ModelVisitor {
 		// incoming properties from the rule graph
 		List<Resource> nodeTypes = getNodeTypes(node);
 
-//		log.info("\nfrom? " + from);
-//		log.info("node? " + node);
+//		log.debug("\nfrom? " + from);
+//		log.debug("node? " + node);
 //		log.debug("found ontology types: " + nodeTypes);
 
 		if (nodeTypes.size() > 1)
@@ -179,10 +179,9 @@ public class ModelVisitorA extends ModelVisitor {
 		});
 
 		for (GraphEdge edge : sortedEdges) {
-			log.info("edge? " + node.getId() + " -> " + edge.getId());
+//			log.info("edge? " + node.getId() + " -> " + edge.getId());
 
 			ClauseTypes clauseType2 = (ClauseTypes) edge.getData();
-
 			GraphNode target = edge.getTarget();
 
 			// - outgoing "type" edge

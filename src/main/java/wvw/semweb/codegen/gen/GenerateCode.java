@@ -62,4 +62,17 @@ public abstract class GenerateCode {
 	protected boolean includeField(ModelProperty prp, ModelStruct ofStruct) {
 		return (!prp.isTypePrp() || ofStruct.hasConstants());
 	}
+
+	protected String printLiteral(Object o) {
+		if (o instanceof String) {
+			String str = (String) o;
+
+			if (str.contains("\n"))
+				str = str.replace("\n", "\\n");
+
+			return "\"" + str + "\"";
+
+		} else
+			return o.toString();
+	}
 }
