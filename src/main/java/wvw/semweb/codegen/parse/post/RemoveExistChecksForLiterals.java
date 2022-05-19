@@ -11,7 +11,7 @@ import wvw.semweb.codegen.model.IfThen;
 import wvw.semweb.codegen.model.Operand;
 import wvw.semweb.codegen.model.Operand.Operands;
 import wvw.semweb.codegen.model.struct.CodeModel;
-import wvw.semweb.codegen.rule.GraphNode;
+import wvw.semweb.codegen.parse.rule.RuleGraph;
 
 public class RemoveExistChecksForLiterals extends ModelPostprocessor {
 
@@ -20,7 +20,7 @@ public class RemoveExistChecksForLiterals extends ModelPostprocessor {
 	// be added for the latter. but, this check is redundant, so remove those here.
 
 	@Override
-	public void postprocess(CodeModel model, IfThen it, List<GraphNode> roots) {
+	public void postprocess(CodeModel model, IfThen it, RuleGraph ruleGraph) {
 		Conjunction cond = (Conjunction) it.getCondition();
 		
 		List<Operand> toRemove = new ArrayList<>();

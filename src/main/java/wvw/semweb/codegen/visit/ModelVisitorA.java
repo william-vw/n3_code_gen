@@ -1,4 +1,4 @@
-package wvw.semweb.codegen.model.visit;
+package wvw.semweb.codegen.visit;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -37,9 +37,10 @@ import wvw.semweb.codegen.model.struct.ModelProperty;
 import wvw.semweb.codegen.model.struct.ModelStruct;
 import wvw.semweb.codegen.model.struct.ModelType;
 import wvw.semweb.codegen.parse.post.ModelPostprocessor;
-import wvw.semweb.codegen.rule.GraphEdge;
-import wvw.semweb.codegen.rule.GraphNode;
-import wvw.semweb.codegen.rule.RuleGraph.ClauseTypes;
+import wvw.semweb.codegen.parse.rule.GraphEdge;
+import wvw.semweb.codegen.parse.rule.GraphNode;
+import wvw.semweb.codegen.parse.rule.RuleGraph;
+import wvw.semweb.codegen.parse.rule.RuleGraph.ClauseTypes;
 import wvw.semweb.owl.OntologyUtil;
 
 public class ModelVisitorA extends ModelVisitor {
@@ -49,17 +50,16 @@ public class ModelVisitorA extends ModelVisitor {
 	}
 
 	@Override
-	public void visit(List<GraphNode> roots, ModelPostprocessor.PostprocessTypes... postprocesses) {
+	public void visit(RuleGraph ruleGraph, ModelPostprocessor.PostprocessTypes... postprocesses) {
 		Set<GraphNode> found = new HashSet<>();
 
-		for (GraphNode root : roots) {
+		for (GraphNode root : ruleGraph.getGraphRoots()) {
 			Variable start = new Variable(((Node_Variable) root.getId()).getName());
 			doVisit(root, null, new NodePath(start), found);
 		}
 	}
 
 	private ModelType doVisit(GraphNode node, GraphEdge from, NodePath path, Set<GraphNode> found) {
-		// this occurs in case of inverted properties (see RuleGraphFactory)
 		if (found.contains(node))
 			return null;
 
@@ -86,8 +86,8 @@ public class ModelVisitorA extends ModelVisitor {
 		// incoming properties from the rule graph
 		List<Resource> nodeTypes = getNodeTypes(node);
 
-//		log.debug("\nfrom? " + from);
-//		log.debug("node? " + node.getId());
+//		log.info("\nfrom? " + from);
+//		log.info("node? " + node);
 //		log.debug("found ontology types: " + nodeTypes);
 
 		if (nodeTypes.size() > 1)
@@ -165,7 +165,22 @@ public class ModelVisitorA extends ModelVisitor {
 			newPath(path, clauseType);
 
 		nodePropertiesStart();
-		for (GraphEdge edge : node.getOut()) {
+
+		// make sure type properties come first
+		// (needed when dealing w/ array-like properties;
+		// (existence check should come before other conditions)
+
+		List<GraphEdge> sortedEdges = new ArrayList<>(node.getOut());
+		sortedEdges.sort((e1, e2) -> {
+			Node n1 = (Node) e1.getId();
+			if (n1.getURI().equals(RDF.type.getURI()))
+				return -1;
+			return 1;
+		});
+
+		for (GraphEdge edge : sortedEdges) {
+			log.info("edge? " + node.getId() + " -> " + edge.getId());
+
 			ClauseTypes clauseType2 = (ClauseTypes) edge.getData();
 
 			GraphNode target = edge.getTarget();
@@ -293,7 +308,7 @@ public class ModelVisitorA extends ModelVisitor {
 	private void newPath(NodePath path, ClauseTypes clauseType) {
 		if (clauseType == ClauseTypes.BODY) {
 			if (!path.getPath().getLast().requiresArray()) {
-				
+
 				Comparison con = new Comparison(path, Comparators.EX);
 				cond.add(con);
 			}
@@ -305,7 +320,7 @@ public class ModelVisitorA extends ModelVisitor {
 
 	private NodePath structNode(GraphNode node, GraphEdge from, NodePath path, ClauseTypes clauseType,
 			Resource nodeType, ModelStruct modelStruct) {
-		
+
 		if (clauseType != ClauseTypes.HEAD)
 			return path;
 
@@ -333,7 +348,7 @@ public class ModelVisitorA extends ModelVisitor {
 
 					// properties of blank node will serve as constructor parameters
 					// add this struct to the stack; use new assignments as parameters
-					
+
 					// (node path doesn't matter here)
 					newStructs.add(newStruct);
 
@@ -347,7 +362,7 @@ public class ModelVisitorA extends ModelVisitor {
 					block.add(subBlock);
 
 					Variable v = new Variable();
-					
+
 					// assign to var
 					Assignment asn = new Assignment(v, newStruct);
 					subBlock.add(asn);
@@ -441,7 +456,13 @@ public class ModelVisitorA extends ModelVisitor {
 	private void typeNode(NodePath path, GraphEdge edge, ClauseTypes clauseType, ModelStruct modelStruct,
 			ModelElement type) {
 
-		Operand cnst = new StructConstant(modelStruct, type);
+		StructConstant cnst = new StructConstant(modelStruct, type);
+
+		// whether type is required to index an array-like property
+		// (i.e., property w/ cardinality > 1)
+
+		if (path.requiresKeyType())
+			path.setKeyType(cnst);
 
 		NodePath path2 = path.copy();
 		path2.add(ModelProperty.typeProperty());

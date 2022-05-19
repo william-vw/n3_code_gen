@@ -1,4 +1,4 @@
-package wvw.semweb.codegen.rule;
+package wvw.semweb.codegen.parse.rule;
 
 import java.util.Collection;
 import java.util.HashSet;

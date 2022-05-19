@@ -2,83 +2,86 @@
 // Learn more: https://solidity.readthedocs.io/en/v0.5.10/layout-of-source-files.html#pragma
 pragma solidity ^0.7.0;
 
-contract DiabetesIot {
-	// Declares a state variable `message` of type `string`.
-	// State variables are variables whose values are permanently stored in contract storage. The keyword `public` makes variables accessible from outside a contract and creates a function that other contracts or clients can call to access the value.
+contract DiabetesIot2 {
 	string public message;
 	
-	// Similar to many class-based object-oriented languages, a constructor is a special function that is only executed upon contract creation.
-	// Constructors are used to initialize the contract's data. Learn more:https://solidity.readthedocs.io/en/v0.5.10/contracts.html#constructors
 	constructor(string memory initMessage) {
-	
-		// Accepts a string argument `initMessage` and sets the value into the contract's `message` storage variable).
 		message = initMessage;
 	}
 	
-	enum DiabetesPhysicalExaminationConstants{ Bmi }
+	
+	event NewTreatmentSubPlan(uint time);
+	
+	
+	struct Patient {
+		mapping(DiabetesDrugs => DiabetesDrug) hasDrugParticipant;
+		mapping(DiabetesPhysicalExaminations => DiabetesPhysicalExamination) hasPhysicalExamination;
+		mapping(PatientDemographics => PatientDemographic) hasDemographic;
+		mapping(DiabetesLaboratoryTests => DiabetesLaboratoryTest) hasLabTest;
+		bool exists;
+	}
+	
+	enum DiabetesPhysicalExaminations{ Bmi, HistoryOfPrediabetes }
 	
 	struct DiabetesPhysicalExamination {
-		DiabetesPhysicalExaminationConstants hasType;
+		DiabetesPhysicalExaminations hasType;
 		int hasQuantitativeValue;
 		bool exists;
 	}
 	
-	struct Patient {
-		mapping(TreatmentSubplanConstants => TreatmentSubplan) hasPart;
-		mapping(PatientDemographicConstants => PatientDemographic) hasDemographic;
-		DiabetesDiagnosis hasDiagnosis;
-		bool exists;
-	}
-	
-	enum PatientDemographicConstants{ Overweight }
+	enum PatientDemographics{ Age, ObeseClassI }
 	
 	struct PatientDemographic {
-		PatientDemographicConstants hasType;
+		PatientDemographics hasType;
+		int hasQuantitativeValue;
 		bool exists;
 	}
 	
-	enum TreatmentSubplanConstants{ LifestyleSubplan }
+	enum DiabetesLaboratoryTests{ Hba1c, Fpg }
 	
-	struct TreatmentSubplan {
-		string label;
-		TreatmentSubplanConstants hasType;
+	struct DiabetesLaboratoryTest {
+		DiabetesLaboratoryTests hasType;
+		int hasQuantitativeValue;
 		bool exists;
 	}
 	
-	struct DiabetesDiagnosis {
-		DiabetesMellitus hasDiabetesType;
+	enum DiabetesDrugs{ Metformin }
+	
+	struct DiabetesDrug {
+		DiabetesDrugs hasType;
 		bool exists;
 	}
 	
-	enum DiabetesMellitusConstants{ Type2DiabetesMellitus }
 	
-	struct DiabetesMellitus {
-		DiabetesMellitusConstants hasType;
-		bool exists;
-	}
+	mapping(address => Patient) patients;
 	
-	function doSomething(exam, p) {
-		if (exam.hasQuantitativeValue >= 25
-			&& exam.hasType == DiabetesPhysicalExaminationConstants.Bmi
-			&& p.hasPatientProfile != 0) {
+	function execute() {
+		Patient storage patient = patients[msg.sender];
+	
+		if (patient.hasPhysicalExamination[DiabetesPhysicalExaminations.Bmi].exists
+			&& patient.hasPhysicalExamination[DiabetesPhysicalExaminations.Bmi].hasQuantitativeValue >= 35) {
 		
-			PatientDemographic memory v0 = PatientDemographic({ hasType: PatientDemographicConstants.Overweight, exists: true });
-			p.hasPatientProfile.hasDemographic[v0.hasType] = v0;
+			PatientDemographic memory v0 = PatientDemographic({ hasType: PatientDemographics.ObeseClassI, exists: true });
+			patient.hasDemographic[v0.hasType] = v0;
 		}
 		
-		if (p.hasPatientProfile != 0
-			&& p.hasPatientProfile.hasTreatmentPlan != 0
-			&& p.hasPatientProfile.hasDiagnosis != 0
-			&& p.hasPatientProfile.hasDiagnosis.hasDiabetesType != 0
-			&& p.hasPatientProfile.hasDiagnosis.hasDiabetesType.hasType == DiabetesMellitusConstants.Type2DiabetesMellitus
-			&& p.hasPatientProfile.hasDemographic[PatientDemographicConstants.Overweight].exists) {
+		if (patient.hasLabTest[DiabetesLaboratoryTests.Fpg].exists
+			&& patient.hasLabTest[DiabetesLaboratoryTests.Fpg].hasQuantitativeValue >= 110
+			&& patient.hasLabTest[DiabetesLaboratoryTests.Hba1c].exists
+			&& patient.hasLabTest[DiabetesLaboratoryTests.Hba1c].hasQuantitativeValue >= 6
+			&& patient.hasPhysicalExamination[DiabetesPhysicalExaminations.HistoryOfPrediabetes].exists
+			&& patient.hasDemographic[PatientDemographics.Age].exists
+			&& patient.hasDemographic[PatientDemographics.Age].hasQuantitativeValue >= 25
+			&& patient.hasDemographic[PatientDemographics.Age].hasQuantitativeValue <= 59
+			&& patient.hasDemographic[PatientDemographics.ObeseClassI].exists) {
 		
-			TreatmentSubplan memory v1 = TreatmentSubplan({ label: "Management and reduction of weight is important", hasType: TreatmentSubplanConstants.LifestyleSubplan, exists: true });
-			p.hasPatientProfile.hasTreatmentPlan.hasPart[v1.hasType] = v1;
+			DrugSubplan memory v1 = DrugSubplan({ hasDrugParticipant: DiabetesDrugs.Metformin, exists: true });
+			patient = v1;
+		
+			emit NewTreatmentSubPlan(block.timestamp);
 		}
 	}
 	
-	// A public function that accepts a string argument and updates the `message` storage variable.
 	function update(string memory newMessage) public {
 		message = newMessage;
 	}}

@@ -74,4 +74,5 @@
 } => {
     ?profile :recommend_test :diabetes_screening .
 
-} ; cg:loadParam ?patient .
+} ; cg:loadParam ?patient ; 
+    cg:event :RecommendDiabetesScreening .

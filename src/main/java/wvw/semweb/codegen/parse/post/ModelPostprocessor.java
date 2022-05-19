@@ -1,13 +1,11 @@
 package wvw.semweb.codegen.parse.post;
 
-import java.util.List;
-
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
 import wvw.semweb.codegen.model.IfThen;
 import wvw.semweb.codegen.model.struct.CodeModel;
-import wvw.semweb.codegen.rule.GraphNode;
+import wvw.semweb.codegen.parse.rule.RuleGraph;
 
 public abstract class ModelPostprocessor {
 
@@ -37,5 +35,5 @@ public abstract class ModelPostprocessor {
 		return null;
 	}
 
-	public abstract void postprocess(CodeModel model, IfThen it, List<GraphNode> roots);
+	public abstract void postprocess(CodeModel model, IfThen it, RuleGraph ruleGraph);
 }

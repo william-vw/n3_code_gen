@@ -1,8 +1,8 @@
-package wvw.semweb.codegen.rule;
+package wvw.semweb.codegen.parse.rule;
 
 import java.util.Objects;
 
-import wvw.semweb.codegen.rule.RuleGraph.ClauseTypes;
+import wvw.semweb.codegen.parse.rule.RuleGraph.ClauseTypes;
 
 public class GraphEdge extends GraphElement {
 

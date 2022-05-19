@@ -1,16 +1,24 @@
 package wvw.semweb.codegen.parse.post;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import wvw.semweb.codegen.model.Assignment;
+import wvw.semweb.codegen.model.Block;
+import wvw.semweb.codegen.model.Comparison;
+import wvw.semweb.codegen.model.Conjunction;
 import wvw.semweb.codegen.model.IfThen;
+import wvw.semweb.codegen.model.NodePath;
+import wvw.semweb.codegen.model.Operand.Operands;
 import wvw.semweb.codegen.model.struct.CodeModel;
 import wvw.semweb.codegen.model.struct.ModelProperty;
 import wvw.semweb.codegen.model.struct.ModelStruct;
-import wvw.semweb.codegen.rule.GraphNode;
+import wvw.semweb.codegen.parse.rule.GraphNode;
+import wvw.semweb.codegen.parse.rule.RuleGraph;
 
 public class MergeStructsWithArraysIntoRoot extends ModelPostprocessor {
 
@@ -18,15 +26,15 @@ public class MergeStructsWithArraysIntoRoot extends ModelPostprocessor {
 	protected IfThen it;
 
 	@Override
-	public void postprocess(CodeModel model, IfThen it, List<GraphNode> roots) {
+	public void postprocess(CodeModel model, IfThen it, RuleGraph ruleGraph) {
 		this.model = model;
 		this.it = it;
 
-		for (GraphNode root : roots) {
+		for (GraphNode root : ruleGraph.getGraphRoots()) {
 			ModelStruct struct = model.getStruct(root);
 
 			consumeStructsRecursively(struct, new ArrayList<>(), new ArrayList<>(), mergePred,
-					new MergeConsumer(struct));
+					new MergeConsumer(struct, it));
 		}
 	}
 
@@ -37,7 +45,9 @@ public class MergeStructsWithArraysIntoRoot extends ModelPostprocessor {
 		// not dealing with root
 		if (!prpPath.isEmpty()) {
 
+			// does the struct have any array-like properties?
 			if (filter.test(curStruct)) {
+				// if so, let's merge them
 				collect.accept(prpPath, structPath);
 
 				prpPath.clear();
@@ -74,14 +84,16 @@ public class MergeStructsWithArraysIntoRoot extends ModelPostprocessor {
 	private class MergeConsumer implements BiConsumer<List<ModelProperty>, List<ModelStruct>> {
 
 		private ModelStruct root;
+		private IfThen it;
 
-		public MergeConsumer(ModelStruct root) {
+		public MergeConsumer(ModelStruct root, IfThen it) {
 			this.root = root;
+			this.it = it;
 		}
 
 		@Override
 		public void accept(List<ModelProperty> prpPath, List<ModelStruct> structPath) {
-			log.debug("merging into " + root.getString() + ": "
+			log.info("merging into " + root.getString() + ": "
 					+ structPath.stream().map(s -> s.getString()).collect(Collectors.joining(", ")) + " (removing: "
 					+ prpPath.stream().map(s -> s.getString()).collect(Collectors.joining(", ")) + ")");
 
@@ -92,6 +104,49 @@ public class MergeStructsWithArraysIntoRoot extends ModelPostprocessor {
 
 			// remove original properties
 			root.getProperties().removeAll(prpPath);
+
+			// update the if-then blocks as well
+
+			updateComparisons((Conjunction) it.getCondition(), prpPath);
+			updateAssignments((Block) it.getThen(), prpPath);
+		}
+
+		private void updateComparisons(Conjunction conj, List<ModelProperty> prpPath) {
+			Iterator<Comparison> condIt = conj.getConditions().iterator();
+			while (condIt.hasNext()) {
+				Comparison cmp = condIt.next();
+
+				if (cmp.getOp1().getType() == Operands.NODE_PATH) {
+					NodePath p = (NodePath) cmp.getOp1();
+
+					p.getPath().removeAll(prpPath);
+					if (p.getPath().isEmpty())
+						condIt.remove();
+				}
+			}
+		}
+
+		private void updateAssignments(Block b, List<ModelProperty> prpPath) {
+			b.getStatements().forEach(s -> {
+				switch (s.getStatementType()) {
+
+				case BLOCK:
+					updateAssignments((Block) s, prpPath);
+					break;
+
+				case ASSIGN:
+					Assignment assn = (Assignment) s;
+
+					if (assn.getOp1().getType() == Operands.NODE_PATH) {
+						NodePath p = (NodePath) assn.getOp1();
+						p.getPath().removeAll(prpPath);
+					}
+					break;
+
+				default:
+					break;
+				}
+			});
 		}
 	}
 }

@@ -1,9 +1,10 @@
-package wvw.semweb.codegen.rule;
+package wvw.semweb.codegen.parse.rule;
 
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.jen3.graph.Node;
 import org.apache.jen3.n3.impl.N3Rule;
@@ -13,18 +14,20 @@ import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
 import wvw.semweb.codegen.parse.ParseModelException;
-import wvw.semweb.codegen.rule.RuleGraph.ClauseTypes;
+import wvw.semweb.codegen.parse.rule.RuleGraph.ClauseTypes;
+import wvw.semweb.codegen.parse.rule.ann.ParameterAnnotation;
+import wvw.semweb.codegen.parse.rule.ann.RuleAnnotation;
+import wvw.semweb.codegen.parse.rule.ann.RuleAnnotation.AnnotationTypes;
 
-public class RuleGraphFactory {
+public class RuleGraphParser {
 
-	private static final Logger log = LogManager.getLogger(RuleGraphFactory.class);
+	private static final Logger log = LogManager.getLogger(RuleGraphParser.class);
 
 	private RuleGraph graph = new RuleGraph();
 
-	public RuleGraph createGraph(N3Rule rule, List<Node> allEntries) throws ParseModelException {
+	public RuleGraph createGraph(N3Rule rule, List<RuleAnnotation> annotations) throws ParseModelException {
 		buildGraph(rule);
-
-		checkGraph(rule, allEntries);
+		checkGraph(rule, annotations);
 
 		return graph;
 	}
@@ -71,23 +74,23 @@ public class RuleGraphFactory {
 	// (in code generation, we created an inverse name for it)
 	// so all code paths originated nicely from the entry-point
 
-	// this worked but was unintuitive - it also caused issues in solidity:
-	// e.g., exam.isPhysicalExaminationOf .. caused the following error: "TypeError:
-	// Types in storage containing (nested) mappings cannot be assigned to."
+	// this worked but was unintuitive in practice
+	// it also caused issues in solidity: e.g., exam.isPhysicalExaminationOf ..
+	// caused the following error: "TypeError: Types in storage containing (nested)
+	// mappings cannot be assigned to."
 
-	// so we find additional entry-points here (i.e., other graph roots) and add
-	// them to the given list; these will invariably introduce cycles (unless the
-	// graph is not well connected, which flags an error).
-	// client code (e.g., ModelVisitorA) will have to avoid cycles manually
-
-	protected void checkGraph(N3Rule rule, List<Node> allEntries) throws ParseModelException {
+	protected void checkGraph(N3Rule rule, List<RuleAnnotation> annotations) throws ParseModelException {
 		Set<GraphNode> found = new HashSet<>();
 
-		for (Node entryTerm : allEntries) {
-			if (!graph.contains(entryTerm))
-				throw new ParseModelException("entry term " + entryTerm + " not found in rule: " + rule);
+		List<Node> params = annotations.stream().filter(a -> a.getType() == AnnotationTypes.PARAM)
+				.map(a -> ((ParameterAnnotation) a).getNode()).collect(Collectors.toList());
 
-			GraphNode node = graph.get(entryTerm);
+		for (Node param : params) {
+
+			if (!graph.contains(param))
+				throw new ParseModelException("parameter " + param + " not found in rule:\n" + rule);
+
+			GraphNode node = graph.get(param);
 			coverGraph(found, node);
 		}
 
@@ -95,18 +98,13 @@ public class RuleGraphFactory {
 		for (Node root : roots) {
 			GraphNode node = graph.get(root);
 
-			if (!allEntries.contains(root)) {
-				log.info("found root that is not entry term (" + root + ") - adding as entry term");
-				allEntries.add(root);
-			}
+			if (!params.contains(root))
+				throw new ParseModelException("found root that is not a parameter (" + root + ") for rule:\n" + rule);
 
 			coverGraph(found, node);
 		}
 
-		graph.getAllNodes().forEach(n -> {
-			if (!found.contains(n))
-				log.error("term " + n.prettyPrint() + " not reachable from entry points");
-		});
+		annotations.forEach(a -> graph.add(a));
 	}
 
 	protected void coverGraph(Set<GraphNode> found, GraphNode curNode) {

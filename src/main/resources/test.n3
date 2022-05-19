@@ -1,36 +1,22 @@
 @prefix math: <http://www.w3.org/2000/10/swap/math#> .
 @prefix math: <http://www.w3.org/2000/10/swap/math#> .
+@prefix cg: <http://niche.cs.dal.ca/codegen.owl#> .
 @prefix : <https://example.org/> .
 @base <https://example.org/> .
 
 # regular "branching" pattern
-{   ?x :p ?o ;
-        :p2 ?o2 .
-    ?o2 :p3 ?v .
+#{   ?x :p ?o ;
+#        :p2 ?o2 .
+#    ?o2 :p3 ?v .
+#    ?v math:greaterThan 10
+#
+#} => { ?x :p4 :v } ; cg:functionParam ?x .
+
+
+# multiple parameters
+{   ?x :p ?o .
+    ?y :p2 ?o2 .
+    ?y :p3 ?v .
     ?v math:greaterThan 10
 
-} => { ?x :p4 :y } .
-
-# multiple "roots" - requires an inverse property
-#{   ?x :p ?o .
-#    ?o2 :p2 ?o .
-#    ?o2 :p3 ?v .
-#    ?v math:greaterThan 10
-
-#} => { ?x :p4 :y } .
-
-
-# multiple "roots" - requires an inverse property (2)
-#{   ?o :p ?x .
-#    ?o2 :p2 ?o .
-#    ?o2 :p3 ?v .
-#    ?v math:greaterThan 10
-#
-#} => { ?x :p4 :y } .
-
-# unreachable node from entry-term (x)
-#{   ?x :p ?o .
-#    ?o :p2 ?o2 .
-#    ?k :p3 ?l .
-#
-#} => { ?x :p4 :y } .
+} => { ?x :p4 :v } ; cg:functionParam ?x ; cg:loadParam ?y .

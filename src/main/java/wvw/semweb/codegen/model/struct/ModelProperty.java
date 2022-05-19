@@ -1,11 +1,14 @@
 package wvw.semweb.codegen.model.struct;
 
+import wvw.semweb.codegen.model.StructConstant;
+
 public class ModelProperty extends ModelElement {
 
 	private ModelType target;
 	private Integer maxCardinality;
-	private boolean isKey;
 	private boolean isTypePrp;
+
+	private StructConstant keyType;
 
 	public ModelProperty(String name) {
 		super(name);
@@ -43,14 +46,6 @@ public class ModelProperty extends ModelElement {
 		this.maxCardinality = maxCardinality;
 	}
 
-	public ModelProperty(String name, ModelType target, Integer maxCardinality, boolean isKey) {
-		super(name);
-
-		this.target = target;
-		this.maxCardinality = maxCardinality;
-		this.isKey = isKey;
-	}
-
 	public boolean hasTarget() {
 		return target != null;
 	}
@@ -83,16 +78,24 @@ public class ModelProperty extends ModelElement {
 		return !hasMaxCardinality() || getMaxCardinality() > 1;
 	}
 
-	public boolean isKey() {
-		return isKey;
-	}
-
 	public void setTypePrp(boolean isTypePrp) {
 		this.isTypePrp = isTypePrp;
 	}
 
 	public boolean isTypePrp() {
 		return isTypePrp;
+	}
+
+	public boolean hasKeyType() {
+		return keyType != null;
+	}
+
+	public StructConstant getKeyType() {
+		return keyType;
+	}
+
+	public void setKeyType(StructConstant keyType) {
+		this.keyType = keyType;
 	}
 
 	// for debugging

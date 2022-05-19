@@ -1,15 +1,3 @@
-class DiabetesPhysicalExamination {
-	static bmi = 'bmi';
-
-	constructor(type, hasQuantitativeValue) {
-		this.type = type;
-		this.hasQuantitativeValue = hasQuantitativeValue;
-	}
-
-	type;
-	hasQuantitativeValue;
-}
-
 class Patient {
 	constructor(hasPatientProfile) {
 		this.hasPatientProfile = hasPatientProfile;
@@ -37,6 +25,18 @@ class PatientDemographic {
 	}
 
 	type;
+}
+
+class DiabetesPhysicalExamination {
+	static bmi = 'bmi';
+
+	constructor(type, hasQuantitativeValue) {
+		this.type = type;
+		this.hasQuantitativeValue = hasQuantitativeValue;
+	}
+
+	type;
+	hasQuantitativeValue;
 }
 
 class TreatmentPlan {
@@ -74,23 +74,23 @@ class DiabetesMellitus {
 	type;
 }
 
-function doSomething(exam, p) {
-	if (exam.hasQuantitativeValue >= 25
-		&& exam.type == DiabetesPhysicalExamination.bmi
-		&& p.hasPatientProfile != undefined) {
+function doSomething(exam, patient) {
+	if (patient.hasPatientProfile != undefined
+		&& exam.hasQuantitativeValue >= 25
+		&& exam.type == DiabetesPhysicalExamination.bmi) {
 	
 		var v0 = new PatientDemographic(PatientDemographic.overweight);
-		p.hasPatientProfile.hasDemographic.push(v0);
+		patient.hasPatientProfile.hasDemographic.push(v0);
 	}
 	
-	if (p.hasPatientProfile != undefined
-		&& p.hasPatientProfile.hasTreatmentPlan != undefined
-		&& p.hasPatientProfile.hasDiagnosis != undefined
-		&& p.hasPatientProfile.hasDiagnosis.hasDiabetesType != undefined
-		&& p.hasPatientProfile.hasDiagnosis.hasDiabetesType.type == DiabetesMellitus.type2DiabetesMellitus
-		&& p.hasPatientProfile.hasDemographic.some((e) => e.type == PatientDemographic.overweight)) {
+	if (patient.hasPatientProfile != undefined
+		&& patient.hasPatientProfile.hasTreatmentPlan != undefined
+		&& patient.hasPatientProfile.hasDiagnosis != undefined
+		&& patient.hasPatientProfile.hasDiagnosis.hasDiabetesType != undefined
+		&& patient.hasPatientProfile.hasDiagnosis.hasDiabetesType.type == DiabetesMellitus.type2DiabetesMellitus
+		&& patient.hasPatientProfile.hasDemographic.some((e) => e.type == PatientDemographic.overweight)) {
 	
 		var v1 = new TreatmentSubplan("Management and reduction of weight is important", TreatmentSubplan.lifestyleSubplan);
-		p.hasPatientProfile.hasTreatmentPlan.hasPart.push(v1);
+		patient.hasPatientProfile.hasTreatmentPlan.hasPart.push(v1);
 	}
 }

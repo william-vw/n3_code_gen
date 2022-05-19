@@ -1,6 +1,4 @@
-package wvw.semweb.codegen.model.visit;
-
-import java.util.List;
+package wvw.semweb.codegen.visit;
 
 import org.apache.jen3.n3.N3Model;
 import org.apache.log4j.LogManager;
@@ -10,7 +8,7 @@ import wvw.semweb.codegen.model.Block;
 import wvw.semweb.codegen.model.Conjunction;
 import wvw.semweb.codegen.model.struct.CodeModel;
 import wvw.semweb.codegen.parse.post.ModelPostprocessor.PostprocessTypes;
-import wvw.semweb.codegen.rule.GraphNode;
+import wvw.semweb.codegen.parse.rule.RuleGraph;
 
 public abstract class ModelVisitor {
 
@@ -38,5 +36,5 @@ public abstract class ModelVisitor {
 		return block;
 	}
 
-	public abstract void visit(List<GraphNode> roots, PostprocessTypes... postprocesses);
+	public abstract void visit(RuleGraph ruleGraph, PostprocessTypes... postprocesses);
 }

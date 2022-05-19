@@ -22,7 +22,11 @@ public class Util {
 
 	public static boolean involvesArrayAssign(Operand op1) {
 		if (op1.getType() == Operands.NODE_PATH) {
-			ModelProperty lastPrp = ((NodePath) op1).getPath().getLast();
+			NodePath p = (NodePath) op1;
+			if (p.getPath().isEmpty())
+				return false;
+			
+			ModelProperty lastPrp = p.getPath().getLast();
 			return lastPrp.requiresArray();
 		}
 

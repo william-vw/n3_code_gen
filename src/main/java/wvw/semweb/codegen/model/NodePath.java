@@ -51,6 +51,17 @@ public class NodePath implements Operand {
 		return new NodePath(start, new LinkedList<>(path.subList(0, end)));
 	}
 
+	public boolean requiresKeyType() {
+		if (path.isEmpty())
+			return false;
+		else
+			return path.getLast().requiresArray();
+	}
+
+	public void setKeyType(StructConstant type) {
+		path.getLast().setKeyType(type);
+	}
+
 	@Override
 	public Operands getType() {
 		return Operands.NODE_PATH;
@@ -75,7 +86,6 @@ public class NodePath implements Operand {
 
 	@Override
 	public String toString() {
-		return (start != null ? start + "." : "")
-				+ path.stream().map(p -> p.print()).collect(Collectors.joining("."));
+		return (start != null ? start + "." : "") + path.stream().map(p -> p.print()).collect(Collectors.joining("."));
 	}
 }

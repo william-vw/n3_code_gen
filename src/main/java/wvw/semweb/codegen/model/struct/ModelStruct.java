@@ -3,7 +3,6 @@ package wvw.semweb.codegen.model.struct;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.Optional;
 import java.util.Set;
 
 import org.apache.jen3.util.iterator.WrappedIterator;
@@ -58,10 +57,6 @@ public class ModelStruct extends ModelElement implements Comparable<ModelStruct>
 
 	public Collection<ModelProperty> getProperties() {
 		return properties;
-	}
-
-	public Optional<ModelProperty> getKeyProperty() {
-		return properties.stream().filter(p -> p.isKey()).findAny();
 	}
 
 	public void replacing(ModelStruct struct2) {

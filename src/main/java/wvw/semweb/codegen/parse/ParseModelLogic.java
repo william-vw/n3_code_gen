@@ -4,15 +4,10 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.jen3.graph.Node;
-import org.apache.jen3.graph.NodeFactory;
 import org.apache.jen3.graph.n3.Node_QuickVariable;
 import org.apache.jen3.n3.N3Model;
 import org.apache.jen3.n3.N3ModelSpec;
@@ -20,6 +15,8 @@ import org.apache.jen3.n3.N3ModelSpec.Types;
 import org.apache.jen3.n3.impl.N3ModelImpl.N3EventListener;
 import org.apache.jen3.n3.impl.N3Rule;
 import org.apache.jen3.rdf.model.ModelFactory;
+import org.apache.jen3.rdf.model.Resource;
+import org.apache.jen3.rdf.model.Statement;
 import org.apache.jen3.util.IOUtils;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
@@ -27,13 +24,17 @@ import org.apache.log4j.Logger;
 import wvw.semweb.codegen.model.CodeLogic;
 import wvw.semweb.codegen.model.IfThen;
 import wvw.semweb.codegen.model.struct.CodeModel;
-import wvw.semweb.codegen.model.visit.ModelVisitor;
-import wvw.semweb.codegen.model.visit.ModelVisitorA;
 import wvw.semweb.codegen.parse.post.ModelPostprocessor;
 import wvw.semweb.codegen.parse.post.ModelPostprocessor.PostprocessTypes;
-import wvw.semweb.codegen.rule.GraphNode;
-import wvw.semweb.codegen.rule.RuleGraph;
-import wvw.semweb.codegen.rule.RuleGraphFactory;
+import wvw.semweb.codegen.parse.rule.RuleGraph;
+import wvw.semweb.codegen.parse.rule.RuleGraphParser;
+import wvw.semweb.codegen.parse.rule.ann.EventAnnotation;
+import wvw.semweb.codegen.parse.rule.ann.ParameterAnnotation;
+import wvw.semweb.codegen.parse.rule.ann.ParameterAnnotation.ParameterTypes;
+import wvw.semweb.codegen.parse.rule.ann.RuleAnnotation;
+import wvw.semweb.codegen.parse.rule.ann.RuleAnnotation.AnnotationTypes;
+import wvw.semweb.codegen.visit.ModelVisitor;
+import wvw.semweb.codegen.visit.ModelVisitorA;
 import wvw.utils.rdf.NS;
 
 // (major)
@@ -52,7 +53,6 @@ public class ParseModelLogic implements N3EventListener {
 	private static final Logger log = LogManager.getLogger(ParseModelLogic.class);
 
 	private List<N3Rule> parsedRules = new ArrayList<>();
-	private Collection<String> entryPoints = new HashSet<>();
 
 	private CodeModel model = new CodeModel();
 	private CodeLogic logic = new CodeLogic();
@@ -60,10 +60,6 @@ public class ParseModelLogic implements N3EventListener {
 	@Override
 	public void newRule(N3Rule r) {
 		parsedRules.add(r);
-	}
-
-	public Collection<String> getEntryPoints() {
-		return entryPoints;
 	}
 
 	public CodeModel getModel() {
@@ -74,7 +70,7 @@ public class ParseModelLogic implements N3EventListener {
 		return logic;
 	}
 
-	public void parseClassModel(File rulesFile, File ontologyFile, PostprocessTypes... postprocesses)
+	public void parse(File rulesFile, File ontologyFile, PostprocessTypes... postprocesses)
 			throws IOException, URISyntaxException, ParseModelException {
 
 		logic.setRulesName(FilenameUtils.removeExtension(rulesFile.getName()));
@@ -92,80 +88,102 @@ public class ParseModelLogic implements N3EventListener {
 		for (N3Rule r : parsedRules) {
 			log.debug("- parsed rule:\n" + r);
 
-			List<Node> entryTerms = findEntryPoints(r, ruleset);
-			if (entryTerms.isEmpty())
-				throw new ParseModelException("no entry terms found for rule");
+			List<RuleAnnotation> annotations = getRuleAnnotations(r, ruleset);
+			checkAnnotations(annotations, r);
+			logic.getAnnotations().addAll(annotations);
 
-			entryTerms.stream().map(n -> n.getName()).forEach(e -> entryPoints.add(e));
-
-			processRule(r, ontology, entryTerms.toArray(Node[]::new), postprocesses);
+			processRule(r, ontology, annotations, postprocesses);
 		}
 	}
 
-	private List<Node> findEntryPoints(N3Rule r, N3Model ruleset) {
-		List<Node> ret = new ArrayList<>();
+	private List<RuleAnnotation> getRuleAnnotations(N3Rule r, N3Model ruleset) {
+		List<RuleAnnotation> ret = new ArrayList<>();
 
-		ruleset.getGraph().find(r.getBodyNode(), NodeFactory.createURI(NS.toUri("cg:entryPoint")), null)
-				.forEachRemaining(stmt -> {
-					Node n = stmt.getObject();
-					n = r.toRuleVar((Node_QuickVariable) n);
+		ruleset.listStatements(ruleset.asResource(r.getBodyNode()),
+				ruleset.createResource(NS.toUri("cg:functionParam")), (Resource) null).forEachRemaining(
+						stmt -> ret.add(new ParameterAnnotation(getAnnotationNode(stmt, r), ParameterTypes.FUNCTION)));
 
-					ret.add(n);
-				});
+		ruleset.listStatements(ruleset.asResource(r.getBodyNode()), ruleset.createResource(NS.toUri("cg:loadParam")),
+				(Resource) null).forEachRemaining(
+						stmt -> ret.add(new ParameterAnnotation(getAnnotationNode(stmt, r), ParameterTypes.LOAD)));
+
+		ruleset.listStatements(ruleset.asResource(r.getBodyNode()), ruleset.createResource(NS.toUri("cg:event")),
+				(Resource) null).forEachRemaining(stmt -> ret.add(new EventAnnotation(stmt.getObject().asNode())));
 
 		return ret;
 	}
 
-	private void processRule(N3Rule r, N3Model ontology, Node[] entryTerms, PostprocessTypes... postprocesses)
-			throws ParseModelException {
+	private void checkAnnotations(List<RuleAnnotation> annotations, N3Rule r) throws ParseModelException {
+		if (annotations.isEmpty())
+			throw new ParseModelException("no annotations found for rule:\n" + r);
 
-		RuleGraphFactory graphFactory = new RuleGraphFactory();
+		if (annotations.stream().filter(a -> a.getType() == AnnotationTypes.PARAM
+				&& ((ParameterAnnotation) a).getParameterType() == ParameterTypes.LOAD).count() > 1)
 
-		List<Node> allEntries = new ArrayList<>(Arrays.asList(entryTerms));
-		RuleGraph ruleGraph = graphFactory.createGraph(r, allEntries);
+			throw new ParseModelException("only 1 loadParam can be specified for rule:\n" + r);
+
+		if (annotations.stream().filter(a -> a.getType() == AnnotationTypes.EVENT).count() > 1)
+			throw new ParseModelException("only 1 event can be specified for rule:\n" + r);
+	}
+
+	private Node getAnnotationNode(Statement stmt, N3Rule r) {
+		Node o = stmt.getObject().asNode();
+		if (o.isQuickVariable())
+			return r.toRuleVar((Node_QuickVariable) o);
+
+		return o;
+	}
+
+	private void processRule(N3Rule r, N3Model ontology, List<RuleAnnotation> annotations,
+			PostprocessTypes... postprocesses) throws ParseModelException {
+
+		RuleGraphParser ruleParser = new RuleGraphParser();
+
+		RuleGraph ruleGraph = ruleParser.createGraph(r, annotations);
+		annotations.forEach(a -> {
+			if (a.getType() == AnnotationTypes.PARAM)
+				a.setGraphNode(ruleGraph.get(a.getNode()));
+		});
 
 		log.info("> processing new rule");
-		
-		log.info("- rule graph:");
-		log.info(ruleGraph);
-		log.info("");
 
-		List<GraphNode> roots = allEntries.stream().map(t -> ruleGraph.get(t)).collect(Collectors.toList());
-		log.info("\n- roots: " + allEntries);
+		log.info("- rule graph:\n");
+		log.info(ruleGraph + "\n");
+
+		log.info("- annotations: " + annotations);
 
 		ModelVisitor visitor = new ModelVisitorA(ontology);
-		visitor.visit(roots);
+		visitor.visit(ruleGraph);
 
 		CodeModel newModel = visitor.getModel();
-		IfThen newIt = new IfThen(visitor.getCondition(), visitor.getBlock());
 
-		postprocess(newModel, newIt, roots, postprocesses);
+		IfThen newIt = new IfThen(visitor.getCondition(), visitor.getBlock());
+		newIt.addAll(ruleGraph);
+
+		postprocess(newModel, newIt, ruleGraph, postprocesses);
 
 		model.mergeWith(newModel);
 		logic.add(newIt);
 
-		log.info("- code model:");
-		log.info(model);
-		log.info("");
+		log.info("- code model:\n");
+		log.info(model + "\n");
 
 		log.info("- condition:");
-		log.info(visitor.getCondition());
-		log.info("");
+		log.info(visitor.getCondition() + "\n");
 
 		log.info("- code:");
-		log.info(visitor.getBlock());
-		log.info("\n");
+		log.info(visitor.getBlock() + "\n");
 	}
 
-	private void postprocess(CodeModel newModel, IfThen newIt, List<GraphNode> roots,
-			PostprocessTypes... postprocesses) {
+	private void postprocess(CodeModel newModel, IfThen newIt, RuleGraph ruleGraph, PostprocessTypes... postprocesses) {
 
 		// do this by default
-		ModelPostprocessor.create(PostprocessTypes.REMOVE_EXISTS_CHECK_LITERALS).postprocess(newModel, newIt, roots);
+		ModelPostprocessor.create(PostprocessTypes.REMOVE_EXISTS_CHECK_LITERALS).postprocess(newModel, newIt,
+				ruleGraph);
 
 		for (PostprocessTypes type : postprocesses) {
 			log.info("(postprocess: " + type + ")");
-			ModelPostprocessor.create(type).postprocess(newModel, newIt, roots);
+			ModelPostprocessor.create(type).postprocess(newModel, newIt, ruleGraph);
 		}
 	}
 }

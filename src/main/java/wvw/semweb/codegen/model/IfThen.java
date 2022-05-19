@@ -1,6 +1,8 @@
 package wvw.semweb.codegen.model;
 
-public class IfThen implements CodeStatement {
+import wvw.semweb.codegen.parse.rule.ann.Annotated;
+
+public class IfThen extends Annotated implements CodeStatement {
 
 	private Condition cond;
 	private CodeStatement then;

@@ -2,7 +2,6 @@ package wvw.semweb.codegen.gen;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collection;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
@@ -51,8 +50,7 @@ public abstract class GenerateCode {
 		return null;
 	}
 
-	public abstract void generate(CodeModel model, CodeLogic logic, Collection<String> entryPoints, File output)
-			throws IOException;
+	public abstract void generate(CodeModel model, CodeLogic logic, File output) throws IOException;
 
 	protected boolean isInitField(ModelProperty prp, ModelStruct ofStruct) {
 		return includeField(prp, ofStruct) && !prp.requiresArray();

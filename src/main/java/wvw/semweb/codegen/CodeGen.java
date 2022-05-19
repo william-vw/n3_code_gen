@@ -14,7 +14,7 @@ public class CodeGen {
 	private static final Logger log = LogManager.getLogger(CodeGen.class);
 
 	public static void main(String[] args) throws Exception {
-		generateCode(new File("diabetes-iot.n3"), new File("DMTO2.n3"), new File("src/main/resources/out"),
+		generateCode(new File("diabetes-iot-2.n3"), new File("DMTO2.n3"), new File("src/main/resources/out"),
 				CodeTypes.SOLIDITY);
 	}
 
@@ -24,7 +24,7 @@ public class CodeGen {
 		log.info("-- parsing model and logic");
 
 		ParseModelLogic parser = new ParseModelLogic();
-		parser.parseClassModel(ruleFile, ontologyFile, codeType.getRequirements());
+		parser.parse(ruleFile, ontologyFile, codeType.getRequirements());
 
 		log.info("\n");
 		log.info("-- generating code");
@@ -32,7 +32,7 @@ public class CodeGen {
 		GenerateCode genCode = GenerateCode.create(codeType);
 
 		outFile = new File(outFile.getParentFile(), outFile.getName() + "." + codeType.getExt());
-		genCode.generate(parser.getModel(), parser.getLogic(), parser.getEntryPoints(), outFile);
+		genCode.generate(parser.getModel(), parser.getLogic(), outFile);
 
 		log.info("\ncode written to: " + outFile.getAbsolutePath());
 	}

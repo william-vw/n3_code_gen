@@ -14,7 +14,7 @@ import wvw.semweb.codegen.model.IfThen;
 import wvw.semweb.codegen.model.NodePath;
 import wvw.semweb.codegen.model.Variable;
 import wvw.semweb.codegen.model.struct.CodeModel;
-import wvw.semweb.codegen.rule.GraphNode;
+import wvw.semweb.codegen.parse.rule.RuleGraph;
 
 public class InsertStructExistsCheck extends ModelPostprocessor {
 
@@ -26,7 +26,7 @@ public class InsertStructExistsCheck extends ModelPostprocessor {
 	// intermediary assignments (i.e., not for the last assignment))
 
 	@Override
-	public void postprocess(CodeModel model, IfThen it, List<GraphNode> roots) {
+	public void postprocess(CodeModel model, IfThen it, RuleGraph ruleGraph) {
 		// TODO currently only blocks will be created for create-struct assignment
 		// blocks; should somehow tag these blocks for extensibility ..
 

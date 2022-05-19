@@ -2,7 +2,6 @@ package wvw.semweb.codegen.gen;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collection;
 import java.util.stream.Collectors;
 
 import org.apache.commons.text.CaseUtils;
@@ -28,6 +27,7 @@ import wvw.semweb.codegen.model.struct.CodeModel;
 import wvw.semweb.codegen.model.struct.ModelElement;
 import wvw.semweb.codegen.model.struct.ModelProperty;
 import wvw.semweb.codegen.model.struct.ModelStruct;
+import wvw.semweb.codegen.parse.rule.ann.RuleAnnotation.AnnotationTypes;
 
 public class GenerateJavaScript extends GenerateCode {
 
@@ -35,13 +35,15 @@ public class GenerateJavaScript extends GenerateCode {
 	private StringBuffer logic = new StringBuffer();
 
 	@Override
-	public void generate(CodeModel codeModel, CodeLogic codeLogic, Collection<String> entryPoints, File output)
-			throws IOException {
-
+	public void generate(CodeModel codeModel, CodeLogic codeLogic, File output) throws IOException {
 		codeModel.getAllStructs().forEach(s -> genClass(s));
 
-		logic.append("function doSomething(").append(entryPoints.stream().collect(Collectors.joining(", ")))
-				.append(") {\n");
+		// also include load-param type (in JS, this is also given as input parameter)
+		String fnParams = codeLogic.getAnnotations()
+				.getAll().stream().filter(a -> a.getType() == AnnotationTypes.PARAM)
+				.map(a -> a.getNode().getName()).collect(Collectors.joining(", "));
+
+		logic.append("function execute(").append(fnParams).append(") {\n");
 
 		String contents = codeLogic.getStatements().stream().map(it -> genStatement(it))
 				.collect(Collectors.joining("\n\n"));

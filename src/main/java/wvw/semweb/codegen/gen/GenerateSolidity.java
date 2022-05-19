@@ -2,8 +2,8 @@ package wvw.semweb.codegen.gen;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collection;
 import java.util.Iterator;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
@@ -33,18 +33,21 @@ import wvw.semweb.codegen.model.struct.ModelElement;
 import wvw.semweb.codegen.model.struct.ModelProperty;
 import wvw.semweb.codegen.model.struct.ModelStruct;
 import wvw.semweb.codegen.model.struct.ModelType;
+import wvw.semweb.codegen.parse.rule.ann.ParameterAnnotation;
+import wvw.semweb.codegen.parse.rule.ann.ParameterAnnotation.ParameterTypes;
+import wvw.semweb.codegen.parse.rule.ann.RuleAnnotation;
+import wvw.semweb.codegen.parse.rule.ann.RuleAnnotation.AnnotationTypes;
 
 public class GenerateSolidity extends GenerateCode {
 
-	private StringBuffer structs = new StringBuffer();
+	private StringBuffer model = new StringBuffer();
 	private StringBuffer logic = new StringBuffer();
 
 	@Override
-	public void generate(CodeModel codeModel, CodeLogic codeLogic, Collection<String> entryPoints, File output)
-			throws IOException {
-
+	public void generate(CodeModel codeModel, CodeLogic codeLogic, File output) throws IOException {
+		generateEventDeclr(codeLogic);
 		generateStructs(codeModel);
-		generateFunction(codeLogic, entryPoints);
+		generateFunction(codeModel, codeLogic);
 
 		StringBuffer out = new StringBuffer();
 		// @formatter:off
@@ -56,21 +59,15 @@ public class GenerateSolidity extends GenerateCode {
 		out.append("contract ").append(contractName(codeLogic.getRulesName())).append(" {\n");
 		
 		StringBuffer contents = new StringBuffer()
-			.append("// Declares a state variable `message` of type `string`.\n")
-			.append("// State variables are variables whose values are permanently stored in contract storage. The keyword `public` makes variables accessible from outside a contract and creates a function that other contracts or clients can call to access the value.\n")
 			.append("string public message;\n\n")
-			.append("// Similar to many class-based object-oriented languages, a constructor is a special function that is only executed upon contract creation.\n")
-			.append("// Constructors are used to initialize the contract's data. Learn more:https://solidity.readthedocs.io/en/v0.5.10/contracts.html#constructors\n")
-			.append("constructor(string memory initMessage) {\n\n")
-			.append("	// Accepts a string argument `initMessage` and sets the value into the contract's `message` storage variable).\n")
+			.append("constructor(string memory initMessage) {\n")
 			.append("	message = initMessage;\n")
 			.append("}");
 		contents.append("\n\n");
 		
-		contents.append(structs).append("\n\n").append(logic).append("\n\n");
+		contents.append(model).append("\n\n").append(logic).append("\n\n");
 		
-		contents.append("// A public function that accepts a string argument and updates the `message` storage variable.\n")
-			.append("function update(string memory newMessage) public {\n")
+		contents.append("function update(string memory newMessage) public {\n")
 			.append("	message = newMessage;\n")
 			.append("}");
 		// @formatter:on
@@ -85,13 +82,42 @@ public class GenerateSolidity extends GenerateCode {
 		IOUtils.writeToFile(out.toString(), output);
 	}
 
+	private void generateEventDeclr(CodeLogic codeLogic) {
+		String eventStr = codeLogic.getAnnotations().getAll().stream().filter(a -> a.getType() == AnnotationTypes.EVENT)
+				.map(e -> "event " + e.getNode().getLocalName() + "(uint time);\n").collect(Collectors.joining(""));
+
+		if (!eventStr.isEmpty())
+			model.append("\n").append(eventStr);
+	}
+
 	private void generateStructs(CodeModel codeModel) {
 		codeModel.getAllStructs().forEach(s -> genStruct(s));
 	}
 
-	private void generateFunction(CodeLogic codeLogic, Collection<String> entryPoints) {
-		logic.append("function doSomething(").append(entryPoints.stream().collect(Collectors.joining(", ")))
-				.append(") {\n");
+	private void generateFunction(CodeModel codeModel, CodeLogic codeLogic) {
+		Optional<RuleAnnotation> loadParam = codeLogic.getAnnotations().getAll().stream()
+				.filter(a -> a.getType() == AnnotationTypes.PARAM
+						&& ((ParameterAnnotation) a).getParameterType() == ParameterTypes.LOAD)
+				.findFirst();
+
+		if (loadParam.isPresent()) {
+			String name = loadParam.get().getNode().getName() + "s";
+			String type = structName(codeModel.getStruct(loadParam.get().getGraphNode()));
+
+			logic.append("\nmapping(address => ").append(type).append(") ").append(name).append(";\n\n");
+		}
+
+		String fnParams = codeLogic.getAnnotations().getAll().stream().filter(a -> a.getType() == AnnotationTypes.PARAM)
+				.map(a -> (ParameterAnnotation) a).filter(a -> a.getParameterType() == ParameterTypes.FUNCTION)
+				.map(a -> structName(codeModel.getStruct(a.getGraphNode())) + " memory " + a.getNode().getName())
+				.collect(Collectors.joining(", "));
+
+		logic.append("function execute(").append(fnParams).append(") {\n");
+
+		if (loadParam.isPresent()) {
+			logic.append("\t").append(structName(codeModel.getStruct(loadParam.get().getGraphNode())) + " storage "
+					+ loadParam.get().getNode().getName() + " = patients[msg.sender];\n\n");
+		}
 
 		String contents = codeLogic.getStatements().stream().map(it -> genStatement(it))
 				.collect(Collectors.joining("\n\n"));
@@ -148,10 +174,10 @@ public class GenerateSolidity extends GenerateCode {
 		switch (cmp.getCmp()) {
 
 		case EX:
-			part2 = genCmp(Comparators.NEQ) + " " + "0";
-			break;
+			return genOperand(cmp.getOp1()) + ".exists";
 
 		case NEX:
+			// TODO
 			part2 = genCmp(Comparators.EQ) + " " + "0";
 			break;
 
@@ -160,24 +186,22 @@ public class GenerateSolidity extends GenerateCode {
 			break;
 		}
 
+		String op1 = genOperand(cmp.getOp1());
+
 		if (Util.involvesArrayCheck(cmp.getOp1())) {
 			NodePath path = (NodePath) cmp.getOp1();
-
-			String subPath = genOperand(path.subPath(path.size() - 1));
 			ModelProperty lastPrp = path.getPath().getLast();
 
-			if (lastPrp.isTypePrp())
-				return subPath + "[" + op2 + "].exists";
+			if (lastPrp.isTypePrp()) {
+				// don't include the 'type' property
+				// type will have already been used to index the mapping (see #fieldName)
+				String subPath = genOperand(path.subPath(path.size() - 1));
 
-			else {
-				log.error("unsupported property for contains: " + fieldName(lastPrp));
-				return "null";
+				return subPath + ".exists";
 			}
-
-		} else {
-			String op1 = genOperand(cmp.getOp1());
-			return op1 + " " + part2;
 		}
+
+		return op1 + " " + part2;
 	}
 
 	private String genIfThen(IfThen ifThen) {
@@ -191,7 +215,14 @@ public class GenerateSolidity extends GenerateCode {
 		// add extra newline after conditions
 		if (ifThen.getCondition().getConditionType() == Conditions.CONJ)
 			ret += "\n";
-		ret += thenContents + "\n}";
+		ret += thenContents + "\n";
+
+		if (ifThen.has(AnnotationTypes.EVENT)) {
+			RuleAnnotation event = ifThen.get(AnnotationTypes.EVENT).iterator().next();
+			ret += "\n\temit " + event.getNode().getLocalName() + "(block.timestamp);\n";
+		}
+
+		ret += "}";
 
 		return ret;
 	}
@@ -290,8 +321,17 @@ public class GenerateSolidity extends GenerateCode {
 		case NODE_PATH:
 			NodePath np = (NodePath) op;
 
-			return genOperand(np.getStart()) + (!np.getPath().isEmpty() ? "." : "")
-					+ np.getPath().stream().map(p -> fieldName(p)).collect(Collectors.joining("."));
+			return genOperand(np.getStart()) + (!np.getPath().isEmpty() ? "." : "") + np.getPath().stream().map(p -> {
+				if (p.requiresArray()) {
+					if (p.hasKeyType())
+						return fieldName(p) + "[" + genOperand(p.getKeyType()) + "]";
+					else
+						log.error("found array-like property without type key for indexing: " + p);
+				}
+
+				return fieldName(p);
+
+			}).collect(Collectors.joining("."));
 
 		default:
 			return null;
@@ -322,47 +362,47 @@ public class GenerateSolidity extends GenerateCode {
 	}
 
 	private void genStruct(ModelStruct struct) {
-		if (!structs.isEmpty())
-			structs.append("\n\n");
+		if (!model.isEmpty())
+			model.append("\n\n");
 
 		// add any required enum to keep types & uris
 
 		Iterator<ModelElement> cnsts = struct.getConstants();
 		if (cnsts.hasNext()) {
 			String enumName = enumName(struct);
-			structs.append("enum ").append(enumName).append("{ ");
+			model.append("enum ").append(enumName).append("{ ");
 
 			int cnt = 0;
 			while (cnsts.hasNext()) {
 				if (cnt++ > 0)
-					structs.append(", ");
+					model.append(", ");
 
 				ModelElement cnst = cnsts.next();
-				structs.append(enumFieldName(cnst));
+				model.append(enumFieldName(cnst));
 			}
 
-			structs.append(" }");
-			structs.append("\n\n");
+			model.append(" }");
+			model.append("\n\n");
 		}
 
 		// add the actual struct
 
-		structs.append("struct ").append(structName(struct)).append(" {\n");
+		model.append("struct ").append(structName(struct)).append(" {\n");
 
 		for (ModelProperty prp : struct.getProperties())
 			genField(prp, struct);
 
 		// yes this is actually needed
-		structs.append("\tbool exists;\n");
+		model.append("\tbool exists;\n");
 
-		structs.append("}");
+		model.append("}");
 	}
 
 	private void genField(ModelProperty prp, ModelStruct ofStruct) {
 		if (!includeField(prp, ofStruct))
 			return;
 
-		structs.append("\t");
+		model.append("\t");
 
 		String typeName = null;
 
@@ -390,14 +430,14 @@ public class GenerateSolidity extends GenerateCode {
 			else
 				keyName = solDatatype(target.getDataType());
 
-			structs.append("mapping(").append(keyName).append(" => ").append(typeName).append(")");
+			model.append("mapping(").append(keyName).append(" => ").append(typeName).append(")");
 
 		} else
-			structs.append(typeName);
+			model.append(typeName);
 
-		structs.append(" ").append(fieldName(prp));
+		model.append(" ").append(fieldName(prp));
 
-		structs.append(";\n");
+		model.append(";\n");
 	}
 
 	private String contractName(String name) {
@@ -409,7 +449,7 @@ public class GenerateSolidity extends GenerateCode {
 	}
 
 	private String enumName(ModelStruct struct) {
-		return structName(struct) + "Constants";
+		return structName(struct) + "s";
 	}
 
 	private String fieldName(ModelProperty prp) {

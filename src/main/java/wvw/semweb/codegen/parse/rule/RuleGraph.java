@@ -1,4 +1,4 @@
-package wvw.semweb.codegen.rule;
+package wvw.semweb.codegen.parse.rule;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -9,7 +9,9 @@ import java.util.stream.Collectors;
 
 import org.apache.jen3.graph.Node;
 
-public class RuleGraph {
+import wvw.semweb.codegen.parse.rule.ann.Annotated;
+
+public class RuleGraph extends Annotated {
 
 	public static enum ClauseTypes {
 		BODY, HEAD
@@ -18,10 +20,11 @@ public class RuleGraph {
 	private Map<Node, GraphNode> termNode = new HashMap<>();
 	private Set<Node> roots = new HashSet<>();
 
+
 	public boolean contains(Node term) {
 		return termNode.containsKey(term);
 	}
-	
+
 	public GraphNode get(Node term) {
 		return termNode.get(term);
 	}
@@ -53,6 +56,10 @@ public class RuleGraph {
 
 	public Collection<Node> getRoots() {
 		return roots;
+	}
+
+	public Collection<GraphNode> getGraphRoots() {
+		return roots.stream().map(r -> get(r)).collect(Collectors.toList());
 	}
 
 	@Override
