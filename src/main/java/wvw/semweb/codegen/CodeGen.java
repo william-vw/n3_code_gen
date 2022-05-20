@@ -39,6 +39,12 @@ public class CodeGen {
 	private static final Logger log = LogManager.getLogger(CodeGen.class);
 
 	public static void main(String[] args) throws Exception {
+//		generateCode(new File("diabetes-iot-1.n3"), new File("DMTO2.n3"), new File("src/main/resources/"),
+//				CodeTypes.SOLIDITY);
+//		generateCode(new File("diabetes-iot-2.n3"), new File("DMTO2.n3"), new File("src/main/resources/"),
+//				CodeTypes.SOLIDITY);
+//		generateCode(new File("diabetes-iot-3.n3"), new File("DMTO2.n3"), new File("src/main/resources/"),
+//				CodeTypes.SOLIDITY);
 		generateCode(new File("diabetes-iot-4.n3"), new File("DMTO2.n3"), new File("src/main/resources/"),
 				CodeTypes.SOLIDITY);
 	}

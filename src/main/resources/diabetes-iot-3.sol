@@ -37,7 +37,7 @@ contract DiabetesIot3 {
 	
 	mapping(address => Patient) patients;
 	
-	function execute(BloodPressure memory dias, BloodPressure memory sys) {
+	function execute(BloodPressure memory sys, BloodPressure memory dias) {
 		Patient storage patient = patients[msg.sender];
 	
 		if (sys.hasType == BloodPressures.SystolicBloodPressure
@@ -45,8 +45,8 @@ contract DiabetesIot3 {
 			&& dias.hasType == BloodPressures.DiastolicBloodPressure
 			&& dias.hasQuantitativeValue > 80) {
 		
-			TreatmentSubplan memory v0 = TreatmentSubplan({ hasType: TreatmentSubplans.LifestyleSubplan, label: "weight loss if indicated, \n            a Dietary Approaches to Stop Hypertension (DASH)-style eating pattern, \n            including reducing sodium and increasing potassium intake, moderation of alcohol intake, \n            and increased physical activity.", exists: true });
-			patient.hasPart[v0.hasType] = v0;
+			TreatmentSubplan memory v4 = TreatmentSubplan({ hasType: TreatmentSubplans.LifestyleSubplan, label: "weight loss if indicated, \n            a Dietary Approaches to Stop Hypertension (DASH)-style eating pattern, \n            including reducing sodium and increasing potassium intake, moderation of alcohol intake, \n            and increased physical activity.", exists: true });
+			patient.hasPart[v4.hasType] = v4;
 		
 			emit NewTreatmentSubPlan(block.timestamp);
 		}
@@ -56,8 +56,8 @@ contract DiabetesIot3 {
 			&& dias.hasType == BloodPressures.DiastolicBloodPressure
 			&& dias.hasQuantitativeValue > 80) {
 		
-			TreatmentSubplan memory v1 = TreatmentSubplan({ hasType: TreatmentSubplans.DrugSubplan, label: "in addition to lifestyle therapy, \n        have prompt initiation and timely titration of pharmacologic therapy \n        to achieve blood pressure goals", exists: true });
-			patient.hasPart[v1.hasType] = v1;
+			TreatmentSubplan memory v5 = TreatmentSubplan({ hasType: TreatmentSubplans.DrugSubplan, label: "in addition to lifestyle therapy, \n        have prompt initiation and timely titration of pharmacologic therapy \n        to achieve blood pressure goals", exists: true });
+			patient.hasPart[v5.hasType] = v5;
 		
 			emit NewTreatmentSubPlan(block.timestamp);
 		}

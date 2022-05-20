@@ -9,7 +9,12 @@ contract DiabetesIot4 {
 		message = initMessage;
 	}
 	
+	
+	event RecommendDiabetesScreening(uint time);
+	
+	
 	struct Patient {
+		mapping(Recommendations => Recommendation) recommendTest;
 		Ethnicity hasEthnicity;
 		PatientProfile hasPatientProfile;
 		mapping(DiabetesPhysicalExaminations => DiabetesPhysicalExamination) hasPhysicalExamination;
@@ -41,6 +46,13 @@ contract DiabetesIot4 {
 	
 	struct PatientProfile {
 		Ethnicity hasEthnicity;
+		bool exists;
+	}
+	
+	enum Recommendations{ DiabetesScreening }
+	
+	struct Recommendation {
+		Recommendations hasType;
 		bool exists;
 	}
 	
@@ -77,6 +89,16 @@ contract DiabetesIot4 {
 		
 			Ethnicity memory v2 = Ethnicity({ hasType: Ethnicities.HighRiskEthnicity, exists: true });
 			patient.hasPatientProfile.hasEthnicity = v2;
+		}
+		
+		if (patient.hasEthnicity.exists
+			&& patient.hasEthnicity.hasType == Ethnicities.HighRiskEthnicity
+			&& patient.hasDemographic[PatientDemographics.Overweight].exists) {
+		
+			Recommendation memory v3 = Recommendation({ hasType: Recommendations.DiabetesScreening, exists: true });
+			patient.recommendTest[v3.hasType] = v3;
+		
+			emit RecommendDiabetesScreening(block.timestamp);
 		}
 	}
 	
