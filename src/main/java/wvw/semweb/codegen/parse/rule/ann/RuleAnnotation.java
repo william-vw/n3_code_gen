@@ -4,8 +4,6 @@ import java.util.Objects;
 
 import org.apache.jen3.graph.Node;
 
-import wvw.semweb.codegen.parse.rule.GraphNode;
-
 public class RuleAnnotation {
 
 	public static enum AnnotationTypes {
@@ -13,7 +11,6 @@ public class RuleAnnotation {
 	}
 
 	protected Node node;
-	protected GraphNode graphNode;
 
 	protected AnnotationTypes type;
 
@@ -24,14 +21,6 @@ public class RuleAnnotation {
 
 	public Node getNode() {
 		return node;
-	}
-
-	public GraphNode getGraphNode() {
-		return graphNode;
-	}
-
-	public void setGraphNode(GraphNode graphNode) {
-		this.graphNode = graphNode;
 	}
 
 	public AnnotationTypes getType() {

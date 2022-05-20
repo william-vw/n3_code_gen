@@ -14,32 +14,32 @@ import wvw.semweb.codegen.parse.ParseModelLogic;
 // TODO in JS, use same mapping solution as in solidity
 // ("some" solution doesn't work)
 
-// TODO assuming that the rule ordering reflects the chaining sequence
+//TODO should add all sub-types of a given type as constants
+//(input data could have any of those sub-types)
+//(see ModelVisitorA#doVisit)
 
-// TODO should add all sub-types of a given type as constants
-// (input data could have any of those sub-types)
-// (see ModelVisitorA#doVisit)
+//TODO limitations of struct merging for solidity: 
+//combination of lifestyle with drug subplans will likely not work
+
+// TODO assuming that the rule ordering reflects the chaining sequence
 
 // TODO can only create new struct with *non* array-like properties
 // (e.g., try DrugSubPlan; remove functional property type)
 // (in solidity: "TypeError: Struct containing a (nested) mapping cannot be constructed")
-
-// TODO limitations of struct merging for solidity: 
-// combination of lifestyle with drug subplans will likely not work
 
 //(minor)
 
 //TODO properly parametrize ModelVisitorImpl code (e.g., CodeLogicVisitor, CodeModelVisitor)
 
 //TODO post-processing where structs sharing a (non-trivial) superclass (i.e., not owl:Thing, entity, ..)
-//are merged together
+// are merged together
 
 public class CodeGen {
 
 	private static final Logger log = LogManager.getLogger(CodeGen.class);
 
 	public static void main(String[] args) throws Exception {
-		generateCode(new File("diabetes-iot-1.n3"), new File("DMTO2.n3"), new File("src/main/resources/"),
+		generateCode(new File("diabetes-iot-4.n3"), new File("DMTO2.n3"), new File("src/main/resources/"),
 				CodeTypes.SOLIDITY);
 	}
 

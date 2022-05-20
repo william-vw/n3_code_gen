@@ -3,7 +3,7 @@ package wvw.semweb.codegen.model;
 public abstract class Condition implements CodeStatement {
 
 	public enum Conditions {
-		CONJ, CMP
+		CONJ, DISJ, CMP
 	}
 
 	@Override

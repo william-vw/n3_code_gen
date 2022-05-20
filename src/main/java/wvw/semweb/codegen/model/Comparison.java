@@ -3,7 +3,7 @@ package wvw.semweb.codegen.model;
 public class Comparison extends Condition {
 
 	public static enum Comparators {
-		LT, LE, EQ, GT, GE, NEQ, NGT, NLT, EX, NEX
+		LT, LE, EQ, GT, GE, NEQ, NGT, NLT, EX, NEX, ONE_OF;
 	}
 
 	private Operand op1;

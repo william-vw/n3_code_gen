@@ -11,15 +11,9 @@ contract DiabetesIot4 {
 	
 	struct Patient {
 		Ethnicity hasEthnicity;
-		mapping(PatientDemographics => PatientDemographic) hasDemographic;
+		PatientProfile hasPatientProfile;
 		mapping(DiabetesPhysicalExaminations => DiabetesPhysicalExamination) hasPhysicalExamination;
-		bool exists;
-	}
-	
-	enum PatientDemographics{ Overweight }
-	
-	struct PatientDemographic {
-		PatientDemographics hasType;
+		mapping(PatientDemographics => PatientDemographic) hasDemographic;
 		bool exists;
 	}
 	
@@ -31,10 +25,22 @@ contract DiabetesIot4 {
 		bool exists;
 	}
 	
-	enum Ethnicities{ AsianAmerican }
+	enum Ethnicities{ HighRiskEthnicity, PacificIslander, AfricanAmerican, AsianAmerican, Latino, NativeAmerican }
 	
 	struct Ethnicity {
 		Ethnicities hasType;
+		bool exists;
+	}
+	
+	enum PatientDemographics{ Overweight }
+	
+	struct PatientDemographic {
+		PatientDemographics hasType;
+		bool exists;
+	}
+	
+	struct PatientProfile {
+		Ethnicity hasEthnicity;
 		bool exists;
 	}
 	
@@ -59,6 +65,18 @@ contract DiabetesIot4 {
 		
 			PatientDemographic memory v1 = PatientDemographic({ hasType: PatientDemographics.Overweight, exists: true });
 			patient.hasDemographic[v1.hasType] = v1;
+		}
+		
+		if (patient.hasPatientProfile.exists
+			&& patient.hasPatientProfile.hasEthnicity.exists
+			&& (patient.hasPatientProfile.hasEthnicity.hasType == Ethnicities.AfricanAmerican
+			|| patient.hasPatientProfile.hasEthnicity.hasType == Ethnicities.Latino
+			|| patient.hasPatientProfile.hasEthnicity.hasType == Ethnicities.NativeAmerican
+			|| patient.hasPatientProfile.hasEthnicity.hasType == Ethnicities.AsianAmerican
+			|| patient.hasPatientProfile.hasEthnicity.hasType == Ethnicities.PacificIslander)) {
+		
+			Ethnicity memory v2 = Ethnicity({ hasType: Ethnicities.HighRiskEthnicity, exists: true });
+			patient.hasPatientProfile.hasEthnicity = v2;
 		}
 	}
 	

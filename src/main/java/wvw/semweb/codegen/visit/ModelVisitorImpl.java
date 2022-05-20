@@ -14,20 +14,25 @@ import org.apache.jen3.graph.Node;
 import org.apache.jen3.graph.Node_Literal;
 import org.apache.jen3.graph.Node_URI;
 import org.apache.jen3.graph.Node_Variable;
+import org.apache.jen3.graph.n3.Node_Collection;
 import org.apache.jen3.n3.N3Model;
 import org.apache.jen3.rdf.model.Resource;
 import org.apache.jen3.reasoner.rulesys.Node_RuleVariable;
+import org.apache.jen3.vocabulary.N3List;
 import org.apache.jen3.vocabulary.N3Log;
 import org.apache.jen3.vocabulary.N3Math;
 import org.apache.jen3.vocabulary.OWL;
 import org.apache.jen3.vocabulary.RDF;
 import org.apache.jen3.vocabulary.RDFS;
 
+import wvw.semweb.codegen.gen.Util;
 import wvw.semweb.codegen.model.Assignment;
 import wvw.semweb.codegen.model.Block;
 import wvw.semweb.codegen.model.Comparison;
 import wvw.semweb.codegen.model.Comparison.Comparators;
+import wvw.semweb.codegen.model.Condition;
 import wvw.semweb.codegen.model.CreateStruct;
+import wvw.semweb.codegen.model.Disjunction;
 import wvw.semweb.codegen.model.Literal;
 import wvw.semweb.codegen.model.NodePath;
 import wvw.semweb.codegen.model.StructConstant;
@@ -58,15 +63,17 @@ public class ModelVisitorImpl extends ModelVisitor {
 		}
 	}
 
-	private ModelType constructModel(GraphNode node, Set<GraphNode> found) throws VisitModelException {
-		if (found.contains(node))
+	private ModelType constructModel(GraphNode gnode, Set<GraphNode> found) throws VisitModelException {
+		if (found.contains(gnode))
 			return null;
 
-		found.add(node);
+		found.add(gnode);
+
+		Node node = (Node) gnode.getId();
 
 		// - literal node
-		if (node.getId() instanceof Node_Literal) {
-			Node_Literal nl = (Node_Literal) node.getId();
+		if (node instanceof Node_Literal) {
+			Node_Literal nl = (Node_Literal) node;
 
 			// return literal's datatype as target for prior property
 			// (assumed this is an end-point in model)
@@ -75,17 +82,17 @@ public class ModelVisitorImpl extends ModelVisitor {
 
 		// - get the node's type(s) based on the domains and ranges of outgoing,
 		// incoming properties from the rule graph
-		List<Resource> nodeTypes = getNodeTypes(node);
+		List<Resource> nodeTypes = getNodeTypes(gnode);
 
 //		log.debug("\nfrom? " + from);
 //		log.debug("node? " + node);
 //		log.debug("found ontology types: " + nodeTypes);
 
 		if (nodeTypes.size() > 1)
-			log.warn("found multiple domain/range types for node " + node.getId() + " (using first one): " + nodeTypes);
+			log.warn("found multiple domain/range types for node " + node + " (using first one): " + nodeTypes);
 
 		else if (nodeTypes.size() == 0)
-			throw new VisitModelException("did not find any domains/ranges or super-types for node: " + node.getId());
+			throw new VisitModelException("did not find any domains/ranges or super-types for node: " + node);
 
 		Resource nodeType = nodeTypes.get(0);
 
@@ -107,18 +114,18 @@ public class ModelVisitorImpl extends ModelVisitor {
 
 		// add a new struct to our model
 		// (or get previously created one)
-		ModelStruct modelStruct = model.getOrCreateStruct(nodeType.getLocalName(), node);
+		ModelStruct modelStruct = model.getOrCreateStruct(Util.localName(nodeType), node);
 		loadAnnotations(nodeType.getURI(), modelStruct);
 
 		// return struct as target
 		ret = new ModelType(modelStruct);
 
 		// -- URI node
-		if (node.getId() instanceof Node_URI)
+		if (node instanceof Node_URI)
 			// add as constant to our struct
-			addConstant((Node_URI) node.getId(), true, modelStruct);
+			addConstant((Node_URI) node, true, modelStruct);
 
-		for (GraphEdge edge : node.getOut()) {
+		for (GraphEdge edge : gnode.getOut()) {
 //			log.info("edge? " + node.getId() + " -> " + edge.getId());
 
 			GraphNode target = edge.getTarget();
@@ -130,7 +137,7 @@ public class ModelVisitorImpl extends ModelVisitor {
 				Node_URI typeUri = (Node_URI) target.getId();
 
 				// e.g., Patient struct with 'patient' type doesn't make a lot of sense
-				if (!typeUri.getLocalName().equals(modelStruct.getName()))
+				if (!Util.localName(typeUri).equals(modelStruct.getName()))
 
 					// add as constant to our struct
 					addConstant(typeUri, false, modelStruct);
@@ -144,16 +151,31 @@ public class ModelVisitorImpl extends ModelVisitor {
 
 				if (toUriComparator(edge) != null) {
 
-					// if the target is concrete, add those as values in the struct
-					if (target.getId() instanceof Node_URI) {
-						addConstant((Node_URI) target.getId(), true, modelStruct);
+					// TODO likely no longer needed if we add all values from ontology
 
-						model.setStruct(target, modelStruct);
+					// if the target is concrete, add those as values in the struct
+
+					// -- individual URI
+					if (target.getId() instanceof Node_URI) {
+						Node_URI targetUri = (Node_URI) target.getId();
+
+						addConstant(targetUri, true, modelStruct);
+						model.setStruct(targetUri, modelStruct);
+
+						// -- collection of URIs
+					} else if (target.getId() instanceof Node_Collection) {
+						Node_Collection coll = (Node_Collection) target.getId();
+						coll.getElements().forEach(el -> {
+							if (el instanceof Node_URI) {
+								addConstant((Node_URI) el, true, modelStruct);
+								model.setStruct(el, modelStruct);
+							}
+						});
 					}
 
 				} else {
 					// -- regular property
-					ModelProperty modelPrp = new ModelProperty(nodePrp.getLocalName());
+					ModelProperty modelPrp = new ModelProperty(Util.localName(nodePrp));
 					loadAnnotations(nodePrp.getURI(), modelPrp);
 					loadCardinality(nodePrp.getURI(), modelPrp);
 
@@ -172,22 +194,24 @@ public class ModelVisitorImpl extends ModelVisitor {
 		return ret;
 	}
 
-	private void constructLogic(GraphNode node, GraphEdge from, NodePath path, Set<GraphNode> found)
+	private void constructLogic(GraphNode gnode, GraphEdge from, NodePath path, Set<GraphNode> found)
 			throws VisitModelException {
 
-		if (found.contains(node))
+		if (found.contains(gnode))
 			return;
 
-		found.add(node);
+		found.add(gnode);
 
 		ClauseTypes clauseType = (from != null ? (ClauseTypes) from.getData() : ClauseTypes.BODY);
 
+		Node node = (Node) gnode.getId();
+
 		// - literal node
-		if (node.getId() instanceof Node_Literal) {
-			Node_Literal nl = (Node_Literal) node.getId();
+		if (node instanceof Node_Literal) {
+			Node_Literal nl = (Node_Literal) node;
 
 			Literal lit = new Literal(nl.getLiteralValue());
-			literalNode(node, from, path, clauseType, lit);
+			literalNode(gnode, from, path, clauseType, lit);
 		}
 
 		ModelStruct modelStruct = model.getStruct(node);
@@ -195,17 +219,28 @@ public class ModelVisitorImpl extends ModelVisitor {
 		// - object type
 		// (else: literal datatype)
 
-		if (modelStruct != null) {
+		// -- URI node
+		if (node instanceof Node_URI) {
+			if (modelStruct != null) {
+				Node_URI valueUri = (Node_URI) node;
+				ModelElement value = modelStruct.getConstant(Util.localName(valueUri));
 
-			// -- URI node
-			if (node.getId() instanceof Node_URI) {
-				Node_URI valueUri = (Node_URI) node.getId();
-				ModelElement value = modelStruct.getConstant(valueUri.getLocalName());
+				constantNode(gnode, from, path, clauseType, modelStruct, value);
+			}
 
-				constantNode(node, from, path, clauseType, modelStruct, value);
+			// -- collection node
+		} else if (node instanceof Node_Collection) {
+			Node_Collection coll = (Node_Collection) node;
 
-				// -- variable node
-			} else {
+			if (clauseType != ClauseTypes.BODY)
+				throw new VisitModelException("currently, collections are only supported in rule body");
+
+			constantDisjNode(coll, from, path);
+
+			// -- variable node
+		} else {
+			if (modelStruct != null) {
+
 				switch (clauseType) {
 
 				case BODY:
@@ -216,12 +251,10 @@ public class ModelVisitorImpl extends ModelVisitor {
 					break;
 
 				case HEAD:
-					Node n = (Node) node.getId();
-
 					// if the (original) node is a blank node
 					// (only needed in case of object datatype)
 
-					if (n.isRuleVariable() && ((Node_RuleVariable) n).getOriginal().isBlank()) {
+					if (node.isRuleVariable() && ((Node_RuleVariable) node).getOriginal().isBlank()) {
 						// deal with existentials in rule head (constructors)
 						// (will likely involve updating the path)
 
@@ -239,7 +272,7 @@ public class ModelVisitorImpl extends ModelVisitor {
 		// (needed when dealing w/ array-like properties;
 		// (existence check should come before other conditions)
 
-		List<GraphEdge> sortedEdges = new ArrayList<>(node.getOut());
+		List<GraphEdge> sortedEdges = new ArrayList<>(gnode.getOut());
 		sortedEdges.sort((e1, e2) -> {
 			Node n1 = (Node) e1.getId();
 			if (n1.getURI().equals(RDF.type.getURI()))
@@ -260,8 +293,8 @@ public class ModelVisitorImpl extends ModelVisitor {
 				Node_URI typeUri = (Node_URI) target.getId();
 
 				// e.g., Patient struct with 'patient' type doesn't make a lot of sense
-				if (!typeUri.getLocalName().equals(modelStruct.getName())) {
-					ModelElement type = modelStruct.getConstant(typeUri.getLocalName());
+				if (!Util.localName(typeUri).equals(modelStruct.getName())) {
+					ModelElement type = modelStruct.getConstant(Util.localName(typeUri));
 
 					constantNode(target, edge, path, clauseType2, modelStruct, type);
 				}
@@ -275,7 +308,7 @@ public class ModelVisitorImpl extends ModelVisitor {
 				if (modelStruct != null && toUriComparator(edge) == null) {
 					Node_URI nodePrp = (Node_URI) edge.getId();
 					// (needs to be copied; key-type can be overridden)
-					ModelProperty modelPrp = modelStruct.getProperty(nodePrp.getLocalName()).copy();
+					ModelProperty modelPrp = modelStruct.getProperty(Util.localName(nodePrp)).copy();
 
 					// copy our current path and add this property to it
 					path2 = path.copy();
@@ -291,13 +324,13 @@ public class ModelVisitorImpl extends ModelVisitor {
 	}
 
 	private void addConstant(Node_URI uri, boolean isValue, ModelStruct modelStruct) {
-		ModelElement cnst = new ModelElement(uri.getLocalName());
+		ModelElement cnst = new ModelElement(Util.localName(uri));
 		loadAnnotations(uri.getURI(), cnst);
 
 		// add as constant to our struct
-		if (isValue)
+		if (isValue) {
 			modelStruct.addValue(cnst);
-		else
+		} else
 			modelStruct.addType(cnst);
 	}
 
@@ -432,7 +465,7 @@ public class ModelVisitorImpl extends ModelVisitor {
 				// if not, then we're checking equality with this literal
 				con = new Comparison(path, lit, Comparators.EQ);
 
-			newComparison(con);
+			newCondition(con);
 
 			break;
 
@@ -462,7 +495,7 @@ public class ModelVisitorImpl extends ModelVisitor {
 		StructConstant cnst = new StructConstant(modelStruct, value);
 
 		// type required to index an array-like property
-		// (in subsequent copies of this path: key will be used to index the array)
+		// (in subsequent copies of this path; key will be used to index the array)
 
 		if (path.size() > 0 && path.getLast().requiresArray()) {
 			if (cmp != null)
@@ -476,9 +509,12 @@ public class ModelVisitorImpl extends ModelVisitor {
 			// (this is an endpoint)
 
 			Comparison con = new Comparison(path, Comparators.EX);
-			newComparison(con);
+			newCondition(con);
 
 		} else {
+			// comparing constants:
+			// check "type" of end of current path with given constant
+
 			NodePath path2 = path.copy();
 			path2.add(ModelProperty.typeProperty());
 
@@ -493,7 +529,7 @@ public class ModelVisitorImpl extends ModelVisitor {
 					// if not, then we're checking equality with this uri
 					con = new Comparison(path2, cnst, Comparators.EQ);
 
-				newComparison(con);
+				newCondition(con);
 
 				break;
 
@@ -514,6 +550,34 @@ public class ModelVisitorImpl extends ModelVisitor {
 			throw new VisitModelException("currently assuming that URI nodes are endpoints: " + value);
 	}
 
+	private void constantDisjNode(Node_Collection coll, GraphEdge from, NodePath path) throws VisitModelException {
+		Comparators cmp = toUriComparator(from);
+
+		// only supporting this specific case
+
+		// compare each element of collection as constant:
+		// i.e. check "type" of end of current path with given constant
+
+		if (cmp != Comparators.ONE_OF)
+			throw new VisitModelException("expecting list:in builtin for collection, found: " + from);
+
+		Disjunction disj = new Disjunction();
+		newCondition(disj);
+
+		NodePath path2 = path.copy();
+		path2.add(ModelProperty.typeProperty());
+
+		for (Node el : coll.getElements()) {
+			Node_URI elUri = (Node_URI) el;
+			ModelStruct elStruct = model.getStruct(el);
+
+			ModelElement value = elStruct.getConstant(Util.localName(elUri));
+			StructConstant cnst = new StructConstant(elStruct, value);
+
+			disj.add(new Comparison(path2, cnst, Comparators.EQ));
+		}
+	}
+
 	private void newAssignment(Assignment assn) {
 		if (!newStructs.isEmpty()) {
 			CreateStruct curStruct = newStructs.getLast();
@@ -524,8 +588,8 @@ public class ModelVisitorImpl extends ModelVisitor {
 		}
 	}
 
-	private void newComparison(Comparison con) {
-		cond.add(con);
+	private void newCondition(Condition cond) {
+		this.cond.add(cond);
 	}
 
 	private void loadAnnotations(String uri, ModelElement el) {
@@ -568,7 +632,7 @@ public class ModelVisitorImpl extends ModelVisitor {
 			log.info("found max cardinality for " + uri + ": " + prp.getMaxCardinality());
 	}
 
-	private Comparators toLiteralComparator(GraphEdge edge, Object literal) throws VisitModelException {
+	private Comparators toLiteralComparator(GraphEdge edge, Object literal) {
 		Node_URI node = (Node_URI) edge.getId();
 
 		if (literal instanceof Integer || literal instanceof Double) {
@@ -588,18 +652,24 @@ public class ModelVisitorImpl extends ModelVisitor {
 				return Comparators.NLT;
 			if (node.equals(N3Math.notEqualTo.asNode()))
 				return Comparators.NEQ;
+
+			if (node.equals(N3List.in.asNode()))
+				return Comparators.ONE_OF;
 		}
 
 		return null;
 	}
 
-	private Comparators toUriComparator(GraphEdge edge) throws VisitModelException {
+	private Comparators toUriComparator(GraphEdge edge) {
 		Node_URI node = (Node_URI) edge.getId();
 
 		if (node.equals(N3Log.equalTo.asNode()))
 			return Comparators.EQ;
 		if (node.equals(N3Log.notEqualTo.asNode()))
 			return Comparators.NEQ;
+
+		if (node.equals(N3List.in.asNode()))
+			return Comparators.ONE_OF;
 		else
 			return null;
 	}

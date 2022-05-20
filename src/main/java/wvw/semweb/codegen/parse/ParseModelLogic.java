@@ -130,10 +130,6 @@ public class ParseModelLogic implements N3EventListener {
 		RuleGraphParser ruleParser = new RuleGraphParser();
 
 		RuleGraph ruleGraph = ruleParser.createGraph(r, annotations);
-		annotations.forEach(a -> {
-			if (a.getType() == AnnotationTypes.PARAM)
-				a.setGraphNode(ruleGraph.get(a.getNode()));
-		});
 
 		log.info("> processing new rule");
 

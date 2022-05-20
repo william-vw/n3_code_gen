@@ -7,9 +7,13 @@ import java.util.function.BiConsumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import org.apache.jen3.graph.Node;
+
 import wvw.semweb.codegen.model.Assignment;
 import wvw.semweb.codegen.model.Block;
 import wvw.semweb.codegen.model.Comparison;
+import wvw.semweb.codegen.model.ConditionList;
+import wvw.semweb.codegen.model.Condition;
 import wvw.semweb.codegen.model.Conjunction;
 import wvw.semweb.codegen.model.IfThen;
 import wvw.semweb.codegen.model.NodePath;
@@ -31,9 +35,8 @@ public class MergeStructsWithArraysIntoRoot extends ModelPostprocessor {
 		this.it = it;
 
 		for (GraphNode root : ruleGraph.getGraphRoots()) {
-			ModelStruct struct = model.getStruct(root);
+			ModelStruct struct = model.getStruct((Node) root.getId());
 
-			log.info("got: " + root + " !! " + struct);
 			consumeStructsRecursively(struct, new ArrayList<>(), new ArrayList<>(), mergePred,
 					new MergeConsumer(struct, it));
 		}
@@ -55,7 +58,7 @@ public class MergeStructsWithArraysIntoRoot extends ModelPostprocessor {
 				structPath.clear();
 			}
 		}
-		
+
 		// avoid concurrent modification error
 		List<ModelProperty> curPrps = new ArrayList<>(curStruct.getProperties());
 
@@ -112,17 +115,30 @@ public class MergeStructsWithArraysIntoRoot extends ModelPostprocessor {
 			updateAssignments((Block) it.getThen(), prpPath);
 		}
 
-		private void updateComparisons(Conjunction conj, List<ModelProperty> prpPath) {
-			Iterator<Comparison> condIt = conj.getConditions().iterator();
+		private void updateComparisons(ConditionList list, List<ModelProperty> prpPath) {
+			Iterator<Condition> condIt = list.getConditions().iterator();
 			while (condIt.hasNext()) {
-				Comparison cmp = condIt.next();
+				
+				Condition cond = condIt.next();
+				switch (cond.getConditionType()) {
 
-				if (cmp.getOp1().getType() == Operands.NODE_PATH) {
-					NodePath p = (NodePath) cmp.getOp1();
+				case CONJ:
+				case DISJ:
+					updateComparisons((ConditionList) cond, prpPath);
+					break;
 
-					p.getPath().removeAll(prpPath);
-					if (p.getPath().isEmpty())
-						condIt.remove();
+				case CMP:
+					Comparison cmp = (Comparison) cond;
+
+					if (cmp.getOp1().getType() == Operands.NODE_PATH) {
+						NodePath p = (NodePath) cmp.getOp1();
+
+						p.getPath().removeAll(prpPath);
+						if (p.getPath().isEmpty())
+							condIt.remove();
+					}
+
+					break;
 				}
 			}
 		}

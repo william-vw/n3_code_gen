@@ -20,8 +20,10 @@ import wvw.semweb.codegen.model.Comparison;
 import wvw.semweb.codegen.model.Comparison.Comparators;
 import wvw.semweb.codegen.model.Condition;
 import wvw.semweb.codegen.model.Condition.Conditions;
+import wvw.semweb.codegen.model.ConditionList;
 import wvw.semweb.codegen.model.Conjunction;
 import wvw.semweb.codegen.model.CreateStruct;
+import wvw.semweb.codegen.model.Disjunction;
 import wvw.semweb.codegen.model.IfThen;
 import wvw.semweb.codegen.model.Literal;
 import wvw.semweb.codegen.model.NodePath;
@@ -103,24 +105,24 @@ public class GenerateSolidity extends GenerateCode {
 
 		if (loadParam.isPresent()) {
 			String name = loadParam.get().getNode().getName() + "s";
-			String type = structName(codeModel.getStruct(loadParam.get().getGraphNode()));
+			String type = structName(codeModel.getStruct(loadParam.get().getNode()));
 
 			logic.append("\nmapping(address => ").append(type).append(") ").append(name).append(";\n\n");
 		}
 
 		String fnParams = codeLogic.getAnnotations().getAll().stream().filter(a -> a.getType() == AnnotationTypes.PARAM)
 				.map(a -> (ParameterAnnotation) a).filter(a -> a.getParameterType() == ParameterTypes.FUNCTION)
-				.map(a -> structName(codeModel.getStruct(a.getGraphNode())) + " memory " + a.getNode().getName())
+				.map(a -> structName(codeModel.getStruct(a.getNode())) + " memory " + a.getNode().getName())
 				.collect(Collectors.joining(", "));
 
 		logic.append("function execute(").append(fnParams).append(") {\n");
 
 		if (loadParam.isPresent()) {
-			logic.append("\t").append(structName(codeModel.getStruct(loadParam.get().getGraphNode())) + " storage "
+			logic.append("\t").append(structName(codeModel.getStruct(loadParam.get().getNode())) + " storage "
 					+ loadParam.get().getNode().getName() + " = patients[msg.sender];\n\n");
 		}
 
-		String contents = codeLogic.getStatements().stream().map(it -> genStatement(it))
+		String contents = codeLogic.getStatements().stream().map(it -> genStatement(it, 0))
 				.collect(Collectors.joining("\n\n"));
 		// indent contents of the function
 		contents = "\t" + contents.replace("\n", "\n\t");
@@ -129,14 +131,14 @@ public class GenerateSolidity extends GenerateCode {
 		logic.append("\n}");
 	}
 
-	private String genStatement(CodeStatement stmt) {
+	private String genStatement(CodeStatement stmt, int level) {
 		switch (stmt.getStatementType()) {
 
 		case COND:
-			return genCondition((Condition) stmt);
+			return genCondition((Condition) stmt, level);
 
 		case IF_THEN:
-			return genIfThen((IfThen) stmt);
+			return genIfThen((IfThen) stmt, level);
 
 		case BLOCK:
 			return genBlock((Block) stmt);
@@ -149,11 +151,14 @@ public class GenerateSolidity extends GenerateCode {
 		}
 	}
 
-	private String genCondition(Condition cond) {
+	private String genCondition(Condition cond, int level) {
 		switch (cond.getConditionType()) {
 
 		case CONJ:
-			return genConjunction((Conjunction) cond);
+			return genConjunction((Conjunction) cond, level);
+
+		case DISJ:
+			return genDisjunction((Disjunction) cond, level);
 
 		case CMP:
 			return genComparison((Comparison) cond);
@@ -163,8 +168,22 @@ public class GenerateSolidity extends GenerateCode {
 		}
 	}
 
-	private String genConjunction(Conjunction conj) {
-		return conj.getConditions().stream().map(c -> genCondition(c)).collect(Collectors.joining("\n\t&& "));
+	private String genConjunction(Conjunction conj, int level) {
+		return genConditionList(conj, "&&", level);
+	}
+
+	private String genDisjunction(Disjunction disj, int level) {
+		return genConditionList(disj, "||", level);
+	}
+
+	private String genConditionList(ConditionList list, String conn, int level) {
+		String ret = list.getConditions().stream().map(c -> genCondition(c, level + 1))
+				.collect(Collectors.joining("\n\t" + conn + " "));
+
+		if (level > 0)
+			return "(" + ret + ")";
+		else
+			return ret;
 	}
 
 	private String genComparison(Comparison cmp) {
@@ -191,10 +210,10 @@ public class GenerateSolidity extends GenerateCode {
 		return op1 + " " + part2;
 	}
 
-	private String genIfThen(IfThen ifThen) {
-		String ifContents = genCondition(ifThen.getCondition());
+	private String genIfThen(IfThen ifThen, int level) {
+		String ifContents = genCondition(ifThen.getCondition(), level);
 
-		String thenContents = genStatement(ifThen.getThen());
+		String thenContents = genStatement(ifThen.getThen(), level);
 		// indent 'then' part of the ifThen
 		thenContents = "\t" + thenContents.replace("\n", "\n\t").trim();
 
@@ -217,7 +236,7 @@ public class GenerateSolidity extends GenerateCode {
 	private String genBlock(Block block) {
 		StringBuffer out = new StringBuffer();
 
-		out.append(block.getStatements().stream().map(stmt -> genStatement(stmt)).collect(Collectors.joining("\n")));
+		out.append(block.getStatements().stream().map(stmt -> genStatement(stmt, 0)).collect(Collectors.joining("\n")));
 		if (block.getStatements().size() > 1)
 			out.append("\n");
 
