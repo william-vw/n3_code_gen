@@ -10,6 +10,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.CaseUtils;
 import org.apache.jen3.datatypes.RDFDatatype;
 import org.apache.jen3.util.IOUtils;
+import org.atteo.evo.inflector.English;
 
 import wvw.semweb.codegen.model.Assignment;
 import wvw.semweb.codegen.model.Block;
@@ -318,14 +319,10 @@ public class GenerateSolidity extends GenerateCode {
 			NodePath np = (NodePath) op;
 
 			return genOperand(np.getStart()) + (!np.getPath().isEmpty() ? "." : "") + np.getPath().stream().map(p -> {
-				if (p.requiresArray()) {
-					if (p.hasKeyType())
-						return fieldName(p) + "[" + genOperand(p.getKeyType()) + "]";
-					else
-						log.error("found array-like property without type key for indexing: " + p);
-				}
-
-				return fieldName(p);
+				if (p.requiresArray() && p.hasKeyType())
+					return fieldName(p) + "[" + genOperand(p.getKeyType()) + "]";
+				else
+					return fieldName(p);
 
 			}).collect(Collectors.joining("."));
 
@@ -445,7 +442,7 @@ public class GenerateSolidity extends GenerateCode {
 	}
 
 	private String enumName(ModelStruct struct) {
-		return structName(struct) + "s";
+		return English.plural(structName(struct));
 	}
 
 	private String fieldName(ModelProperty prp) {

@@ -17,6 +17,7 @@ import org.apache.jen3.graph.Node_Variable;
 import org.apache.jen3.n3.N3Model;
 import org.apache.jen3.rdf.model.Resource;
 import org.apache.jen3.reasoner.rulesys.Node_RuleVariable;
+import org.apache.jen3.vocabulary.N3Log;
 import org.apache.jen3.vocabulary.N3Math;
 import org.apache.jen3.vocabulary.OWL;
 import org.apache.jen3.vocabulary.RDF;
@@ -36,7 +37,6 @@ import wvw.semweb.codegen.model.struct.ModelElement;
 import wvw.semweb.codegen.model.struct.ModelProperty;
 import wvw.semweb.codegen.model.struct.ModelStruct;
 import wvw.semweb.codegen.model.struct.ModelType;
-import wvw.semweb.codegen.parse.post.ModelPostprocessor;
 import wvw.semweb.codegen.parse.rule.GraphEdge;
 import wvw.semweb.codegen.parse.rule.GraphNode;
 import wvw.semweb.codegen.parse.rule.RuleGraph;
@@ -50,33 +50,24 @@ public class ModelVisitorA extends ModelVisitor {
 	}
 
 	@Override
-	public void visit(RuleGraph ruleGraph, ModelPostprocessor.PostprocessTypes... postprocesses) {
-		Set<GraphNode> found = new HashSet<>();
-
+	public void visit(RuleGraph ruleGraph) throws VisitModelException {
 		for (GraphNode root : ruleGraph.getGraphRoots()) {
 			Variable start = new Variable(((Node_Variable) root.getId()).getName());
-			doVisit(root, null, new NodePath(start), found);
+
+			constructModel(root, new HashSet<>());
+			constructLogic(root, null, new NodePath(start), new HashSet<>());
 		}
 	}
 
-	private ModelType doVisit(GraphNode node, GraphEdge from, NodePath path, Set<GraphNode> found) {
+	private ModelType constructModel(GraphNode node, Set<GraphNode> found) throws VisitModelException {
 		if (found.contains(node))
 			return null;
 
 		found.add(node);
 
-		ClauseTypes clauseType = null;
-		if (from != null)
-			clauseType = (ClauseTypes) from.getData();
-
-		boolean addedCond = false;
-
 		// - literal node
 		if (node.getId() instanceof Node_Literal) {
 			Node_Literal nl = (Node_Literal) node.getId();
-
-			Literal lit = new Literal(nl.getLiteralValue());
-			literalNode(node, from, path, clauseType, lit);
 
 			// return literal's datatype as target for prior property
 			return new ModelType(nl.getLiteralDatatype());
@@ -93,76 +84,148 @@ public class ModelVisitorA extends ModelVisitor {
 		if (nodeTypes.size() > 1)
 			log.warn("found multiple domain/range types for node " + node.getId() + " (using first one): " + nodeTypes);
 
-		else if (nodeTypes.size() == 0) {
-			log.error("did not find any domains/ranges or super-types for node: " + node.getId());
-			return null;
-		}
-
-		ModelStruct modelStruct = null;
-		ModelType ret = null;
+		else if (nodeTypes.size() == 0)
+			throw new VisitModelException("did not find any domains/ranges or super-types for node: " + node.getId());
 
 		Resource nodeType = nodeTypes.get(0);
 
-		// - node has literal datatype
-		// (but is not an actual literal; likely a variable)
+		// - literal datatype
 		if (nodeType.getURI().startsWith(XSDDatatype.XSD)) {
 			RDFDatatype dt = TypeMapper.getInstance().getTypeByName(nodeType.getURI());
 
-			if (dt == null) {
-				log.error("could not find datatype for XSD range " + nodeType);
-				return null;
+			if (dt == null)
+				throw new VisitModelException("could not find datatype for XSD range " + nodeType);
 
-			} else
-				// return datatype as target
-				// TODO can't we just return directly here?
-				ret = new ModelType(dt);
-
-			// - node has object type
-		} else {
-			String nodeName = nodeType.getLocalName();
-
-			// add a new struct to our model
-			// (or get previously created one)
-			modelStruct = model.getOrCreateStruct(nodeName, node);
-			loadAnnotations(nodeType.getURI(), modelStruct);
-
-			// return struct as target
-			ret = new ModelType(modelStruct);
+			// return datatype as target
+			return new ModelType(dt);
 		}
 
-		// do things with the struct that was (possibly) created above
-		path = structNode(node, from, path, clauseType, nodeType, modelStruct);
+		// - object type
 
-		if (modelStruct != null) {
+		ModelType ret = null;
 
-			// - URI node
-			if (node.getId() instanceof Node_URI) {
-				Node_URI valueUri = (Node_URI) node.getId();
-				ModelElement value = new ModelElement(valueUri.getLocalName());
-				loadAnnotations(valueUri.getURI(), value);
+		// add a new struct to our model
+		// (or get previously created one)
+		ModelStruct modelStruct = model.getOrCreateStruct(nodeType.getLocalName(), node);
+		loadAnnotations(nodeType.getURI(), modelStruct);
 
-				// log.debug("value: " + value);
+		// return struct as target
+		ret = new ModelType(modelStruct);
 
-				// add as constant to our struct
-				modelStruct.addValue(value);
+		// -- URI node
+		if (node.getId() instanceof Node_URI) {
+			Node_URI valueUri = (Node_URI) node.getId();
 
-				uriNode(node, from, path, clauseType, modelStruct, value);
-				addedCond = true;
+			ModelElement value = new ModelElement(valueUri.getLocalName());
+			loadAnnotations(valueUri.getURI(), value);
 
-				return ret;
+			// log.debug("value: " + value);
+
+			// add as constant to our struct
+			modelStruct.addValue(value);
+		}
+
+		for (GraphEdge edge : node.getOut()) {
+//			log.info("edge? " + node.getId() + " -> " + edge.getId());
+
+			GraphNode target = edge.getTarget();
+
+			// -- outgoing "type" edge
+			// if a URI, this node is an explicit type in the rule
+
+			if (edge.getId().equals(RDF.type.asNode()) && target.getId() instanceof Node_URI) {
+				Node_URI typeUri = (Node_URI) target.getId();
+
+				// e.g., Patient struct with 'patient' type doesn't make a lot of sense
+				if (!typeUri.getLocalName().equals(modelStruct.getName())) {
+					ModelElement type = new ModelElement(typeUri.getLocalName());
+					loadAnnotations(typeUri.getURI(), type);
+
+					// add as constant to our struct
+					modelStruct.addType(type);
+				}
+
+				// -- regular property
+			} else {
+				Node_URI nodePrp = (Node_URI) edge.getId();
+
+				ModelProperty modelPrp = new ModelProperty(nodePrp.getLocalName());
+				loadAnnotations(nodePrp.getURI(), modelPrp);
+				loadCardinality(nodePrp.getURI(), modelPrp);
+
+				// then, recursively call this method on the edge target
+
+				ModelType prpType = constructModel(edge.getTarget(), found);
+				// returned model-type will serve as type for our property
+				if (prpType != null) {
+					modelPrp.setTarget(prpType);
+					modelStruct.addProperty(modelPrp);
+				}
 			}
 		}
 
-		// - if no outgoing edges (and not a URI or literal),
-		// then this node is an endpoint
-		if (node.getOut().isEmpty()) {
-			endNode(path, clauseType);
-			addedCond = true;
+		return ret;
+	}
+
+	private void constructLogic(GraphNode node, GraphEdge from, NodePath path, Set<GraphNode> found)
+			throws VisitModelException {
+
+		if (found.contains(node))
+			return;
+
+		found.add(node);
+
+		ClauseTypes clauseType = (from != null ? (ClauseTypes) from.getData() : ClauseTypes.BODY);
+
+		// - literal node
+		if (node.getId() instanceof Node_Literal) {
+			Node_Literal nl = (Node_Literal) node.getId();
+
+			Literal lit = new Literal(nl.getLiteralValue());
+			literalNode(node, from, path, clauseType, lit);
 		}
 
-		// TODO is this needed? (cfr. the code above)
-		if (!addedCond)
-			newPath(path, clauseType);
+		ModelStruct modelStruct = model.getStruct(node);
+
+		// - object type
+		// (else: literal datatype)
+
+		if (modelStruct != null) {
+
+			// -- URI node
+			if (node.getId() instanceof Node_URI) {
+				Node_URI valueUri = (Node_URI) node.getId();
+				ModelElement value = modelStruct.getConstant(valueUri.getLocalName());
+
+				uriNode(node, from, path, clauseType, modelStruct, value);
+
+				// -- variable node
+			} else {
+				switch (clauseType) {
+
+				case BODY:
+					// (only needed in case of object datatype)
+					if (!path.getPath().isEmpty() && !path.getPath().getLast().requiresArray())
+						newPath(path);
+
+					break;
+
+				case HEAD:
+					Node n = (Node) node.getId();
+
+					// if the (original) node is a blank node
+					// (only needed in case of object datatype)
+
+					if (n.isRuleVariable() && ((Node_RuleVariable) n).getOriginal().isBlank()) {
+
+						// deal with existentials in rule head (constructors)
+						// (will likely involve updating the path)
+						path = newStruct(path, modelStruct);
+					}
+					break;
+				}
+			}
+		}
 
 		nodePropertiesStart();
 
@@ -179,74 +242,45 @@ public class ModelVisitorA extends ModelVisitor {
 		});
 
 		for (GraphEdge edge : sortedEdges) {
-//			log.info("edge? " + node.getId() + " -> " + edge.getId());
+//			log.info("edge? " + node.getId() + " -> " + edge.getId() + " -> " + edge.getTarget().getId());
 
 			ClauseTypes clauseType2 = (ClauseTypes) edge.getData();
 			GraphNode target = edge.getTarget();
 
 			// - outgoing "type" edge
-			if (edge.getId().equals(RDF.type.asNode())) {
+			// if a URI, this node is an explicit type in the rule
+			if (edge.getId().equals(RDF.type.asNode()) && target.getId() instanceof Node_URI) {
+				Node_URI typeUri = (Node_URI) target.getId();
 
-				if (modelStruct != null) {
+				// e.g., Patient struct with 'patient' type doesn't make a lot of sense
+				if (!typeUri.getLocalName().equals(modelStruct.getName())) {
+					ModelElement type = modelStruct.getConstant(typeUri.getLocalName());
 
-					// if a URI, this node is an explicit type in the rule
-
-					if (target.getId() instanceof Node_URI) {
-						Node_URI typeUri = (Node_URI) target.getId();
-						ModelElement type = new ModelElement(typeUri.getLocalName());
-						loadAnnotations(typeUri.getURI(), type);
-
-						// e.g., Patient struct with 'patient' type
-						// doesn't make a lot of sense
-						if (type.getString() != modelStruct.getString()) {
-//							log.debug("type: " + type);
-							// add as constant to our struct
-							modelStruct.addType(type);
-
-							// TODO should add all sub-types of the nodeType here
-							// since the input data could have any of those sub-types
-
-							typeNode(path, edge, clauseType2, modelStruct, type);
-						}
-					}
+					typeNode(path, edge, clauseType2, modelStruct, type);
 				}
 
 			} else {
-				Node_URI nodePrp = (Node_URI) edge.getId();
-				String prpName = nodePrp.getLocalName();
+				NodePath path2 = path;
 
-				// copy our current path and add this property to it
+				// - object type
+				// (else, this "edge" should be a builtin comparing w/ literal)
+				if (modelStruct != null) {
+					Node_URI nodePrp = (Node_URI) edge.getId();
+					// (needs to be copied; key-type can be overridden)
+					ModelProperty modelPrp = modelStruct.getProperty(nodePrp.getLocalName()).copy();
 
-				ModelProperty modelPrp = new ModelProperty(prpName);
-
-				loadAnnotations(nodePrp.getURI(), modelPrp);
-				loadCardinality(nodePrp.getURI(), modelPrp);
-
-				// if this is an inverse edge, then "invert" its name
-				// (NOTE currently no longer used)
-				if (edge.isInverse()) {
-					modelPrp.setString(invertProperty(modelPrp.getString()));
-					// (assuming a maxCardinality of 1 on inverse properties
-					// (i.e., a one-to-many))
-					modelPrp.setMaxCardinality(1);
+					// copy our current path and add this property to it
+					path2 = path.copy();
+					path2.add(modelPrp);
 				}
 
-				NodePath path2 = path.copy();
-				path2.add(modelPrp);
+				// recursively call this method on the edge target
 
-				// then, recursively call this method on the edge target
-
-				ModelType prpType = doVisit(edge.getTarget(), edge, path2, found);
-				// returned model-type will serve as type for our property
-				if (prpType != null && modelStruct != null) {
-					modelPrp.setTarget(prpType);
-					modelStruct.addProperty(modelPrp);
-				}
+				constructLogic(edge.getTarget(), edge, path2, found);
 			}
 		}
-		nodePropertiesEnd();
 
-		return ret;
+		nodePropertiesEnd();
 	}
 
 	private List<Resource> getNodeTypes(GraphNode node) {
@@ -304,92 +338,68 @@ public class ModelVisitorA extends ModelVisitor {
 
 	// - hooks for updating the logic - i.e., cond and block
 
-	private void newPath(NodePath path, ClauseTypes clauseType) {
-		if (clauseType == ClauseTypes.BODY) {
-			if (!path.getPath().getLast().requiresArray()) {
-
-				Comparison con = new Comparison(path, Comparators.EX);
-				cond.add(con);
-			}
-		}
+	private void newPath(NodePath path) {
+		Comparison con = new Comparison(path, Comparators.EX);
+		cond.add(con);
 	}
 
 	// support existential rules
 	// if the node represents a blank node, then instantiate a new struct
 
-	private NodePath structNode(GraphNode node, GraphEdge from, NodePath path, ClauseTypes clauseType,
-			Resource nodeType, ModelStruct modelStruct) {
+	private NodePath newStruct(NodePath path, ModelStruct modelStruct) {
+		// create new struct
+		CreateStruct newStruct = new CreateStruct(modelStruct);
 
-		if (clauseType != ClauseTypes.HEAD)
-			return path;
+		// use as constructor parameter
+		// (this is a bit more involved, so don't use new[..] methods)
 
-		Node n = (Node) node.getId();
-		if (n.isRuleVariable()) {
-			Node or = ((Node_RuleVariable) n).getOriginal();
+		if (!newStructs.isEmpty()) {
+			CreateStruct curStruct = newStructs.getLast();
+			curStruct.add(new Assignment(path, newStruct));
 
-			// if the (original) node is a blank node
+			// properties of blank node will serve as constructor parameters
+			// add this struct to the stack; use new assignments as parameters
 
-			if (or.isBlank()) {
-				NodePath ret = null;
+			// (node path doesn't matter here)
+			newStructs.add(newStruct);
 
-				if (modelStruct == null)
-					log.error("should create new instance but non object-type found: " + nodeType);
+			// following struct parameters will have "empty" path
+			// (params are identified by predicates)
+			return new NodePath();
 
-				// create new struct
-				CreateStruct newStruct = new CreateStruct(modelStruct);
+			// treat as regular statement
+		} else {
+			Block subBlock = new Block();
+			block.add(subBlock);
 
-				// use as constructor parameter
-				// (this is a bit more involved, so don't use new[..] methods)
+			Variable v = new Variable();
 
-				if (!newStructs.isEmpty()) {
-					CreateStruct curStruct = newStructs.getLast();
-					curStruct.add(new Assignment(path, newStruct));
+			// assign to var
+			Assignment asn = new Assignment(v, newStruct);
+			subBlock.add(asn);
 
-					// properties of blank node will serve as constructor parameters
-					// add this struct to the stack; use new assignments as parameters
+			// assign end of path to newly created struct
+			Assignment asn2 = new Assignment(path, v);
+			subBlock.add(asn2);
 
-					// (node path doesn't matter here)
-					newStructs.add(newStruct);
+			// properties of blank node will serve as constructor parameters
+			// add this struct to the stack; use new assignments as parameters
+			// (see first option above)
 
-					// following struct parameters will have "empty" path
-					// (params are identified by predicates)
-					ret = new NodePath();
+			// (once constructor is done, new node path starts from variable)
+			newStructs.add(newStruct);
 
-					// treat as regular statement
-				} else {
-					Block subBlock = new Block();
-					block.add(subBlock);
-
-					Variable v = new Variable();
-
-					// assign to var
-					Assignment asn = new Assignment(v, newStruct);
-					subBlock.add(asn);
-
-					// assign end of path to newly created struct
-					Assignment asn2 = new Assignment(path, v);
-					subBlock.add(asn2);
-
-					// properties of blank node will serve as constructor parameters
-					// add this struct to the stack; use new assignments as parameters
-					// (see first option above)
-
-					// (once constructor is done, new node path starts from variable)
-					newStructs.add(newStruct);
-
-					// but, following struct parameters, will have "empty" path
-					// (params are identified by predicates)
-					ret = new NodePath();
-				}
-
-				return ret;
-			}
+			// but, following struct parameters, will have "empty" path
+			// (params are identified by predicates)
+			return new NodePath();
 		}
-
-		return path;
 	}
 
-	private void literalNode(GraphNode node, GraphEdge from, NodePath path, ClauseTypes clauseType, Literal lit) {
+	// TODO two methods below have a lot in common
+
+	private void literalNode(GraphNode node, GraphEdge from, NodePath path, ClauseTypes clauseType, Literal lit)
+			throws VisitModelException {
+
 		// check whether incoming property constitutes a builtin (i.e., comparison)
 		Comparators cmp = toComparator(from);
 
@@ -397,25 +407,19 @@ public class ModelVisitorA extends ModelVisitor {
 
 		case BODY:
 			Comparison con = null;
-			if (cmp != null) {
-				// if so, then remove the property as it's really a builtin
-				path.getPath().removeLast();
-
+			if (cmp != null)
 				// create comparison
 				con = new Comparison(path, lit, cmp);
-
-			} else {
+			else
 				// if not, then we're checking equality with this literal
 				con = new Comparison(path, lit, Comparators.EQ);
-			}
 			newComparison(con);
 
 			break;
 
 		case HEAD:
 			if (cmp != null)
-				log.error("not expecting builtin in rule head: " + from.getId());
-
+				throw new VisitModelException("not expecting builtin in rule head: " + from.getId());
 			else {
 				// create assignment with literal
 				Assignment assign = new Assignment(path, lit);
@@ -426,42 +430,63 @@ public class ModelVisitorA extends ModelVisitor {
 		}
 
 		if (!node.getOut().isEmpty())
-			log.error("currently assuming that literal nodes are endpoints: " + lit);
+			throw new VisitModelException("currently assuming that literal nodes are endpoints: " + lit);
 	}
 
 	private void uriNode(GraphNode node, GraphEdge from, NodePath path, ClauseTypes clauseType, ModelStruct modelStruct,
-			ModelElement value) {
+			ModelElement value) throws VisitModelException {
 
+		// check whether incoming property constitutes a builtin (i.e., comparison)
+		Comparators cmp = toComparator(from);
+
+		// assumed that this value is a constant of the model-struct
 		Operand cnst = new StructConstant(modelStruct, value);
 		switch (clauseType) {
 
 		case BODY:
-			Comparison con = new Comparison(path, cnst, Comparators.EQ);
+			Comparison con = null;
+			if (cmp != null) {
+				// if so, then remove the property as it's really a builtin
+				path.getPath().removeLast();
+
+				// create comparison
+				con = new Comparison(path, cnst, cmp);
+
+			} else {
+				// if not, then we're checking equality with this literal
+				con = new Comparison(path, cnst, Comparators.EQ);
+			}
+
 			newComparison(con);
 
 			break;
 
 		case HEAD:
-			Assignment asn = new Assignment(path, cnst);
-			newAssignment(asn);
+			if (cmp != null)
+				throw new VisitModelException("not expecting builtin in rule head: " + from.getId());
+
+			else {
+				Assignment asn = new Assignment(path, cnst);
+				newAssignment(asn);
+			}
 
 			break;
 		}
 
 		if (!node.getOut().isEmpty())
-			log.error("currently assuming that URI nodes are endpoints: " + value);
+			throw new VisitModelException("currently assuming that URI nodes are endpoints: " + value);
 	}
 
 	private void typeNode(NodePath path, GraphEdge edge, ClauseTypes clauseType, ModelStruct modelStruct,
-			ModelElement type) {
+			ModelElement type) throws VisitModelException {
 
 		StructConstant cnst = new StructConstant(modelStruct, type);
 
-		// whether type is required to index an array-like property
+		// type required to index an array-like property
 		// (i.e., property w/ cardinality > 1)
 
-		if (path.requiresKeyType())
-			path.setKeyType(cnst);
+		if (path.currentRequiresKeyType())
+			path.setCurrentKeyType(cnst);
 
 		NodePath path2 = path.copy();
 		path2.add(ModelProperty.typeProperty());
@@ -482,22 +507,7 @@ public class ModelVisitorA extends ModelVisitor {
 		}
 
 		if (!edge.getTarget().getOut().isEmpty())
-			log.error("currently assuming that types are endpoints: " + type);
-	}
-
-	private void endNode(NodePath path, ClauseTypes clauseType) {
-		switch (clauseType) {
-
-		case BODY:
-			Comparison con = new Comparison(path, Comparators.EX);
-			newComparison(con);
-
-			break;
-
-		case HEAD:
-			log.error("not expecting an endpoint in rule head: " + path);
-			break;
-		}
+			throw new VisitModelException("currently assuming that types are endpoints: " + type);
 	}
 
 	private void newAssignment(Assignment assn) {
@@ -554,18 +564,6 @@ public class ModelVisitorA extends ModelVisitor {
 			log.info("found max cardinality for " + uri + ": " + prp.getMaxCardinality());
 	}
 
-	private String invertProperty(String name) {
-		if (name.startsWith("has")) {
-			if (name.startsWith("has_"))
-				return "is_" + name.substring("has_".length()) + "_of";
-			else
-				return "is" + name.substring("has".length()) + "Of";
-
-		} else {
-			return "inverse_" + name;
-		}
-	}
-
 	private Comparators toComparator(GraphEdge edge) {
 		Node_URI node = (Node_URI) edge.getId();
 
@@ -584,6 +582,9 @@ public class ModelVisitorA extends ModelVisitor {
 		if (node.equals(N3Math.notLessThan.asNode()))
 			return Comparators.NLT;
 		if (node.equals(N3Math.notEqualTo.asNode()))
+			return Comparators.NEQ;
+
+		if (node.equals(N3Log.notEqualTo.asNode()))
 			return Comparators.NEQ;
 
 		return null;

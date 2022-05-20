@@ -11,6 +11,9 @@ import wvw.semweb.codegen.parse.ParseModelLogic;
 
 //(major)
 
+// TODO in JS, use same mapping solution as in solidity
+// ("some" solution doesn't work)
+
 // TODO assuming that the rule ordering reflects the chaining sequence
 
 // TODO should add all sub-types of a given type as constants
@@ -18,7 +21,7 @@ import wvw.semweb.codegen.parse.ParseModelLogic;
 // (see ModelVisitorA#doVisit)
 
 // TODO can only create new struct with *non* array-like properties
-// (e.g., DrugSubPlan; remove functional property type)
+// (e.g., try DrugSubPlan; remove functional property type)
 // (in solidity: "TypeError: Struct containing a (nested) mapping cannot be constructed")
 
 //(minor)
@@ -33,7 +36,7 @@ public class CodeGen {
 	private static final Logger log = LogManager.getLogger(CodeGen.class);
 
 	public static void main(String[] args) throws Exception {
-		generateCode(new File("diabetes-iot-3.n3"), new File("DMTO2.n3"), new File("src/main/resources/"),
+		generateCode(new File("diabetes-iot-2.n3"), new File("DMTO2.n3"), new File("src/main/resources/"),
 				CodeTypes.SOLIDITY);
 	}
 

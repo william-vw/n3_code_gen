@@ -51,14 +51,14 @@ public class NodePath implements Operand {
 		return new NodePath(start, new LinkedList<>(path.subList(0, end)));
 	}
 
-	public boolean requiresKeyType() {
+	public boolean currentRequiresKeyType() {
 		if (path.isEmpty())
 			return false;
 		else
 			return path.getLast().requiresArray();
 	}
 
-	public void setKeyType(StructConstant type) {
+	public void setCurrentKeyType(StructConstant type) {
 		path.getLast().setKeyType(type);
 	}
 

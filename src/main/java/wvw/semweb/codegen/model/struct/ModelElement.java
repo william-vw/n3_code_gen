@@ -11,6 +11,11 @@ public class ModelElement {
 		this.name = name;
 	}
 
+	protected ModelElement(String name, String label) {
+		this.name = name;
+		this.label = label;
+	}
+
 	public boolean hasName() {
 		return this.name != null;
 	}
@@ -34,7 +39,7 @@ public class ModelElement {
 	public String getString() {
 		return (hasLabel() ? label : name);
 	}
-	
+
 	// for debugging
 	public String print() {
 		return getString();

@@ -35,6 +35,7 @@ import wvw.semweb.codegen.parse.rule.ann.RuleAnnotation;
 import wvw.semweb.codegen.parse.rule.ann.RuleAnnotation.AnnotationTypes;
 import wvw.semweb.codegen.visit.ModelVisitor;
 import wvw.semweb.codegen.visit.ModelVisitorA;
+import wvw.semweb.codegen.visit.VisitModelException;
 import wvw.utils.rdf.NS;
 
 public class ParseModelLogic implements N3EventListener {
@@ -60,7 +61,7 @@ public class ParseModelLogic implements N3EventListener {
 	}
 
 	public void parse(File rulesFile, File ontologyFile, PostprocessTypes... postprocesses)
-			throws IOException, URISyntaxException, ParseModelException {
+			throws IOException, URISyntaxException, ParseModelException, VisitModelException {
 
 		logic.setRulesName(FilenameUtils.removeExtension(rulesFile.getName()));
 
@@ -124,7 +125,7 @@ public class ParseModelLogic implements N3EventListener {
 	}
 
 	private void processRule(N3Rule r, N3Model ontology, List<RuleAnnotation> annotations,
-			PostprocessTypes... postprocesses) throws ParseModelException {
+			PostprocessTypes... postprocesses) throws ParseModelException, VisitModelException {
 
 		RuleGraphParser ruleParser = new RuleGraphParser();
 

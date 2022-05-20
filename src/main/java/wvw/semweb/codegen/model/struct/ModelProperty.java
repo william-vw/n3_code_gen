@@ -14,12 +14,6 @@ public class ModelProperty extends ModelElement {
 		super(name);
 	}
 
-	public ModelProperty(Integer maxCardinality) {
-		super(null);
-
-		this.maxCardinality = maxCardinality;
-	}
-
 	public ModelProperty(String name, Integer maxCardinality) {
 		super(name);
 
@@ -27,7 +21,7 @@ public class ModelProperty extends ModelElement {
 	}
 
 	public static ModelProperty typeProperty() {
-		ModelProperty typePrp = new ModelProperty(1);
+		ModelProperty typePrp = new ModelProperty("type", 1);
 		typePrp.setTypePrp(true);
 
 		return typePrp;
@@ -44,6 +38,17 @@ public class ModelProperty extends ModelElement {
 
 		this.target = target;
 		this.maxCardinality = maxCardinality;
+	}
+
+	private ModelProperty(String name, String label, ModelType target, Integer maxCardinality, boolean isTypePrp,
+			StructConstant keyType) {
+
+		super(name, label);
+
+		this.target = target;
+		this.maxCardinality = maxCardinality;
+		this.isTypePrp = isTypePrp;
+		this.keyType = keyType;
 	}
 
 	public boolean hasTarget() {
@@ -98,10 +103,14 @@ public class ModelProperty extends ModelElement {
 		this.keyType = keyType;
 	}
 
+	public ModelProperty copy() {
+		return new ModelProperty(name, label, target, maxCardinality, isTypePrp, keyType);
+	}
+
 	// for debugging
 	@Override
 	public String print() {
-		return (isTypePrp ? "#type" : super.toString());
+		return (isTypePrp ? "#type" : (super.toString() + (hasKeyType() ? "[" + keyType.getConstant() + "]" : "")));
 	}
 
 	@Override

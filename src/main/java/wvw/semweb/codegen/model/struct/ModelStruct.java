@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import org.apache.jen3.util.iterator.WrappedIterator;
 
@@ -51,8 +52,16 @@ public class ModelStruct extends ModelElement implements Comparable<ModelStruct>
 		return WrappedIterator.create(types.iterator()).andThen(values.iterator());
 	}
 
+	public ModelElement getConstant(String name) {
+		return Stream.concat(types.stream(), values.stream()).filter(p -> p.getName().equals(name)).findAny().get();
+	}
+
 	public void addProperty(ModelProperty prp) {
 		properties.add(prp);
+	}
+
+	public ModelProperty getProperty(String name) {
+		return properties.stream().filter(p -> p.getName().equals(name)).findAny().get();
 	}
 
 	public Collection<ModelProperty> getProperties() {
