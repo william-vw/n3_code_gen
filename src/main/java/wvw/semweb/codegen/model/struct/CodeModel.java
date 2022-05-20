@@ -59,6 +59,10 @@ public class CodeModel {
 	public ModelStruct getStruct(GraphNode node) {
 		return nodeStructs.get(node);
 	}
+	
+	public void setStruct(GraphNode node, ModelStruct struct) {
+		nodeStructs.put(node, struct);
+	}
 
 	public Collection<ModelStruct> getAllStructs() {
 		List<ModelStruct> sorted = new ArrayList<>(nameStructs.values());

@@ -37,7 +37,7 @@ contract DiabetesIot3 {
 	
 	mapping(address => Patient) patients;
 	
-	function execute(BloodPressure memory sys, BloodPressure memory dias) {
+	function execute(BloodPressure memory dias, BloodPressure memory sys) {
 		Patient storage patient = patients[msg.sender];
 	
 		if (sys.hasType == BloodPressures.SystolicBloodPressure

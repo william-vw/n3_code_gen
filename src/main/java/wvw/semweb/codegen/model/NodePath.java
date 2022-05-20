@@ -38,6 +38,10 @@ public class NodePath implements Operand {
 	public LinkedList<ModelProperty> getPath() {
 		return path;
 	}
+	
+	public ModelProperty getLast() {
+		return path.getLast();
+	}
 
 	public int size() {
 		return path.size();
@@ -49,17 +53,6 @@ public class NodePath implements Operand {
 
 	public NodePath subPath(int end) {
 		return new NodePath(start, new LinkedList<>(path.subList(0, end)));
-	}
-
-	public boolean currentRequiresKeyType() {
-		if (path.isEmpty())
-			return false;
-		else
-			return path.getLast().requiresArray();
-	}
-
-	public void setCurrentKeyType(StructConstant type) {
-		path.getLast().setKeyType(type);
 	}
 
 	@Override

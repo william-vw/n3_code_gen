@@ -188,20 +188,6 @@ public class GenerateSolidity extends GenerateCode {
 		}
 
 		String op1 = genOperand(cmp.getOp1());
-
-		if (Util.involvesArrayCheck(cmp.getOp1())) {
-			NodePath path = (NodePath) cmp.getOp1();
-			ModelProperty lastPrp = path.getPath().getLast();
-
-			if (lastPrp.isTypePrp()) {
-				// don't include the 'type' property
-				// type will have already been used to index the mapping (see #fieldName)
-				String subPath = genOperand(path.subPath(path.size() - 1));
-
-				return subPath + ".exists";
-			}
-		}
-
 		return op1 + " " + part2;
 	}
 

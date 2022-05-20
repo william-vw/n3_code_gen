@@ -11,7 +11,7 @@ import wvw.semweb.codegen.parse.rule.RuleGraph;
 
 public abstract class ModelVisitor {
 
-	protected static final Logger log = LogManager.getLogger(ModelVisitorA.class);
+	protected static final Logger log = LogManager.getLogger(ModelVisitorImpl.class);
 
 	protected N3Model ontology;
 

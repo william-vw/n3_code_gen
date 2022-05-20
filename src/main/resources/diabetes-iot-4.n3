@@ -17,6 +17,7 @@
 @prefix list: <http://www.w3.org/2000/10/swap/list#> .
 @base <https://bioportal.bioontology.org/ontologies/DMTO.owl> .
 
+
 {   ?patient a DMTO:DMTO_0000021 ; # type patient
         DMTO:DMTO_0001667 ?profile . # has_patient_profile
 
@@ -27,6 +28,24 @@
     ?exam a DDO:DDO_0000230 ; # type BMI
         DDO:DDO_0000134 ?value . # has_quantitative_value
     ?value math:notLessThan 25 .
+
+} => {
+    ?profile DDO:DDO_0000139 [ # has_demographic
+        a DTO:DTO:0002078 # type overweight
+    ]
+
+} ; cg:loadParam ?patient .
+
+
+{   ?patient a DMTO:DMTO_0000021 ; # type patient
+        DMTO:DMTO_0001667 ?profile . # has_patient_profile
+
+    ?profile DDO:DDO_0000140 DTO:DTO:0001939 . # has_ethnicity, asian american
+   
+    ?profile DDO:DDO_0000238 ?exam . # has_physical_examination
+    ?exam a DDO:DDO_0000230 ; # type BMI
+        DDO:DDO_0000134 ?value . # has_quantitative_value
+    ?value math:notLessThan 23 .
 
 } => {
     ?profile DDO:DDO_0000139 [ # has_demographic

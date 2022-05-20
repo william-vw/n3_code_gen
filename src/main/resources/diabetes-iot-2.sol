@@ -15,17 +15,9 @@ contract DiabetesIot2 {
 	
 	struct Patient {
 		mapping(DrugSubplans => DrugSubplan) hasPart;
-		mapping(DiabetesPhysicalExaminations => DiabetesPhysicalExamination) hasPhysicalExamination;
 		mapping(PatientDemographics => PatientDemographic) hasDemographic;
+		mapping(DiabetesPhysicalExaminations => DiabetesPhysicalExamination) hasPhysicalExamination;
 		mapping(DiabetesLaboratoryTests => DiabetesLaboratoryTest) hasLabTest;
-		bool exists;
-	}
-	
-	enum DiabetesPhysicalExaminations{ Bmi, HistoryOfPrediabetes }
-	
-	struct DiabetesPhysicalExamination {
-		DiabetesPhysicalExaminations hasType;
-		int hasQuantitativeValue;
 		bool exists;
 	}
 	
@@ -33,6 +25,14 @@ contract DiabetesIot2 {
 	
 	struct PatientDemographic {
 		PatientDemographics hasType;
+		int hasQuantitativeValue;
+		bool exists;
+	}
+	
+	enum DiabetesPhysicalExaminations{ Bmi, HistoryOfPrediabetes }
+	
+	struct DiabetesPhysicalExamination {
+		DiabetesPhysicalExaminations hasType;
 		int hasQuantitativeValue;
 		bool exists;
 	}

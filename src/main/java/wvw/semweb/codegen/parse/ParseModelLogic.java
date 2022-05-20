@@ -34,7 +34,7 @@ import wvw.semweb.codegen.parse.rule.ann.ParameterAnnotation.ParameterTypes;
 import wvw.semweb.codegen.parse.rule.ann.RuleAnnotation;
 import wvw.semweb.codegen.parse.rule.ann.RuleAnnotation.AnnotationTypes;
 import wvw.semweb.codegen.visit.ModelVisitor;
-import wvw.semweb.codegen.visit.ModelVisitorA;
+import wvw.semweb.codegen.visit.ModelVisitorImpl;
 import wvw.semweb.codegen.visit.VisitModelException;
 import wvw.utils.rdf.NS;
 
@@ -142,7 +142,7 @@ public class ParseModelLogic implements N3EventListener {
 
 		log.info("- annotations: " + annotations);
 
-		ModelVisitor visitor = new ModelVisitorA(ontology);
+		ModelVisitor visitor = new ModelVisitorImpl(ontology);
 		visitor.visit(ruleGraph);
 
 		CodeModel newModel = visitor.getModel();

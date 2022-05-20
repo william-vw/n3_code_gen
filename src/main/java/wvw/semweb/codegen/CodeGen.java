@@ -24,6 +24,9 @@ import wvw.semweb.codegen.parse.ParseModelLogic;
 // (e.g., try DrugSubPlan; remove functional property type)
 // (in solidity: "TypeError: Struct containing a (nested) mapping cannot be constructed")
 
+// TODO limitations of struct merging for solidity: 
+// combination of lifestyle with drug subplans will likely not work
+
 //(minor)
 
 //TODO properly parametrize ModelVisitorImpl code (e.g., CodeLogicVisitor, CodeModelVisitor)
@@ -36,7 +39,7 @@ public class CodeGen {
 	private static final Logger log = LogManager.getLogger(CodeGen.class);
 
 	public static void main(String[] args) throws Exception {
-		generateCode(new File("diabetes-iot-2.n3"), new File("DMTO2.n3"), new File("src/main/resources/"),
+		generateCode(new File("diabetes-iot-1.n3"), new File("DMTO2.n3"), new File("src/main/resources/"),
 				CodeTypes.SOLIDITY);
 	}
 
