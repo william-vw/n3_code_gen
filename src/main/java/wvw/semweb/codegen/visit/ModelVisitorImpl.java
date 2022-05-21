@@ -150,7 +150,6 @@ public class ModelVisitorImpl extends ModelVisitor {
 				// builtins on literal datatypes are already ignored)
 
 				if (toUriComparator(edge) != null) {
-
 					// TODO likely no longer needed if we add all values from ontology
 
 					// if the target is concrete, add those as values in the struct

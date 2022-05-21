@@ -14,14 +14,9 @@ contract DiabetesIot2 {
 	
 	
 	struct Patient {
-		PatientProfile hasPatientProfile;
-		bool exists;
-	}
-	
-	struct PatientProfile {
+		mapping(DrugSubplans => DrugSubplan) hasPart;
 		mapping(DiabetesPhysicalExaminations => DiabetesPhysicalExamination) hasPhysicalExamination;
 		mapping(PatientDemographics => PatientDemographic) hasDemographic;
-		TreatmentPlan hasTreatmentPlan;
 		mapping(DiabetesLaboratoryTests => DiabetesLaboratoryTest) hasLabTest;
 		bool exists;
 	}
@@ -42,13 +37,11 @@ contract DiabetesIot2 {
 		bool exists;
 	}
 	
-	struct TreatmentPlan {
-		mapping(DrugSubplans => DrugSubplan) hasPart;
-		bool exists;
-	}
+	enum DrugSubplans{ MonotherapyPlan }
 	
 	struct DrugSubplan {
 		DiabetesDrug hasDrugParticipant;
+		DrugSubplans hasType;
 		bool exists;
 	}
 	
@@ -73,28 +66,25 @@ contract DiabetesIot2 {
 	function execute() {
 		Patient storage patient = patients[msg.sender];
 	
-		if (patient.hasPatientProfile.exists
-			&& patient.hasPatientProfile.hasPhysicalExamination[DiabetesPhysicalExaminations.Bmi].exists
-			&& patient.hasPatientProfile.hasPhysicalExamination[DiabetesPhysicalExaminations.Bmi].hasQuantitativeValue >= 35) {
+		if (patient.hasPhysicalExamination[DiabetesPhysicalExaminations.Bmi].exists
+			&& patient.hasPhysicalExamination[DiabetesPhysicalExaminations.Bmi].hasQuantitativeValue >= 35) {
 		
 			PatientDemographic memory v0 = PatientDemographic({ hasType: PatientDemographics.ObeseClassI, exists: true });
-			patient.hasPatientProfile.hasDemographic[v0.hasType] = v0;
+			patient.hasDemographic[v0.hasType] = v0;
 		}
 		
-		if (patient.hasPatientProfile.exists
-			&& patient.hasPatientProfile.hasTreatmentPlan.exists
-			&& patient.hasPatientProfile.hasLabTest[DiabetesLaboratoryTests.Hba1c].exists
-			&& patient.hasPatientProfile.hasLabTest[DiabetesLaboratoryTests.Hba1c].hasQuantitativeValue >= 6
-			&& patient.hasPatientProfile.hasPhysicalExamination[DiabetesPhysicalExaminations.HistoryOfPrediabetes].exists
-			&& patient.hasPatientProfile.hasDemographic[PatientDemographics.Age].exists
-			&& patient.hasPatientProfile.hasDemographic[PatientDemographics.Age].hasQuantitativeValue >= 25
-			&& patient.hasPatientProfile.hasDemographic[PatientDemographics.Age].hasQuantitativeValue <= 59
-			&& patient.hasPatientProfile.hasLabTest[DiabetesLaboratoryTests.Fpg].exists
-			&& patient.hasPatientProfile.hasLabTest[DiabetesLaboratoryTests.Fpg].hasQuantitativeValue >= 110
-			&& patient.hasPatientProfile.hasDemographic[PatientDemographics.ObeseClassI].exists) {
+		if (patient.hasLabTest[DiabetesLaboratoryTests.Hba1c].exists
+			&& patient.hasLabTest[DiabetesLaboratoryTests.Hba1c].hasQuantitativeValue >= 6
+			&& patient.hasPhysicalExamination[DiabetesPhysicalExaminations.HistoryOfPrediabetes].exists
+			&& patient.hasDemographic[PatientDemographics.Age].exists
+			&& patient.hasDemographic[PatientDemographics.Age].hasQuantitativeValue >= 25
+			&& patient.hasDemographic[PatientDemographics.Age].hasQuantitativeValue <= 59
+			&& patient.hasLabTest[DiabetesLaboratoryTests.Fpg].exists
+			&& patient.hasLabTest[DiabetesLaboratoryTests.Fpg].hasQuantitativeValue >= 110
+			&& patient.hasDemographic[PatientDemographics.ObeseClassI].exists) {
 		
-			DrugSubplan memory v1 = DrugSubplan({ hasDrugParticipant: DiabetesDrugs.Metformin, exists: true });
-			patient.hasPatientProfile.hasTreatmentPlan.hasPart[v1.hasType] = v1;
+			DrugSubplan memory v1 = DrugSubplan({ hasType: DrugSubplans.MonotherapyPlan, hasDrugParticipant: DiabetesDrugs.Metformin, exists: true });
+			patient.hasPart[v1.hasType] = v1;
 		
 			emit NewTreatmentSubPlan(block.timestamp);
 		}

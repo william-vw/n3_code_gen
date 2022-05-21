@@ -11,12 +11,15 @@ import wvw.semweb.codegen.parse.ParseModelLogic;
 
 //(major)
 
+// TODO should add all sub-types of a given type as constants
+// input data could have any of those sub-types
+// this will even lead to a bug for diabetes-iot-2, since no key types are given for drug subplan
+// (nothing to index the mapping on)
+
 // TODO in JS, use same mapping solution as in solidity
 // ("some" solution doesn't work)
 
-//TODO should add all sub-types of a given type as constants
-//(input data could have any of those sub-types)
-//(see ModelVisitorA#doVisit)
+// (future work)
 
 //TODO limitations of struct merging for solidity: 
 //combination of lifestyle with drug subplans will likely not work
@@ -41,12 +44,12 @@ public class CodeGen {
 	public static void main(String[] args) throws Exception {
 //		generateCode(new File("diabetes-iot-1.n3"), new File("DMTO2.n3"), new File("src/main/resources/"),
 //				CodeTypes.SOLIDITY);
-//		generateCode(new File("diabetes-iot-2.n3"), new File("DMTO2.n3"), new File("src/main/resources/"),
-//				CodeTypes.SOLIDITY);
+		generateCode(new File("diabetes-iot-2.n3"), new File("DMTO2.n3"), new File("src/main/resources/"),
+				CodeTypes.SOLIDITY);
 //		generateCode(new File("diabetes-iot-3.n3"), new File("DMTO2.n3"), new File("src/main/resources/"),
 //				CodeTypes.SOLIDITY);
-		generateCode(new File("diabetes-iot-4.n3"), new File("DMTO2.n3"), new File("src/main/resources/"),
-				CodeTypes.SOLIDITY);
+//		generateCode(new File("diabetes-iot-4.n3"), new File("DMTO2.n3"), new File("src/main/resources/"),
+//				CodeTypes.SOLIDITY);
 	}
 
 	public static void generateCode(File ruleFile, File ontologyFile, File outFolder, CodeTypes codeType)

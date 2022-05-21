@@ -421,7 +421,7 @@ public class GenerateSolidity extends GenerateCode {
 
 			ModelType target = prp.getTarget();
 			// key will be the type property of the target struct
-			// so put the type property's static type (i.e., the enum w/ constants)
+			// so put the type property's static type (i.e., enum w/ constants)
 			if (target.hasObjectType())
 				keyName = enumName(target.getObjectType());
 			// key will be literal

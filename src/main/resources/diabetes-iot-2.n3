@@ -59,7 +59,7 @@
 
 } => {
     ?plan DMTO:DMTO_0001701 [ # has_part
-        a DMTO:DMTO_0001710 ; # drug subplan
+        a DTO:DTO:0001980 ; # type monotherapy plan (drug subplan)
         DMTO:DMTO_0001713 DMTO:DMTO_0000923 # has_drug_participant, metformin
     ]
 
