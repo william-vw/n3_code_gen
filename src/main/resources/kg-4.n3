@@ -25,7 +25,5 @@
             DDO:DDO_0000134 23 # has_quantitative_value
         ] ;
         
-    DDO:DDO_0000140 [ # has_ethnicity
-        # a DTO:DTO:0001936 # african american
-        a DTO:DTO:0001939 # asian american
-    ] .
+    DDO:DDO_0000140 DTO:DTO:0001939 . # has_ethnicity, asian american
+        # DTO:DTO:0001936 # african american
