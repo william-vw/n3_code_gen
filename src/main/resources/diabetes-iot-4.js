@@ -19,6 +19,25 @@ class PatientProfile {
 
 class DiabetesPhysicalExamination {
 	static bmi = 'bmi';
+	static familyHistoryOfType1DiabetesMellitus = 'familyHistoryOfType1DiabetesMellitus';
+	static smoking = 'smoking';
+	static personalHistoryOfHemochromatosis = 'personalHistoryOfHemochromatosis';
+	static familyHistoryOfType2DiabetesMellitus = 'familyHistoryOfType2DiabetesMellitus';
+	static oralExam = 'oralExam';
+	static eyeExam = 'eyeExam';
+	static vitalSign = 'vitalSign';
+	static thyroidFunction = 'thyroidFunction';
+	static babyDeliveredWeighingMoreThan4pt5Kg = 'babyDeliveredWeighingMoreThan4pt5Kg';
+	static lostFootSensation = 'lostFootSensation';
+	static firstDegreeRelativeWithDiabetes = 'firstDegreeRelativeWithDiabetes';
+	static historyOfGestationalDiabetes = 'historyOfGestationalDiabetes';
+	static highRiskPopulation = 'highRiskPopulation';
+	static waistCircumference = 'waistCircumference';
+	static familyHistoryOfHemochromatosis = 'familyHistoryOfHemochromatosis';
+	static physicallyInactive = 'physicallyInactive';
+	static drinkingAlcohol = 'drinkingAlcohol';
+	static familyHistoryOfGestationalDiabetesMellitus = 'familyHistoryOfGestationalDiabetesMellitus';
+	static historyOfPrediabetes = 'historyOfPrediabetes';
 
 	constructor(type, hasQuantitativeValue) {
 		this.type = type;
@@ -30,6 +49,8 @@ class DiabetesPhysicalExamination {
 }
 
 class Ethnicity {
+	static highRiskEthnicity = 'highRiskEthnicity';
+
 	static pacificIslander = 'pacificIslander';
 	static highRiskEthnicity = 'highRiskEthnicity';
 	static africanAmerican = 'africanAmerican';
@@ -45,7 +66,18 @@ class Ethnicity {
 }
 
 class PatientDemographic {
+	static residence = 'residence';
+	static breastFeeding = 'breastFeeding';
+	static maritalStatus = 'maritalStatus';
+	static weight = 'weight';
+	static levelOfEducation = 'levelOfEducation';
 	static overweight = 'overweight';
+	static height = 'height';
+	static gender = 'gender';
+	static activityLevel = 'activityLevel';
+	static age = 'age';
+	static pregnancyState = 'pregnancyState';
+	static job = 'job';
 
 	constructor(type) {
 		this.type = type;
@@ -71,8 +103,8 @@ function execute(patient) {
 		&& patient.hasPatientProfile.hasEthnicity != undefined
 		&& patient.hasPatientProfile.hasEthnicity.type != Ethnicity.asianAmerican) {
 	
-		var v0 = new PatientDemographic(PatientDemographic.overweight);
-		patient.hasPatientProfile.hasDemographic[v0.type] = v0;
+		var v6 = new PatientDemographic(PatientDemographic.overweight);
+		patient.hasPatientProfile.hasDemographic[v6.type] = v6;
 	}
 	
 	if (patient.hasPatientProfile != undefined
@@ -80,8 +112,8 @@ function execute(patient) {
 		&& patient.hasPatientProfile.hasPhysicalExamination[DiabetesPhysicalExamination.bmi].hasQuantitativeValue >= 23
 		&& patient.hasPatientProfile.hasEthnicity.type == Ethnicity.asianAmerican) {
 	
-		var v1 = new PatientDemographic(PatientDemographic.overweight);
-		patient.hasPatientProfile.hasDemographic[v1.type] = v1;
+		var v7 = new PatientDemographic(PatientDemographic.overweight);
+		patient.hasPatientProfile.hasDemographic[v7.type] = v7;
 	}
 	
 	if (patient.hasPatientProfile != undefined
@@ -99,7 +131,7 @@ function execute(patient) {
 		&& patient.hasPatientProfile.hasDemographic[PatientDemographic.overweight] != undefined
 		&& patient.hasPatientProfile.hasEthnicity.type == Ethnicity.highRiskEthnicity) {
 	
-		var v2 = new Recommendation(Recommendation.diabetesScreening);
-		patient.hasPatientProfile.recommendTest[v2.type] = v2;
+		var v8 = new Recommendation(Recommendation.diabetesScreening);
+		patient.hasPatientProfile.recommendTest[v8.type] = v8;
 	}
 }

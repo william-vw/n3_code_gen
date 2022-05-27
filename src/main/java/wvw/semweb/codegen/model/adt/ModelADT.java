@@ -1,4 +1,4 @@
-package wvw.semweb.codegen.model.struct;
+package wvw.semweb.codegen.model.adt;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -8,15 +8,15 @@ import java.util.stream.Stream;
 
 import org.apache.jen3.util.iterator.WrappedIterator;
 
-public class ModelStruct extends ModelElement implements Comparable<ModelStruct> {
+public class ModelADT extends ModelElement implements Comparable<ModelADT> {
 
 	private int order;
 
 	private Set<ModelElement> types = new HashSet<>();
 	private Set<ModelElement> values = new HashSet<>();
 	private Set<ModelProperty> properties = new HashSet<>();
-
-	public ModelStruct(String name, int order) {
+	
+	public ModelADT(String name, int order) {
 		super(name);
 
 		this.order = order;
@@ -68,25 +68,25 @@ public class ModelStruct extends ModelElement implements Comparable<ModelStruct>
 		return properties;
 	}
 
-	public void replacing(ModelStruct struct2) {
-		mergeWith(struct2);
-		struct2.replaceWith(this);
+	public void replacing(ModelADT adt2) {
+		mergeWith(adt2);
+		adt2.replaceWith(this);
 	}
 
-	private void mergeWith(ModelStruct struct2) {
-		types.addAll(struct2.getTypes());
-		values.addAll(struct2.getValues());
-		properties.addAll(struct2.getProperties());
+	private void mergeWith(ModelADT adt2) {
+		types.addAll(adt2.getTypes());
+		values.addAll(adt2.getValues());
+		properties.addAll(adt2.getProperties());
 	}
 
-	private void replaceWith(ModelStruct struct) {
+	private void replaceWith(ModelADT adt) {
 		// TODO ideally we update all "incoming" properties
-		// (i.e., with this struct as target) with the given struct
+		// (i.e., with this adt as target) with the given adt
 		// but that requires more housekeeping and is currently not needed
 	}
 
 	@Override
-	public int compareTo(ModelStruct o) {
+	public int compareTo(ModelADT o) {
 		return Integer.valueOf(order).compareTo(o.getOrder());
 	}
 

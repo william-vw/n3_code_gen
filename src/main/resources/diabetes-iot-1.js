@@ -18,7 +18,18 @@ class PatientProfile {
 }
 
 class PatientDemographic {
+	static residence = 'residence';
+	static breastFeeding = 'breastFeeding';
+	static maritalStatus = 'maritalStatus';
+	static weight = 'weight';
+	static levelOfEducation = 'levelOfEducation';
 	static overweight = 'overweight';
+	static height = 'height';
+	static gender = 'gender';
+	static activityLevel = 'activityLevel';
+	static age = 'age';
+	static pregnancyState = 'pregnancyState';
+	static job = 'job';
 
 	constructor(type) {
 		this.type = type;
@@ -29,6 +40,25 @@ class PatientDemographic {
 
 class DiabetesPhysicalExamination {
 	static bmi = 'bmi';
+	static familyHistoryOfType1DiabetesMellitus = 'familyHistoryOfType1DiabetesMellitus';
+	static smoking = 'smoking';
+	static personalHistoryOfHemochromatosis = 'personalHistoryOfHemochromatosis';
+	static familyHistoryOfType2DiabetesMellitus = 'familyHistoryOfType2DiabetesMellitus';
+	static oralExam = 'oralExam';
+	static eyeExam = 'eyeExam';
+	static vitalSign = 'vitalSign';
+	static thyroidFunction = 'thyroidFunction';
+	static babyDeliveredWeighingMoreThan4pt5Kg = 'babyDeliveredWeighingMoreThan4pt5Kg';
+	static lostFootSensation = 'lostFootSensation';
+	static firstDegreeRelativeWithDiabetes = 'firstDegreeRelativeWithDiabetes';
+	static historyOfGestationalDiabetes = 'historyOfGestationalDiabetes';
+	static highRiskPopulation = 'highRiskPopulation';
+	static waistCircumference = 'waistCircumference';
+	static familyHistoryOfHemochromatosis = 'familyHistoryOfHemochromatosis';
+	static physicallyInactive = 'physicallyInactive';
+	static drinkingAlcohol = 'drinkingAlcohol';
+	static familyHistoryOfGestationalDiabetesMellitus = 'familyHistoryOfGestationalDiabetesMellitus';
+	static historyOfPrediabetes = 'historyOfPrediabetes';
 
 	constructor(type, hasQuantitativeValue) {
 		this.type = type;
@@ -46,6 +76,8 @@ class TreatmentPlan {
 
 class TreatmentSubplan {
 	static lifestyleSubplan = 'lifestyleSubplan';
+	static educationSubplan = 'educationSubplan';
+	static drugSubplan = 'drugSubplan';
 
 	constructor(type, label) {
 		this.label = label;
@@ -65,6 +97,8 @@ class DiabetesDiagnosis {
 }
 
 class DiabetesMellitus {
+	static diabetesMellitusDuringPregnancyandChildbirthAndThePuerperium = 'diabetesMellitusDuringPregnancyandChildbirthAndThePuerperium';
+	static diabetesMellitusWithoutComplication = 'diabetesMellitusWithoutComplication';
 	static type2DiabetesMellitus = 'type2DiabetesMellitus';
 
 	constructor(type) {

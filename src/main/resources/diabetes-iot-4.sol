@@ -1,8 +1,9 @@
-pragma solidity >=0.4.16;
+// Specifies the version of Solidity, using semantic versioning.
+// Learn more: https://solidity.readthedocs.io/en/v0.5.10/layout-of-source-files.html#pragma
+pragma solidity ^0.7.0;
 
-
-contract {{physician}} {
-    	string public message;
+contract DiabetesIot4 {
+	string public message;
 	
 	constructor(string memory initMessage) {
 		message = initMessage;
@@ -29,14 +30,14 @@ contract {{physician}} {
 		bool exists;
 	}
 	
-	enum Ethnicities{ HighRiskEthnicity, PacificIslander, AfricanAmerican, AsianAmerican, Latino, NativeAmerican }
+	enum Ethnicities{ PacificIslander, HighRiskEthnicity, AfricanAmerican, AsianAmerican, Latino, NativeAmerican }
 	
 	struct Ethnicity {
 		Ethnicities hasType;
 		bool exists;
 	}
 	
-	enum PatientDemographics{ Overweight,ObeseClassI }
+	enum PatientDemographics{ Overweight }
 	
 	struct PatientDemographic {
 		PatientDemographics hasType;
@@ -66,16 +67,16 @@ contract {{physician}} {
 			&& patient.hasEthnicity.exists
 			&& patient.hasEthnicity.hasType != Ethnicities.AsianAmerican) {
 		
-			PatientDemographic memory v0 = PatientDemographic({ hasType: PatientDemographics.ObeseClassI, exists: true });
-			patient.hasDemographic[v0.hasType] = v0;
+			PatientDemographic memory v6 = PatientDemographic({ hasType: PatientDemographics.Overweight, exists: true });
+			patient.hasDemographic[v6.hasType] = v6;
 		}
 		
 		if (patient.hasPhysicalExamination[DiabetesPhysicalExaminations.Bmi].exists
 			&& patient.hasPhysicalExamination[DiabetesPhysicalExaminations.Bmi].hasQuantitativeValue >= 23
 			&& patient.hasEthnicity.hasType == Ethnicities.AsianAmerican) {
 		
-			PatientDemographic memory v1 = PatientDemographic({ hasType: PatientDemographics.Overweight, exists: true });
-			patient.hasDemographic[v1.hasType] = v1;
+			PatientDemographic memory v7 = PatientDemographic({ hasType: PatientDemographics.Overweight, exists: true });
+			patient.hasDemographic[v7.hasType] = v7;
 		}
 		
 		if (patient.hasPatientProfile.exists
@@ -86,16 +87,14 @@ contract {{physician}} {
 			|| patient.hasPatientProfile.hasEthnicity.hasType == Ethnicities.AsianAmerican
 			|| patient.hasPatientProfile.hasEthnicity.hasType == Ethnicities.PacificIslander)) {
 		
-			Ethnicity memory v2 = Ethnicity({ hasType: Ethnicities.HighRiskEthnicity, exists: true });
-			patient.hasPatientProfile.hasEthnicity = v2;
+			patient.hasPatientProfile.hasEthnicity.hasType = Ethnicities.HighRiskEthnicity;
 		}
 		
-		if (patient.hasEthnicity.exists
-			&& patient.hasEthnicity.hasType == Ethnicities.HighRiskEthnicity
-			&& patient.hasDemographic[PatientDemographics.Overweight].exists) {
+		if (patient.hasDemographic[PatientDemographics.Overweight].exists
+			&& patient.hasEthnicity.hasType == Ethnicities.HighRiskEthnicity) {
 		
-			Recommendation memory v3 = Recommendation({ hasType: Recommendations.DiabetesScreening, exists: true });
-			patient.recommendTest[v3.hasType] = v3;
+			Recommendation memory v8 = Recommendation({ hasType: Recommendations.DiabetesScreening, exists: true });
+			patient.recommendTest[v8.hasType] = v8;
 		
 			emit RecommendDiabetesScreening(block.timestamp);
 		}

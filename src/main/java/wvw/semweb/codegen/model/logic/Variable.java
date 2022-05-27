@@ -1,4 +1,4 @@
-package wvw.semweb.codegen.model;
+package wvw.semweb.codegen.model.logic;
 
 public class Variable implements Operand {
 

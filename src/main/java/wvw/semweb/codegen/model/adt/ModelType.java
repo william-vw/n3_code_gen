@@ -1,17 +1,17 @@
-package wvw.semweb.codegen.model.struct;
+package wvw.semweb.codegen.model.adt;
 
 import org.apache.jen3.datatypes.RDFDatatype;
 
 public class ModelType {
 
 	private RDFDatatype dataType;
-	private ModelStruct objectType;
+	private ModelADT objectType;
 	
 	public ModelType(RDFDatatype dataType) {
 		this.dataType = dataType;
 	}
 
-	public ModelType(ModelStruct objectType) {
+	public ModelType(ModelADT objectType) {
 		this.objectType = objectType;
 	}
 
@@ -27,7 +27,7 @@ public class ModelType {
 		return objectType != null;
 	}
 
-	public ModelStruct getObjectType() {
+	public ModelADT getObjectType() {
 		return objectType;
 	}
 	

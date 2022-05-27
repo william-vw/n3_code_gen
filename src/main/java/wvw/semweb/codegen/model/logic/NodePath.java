@@ -1,10 +1,10 @@
-package wvw.semweb.codegen.model;
+package wvw.semweb.codegen.model.logic;
 
 import java.util.LinkedList;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-import wvw.semweb.codegen.model.struct.ModelProperty;
+import wvw.semweb.codegen.model.adt.ModelProperty;
 
 public class NodePath implements Operand {
 

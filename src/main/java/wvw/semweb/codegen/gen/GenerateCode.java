@@ -4,22 +4,23 @@ import java.io.File;
 import java.io.IOException;
 import java.util.stream.Collectors;
 
+import org.apache.commons.text.CaseUtils;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
-import wvw.semweb.codegen.model.Assignment;
-import wvw.semweb.codegen.model.Block;
-import wvw.semweb.codegen.model.CodeLogic;
-import wvw.semweb.codegen.model.CodeStatement;
-import wvw.semweb.codegen.model.Comparison;
-import wvw.semweb.codegen.model.Condition;
-import wvw.semweb.codegen.model.Conjunction;
-import wvw.semweb.codegen.model.Disjunction;
-import wvw.semweb.codegen.model.IfThen;
-import wvw.semweb.codegen.model.MultiCondition;
-import wvw.semweb.codegen.model.struct.CodeModel;
-import wvw.semweb.codegen.model.struct.ModelProperty;
-import wvw.semweb.codegen.model.struct.ModelStruct;
+import wvw.semweb.codegen.model.adt.CodeModel;
+import wvw.semweb.codegen.model.adt.ModelProperty;
+import wvw.semweb.codegen.model.logic.Assignment;
+import wvw.semweb.codegen.model.logic.Block;
+import wvw.semweb.codegen.model.logic.CodeLogic;
+import wvw.semweb.codegen.model.logic.CodeStatement;
+import wvw.semweb.codegen.model.logic.Comparison;
+import wvw.semweb.codegen.model.logic.Condition;
+import wvw.semweb.codegen.model.logic.Conjunction;
+import wvw.semweb.codegen.model.logic.Disjunction;
+import wvw.semweb.codegen.model.logic.IfThen;
+import wvw.semweb.codegen.model.logic.MultiCondition;
+import wvw.semweb.codegen.model.adt.ModelADT;
 import wvw.semweb.codegen.parse.post.ModelPostprocessor.PostprocessTypes;
 
 public abstract class GenerateCode {
@@ -62,14 +63,14 @@ public abstract class GenerateCode {
 
 	public abstract void generate(CodeModel model, CodeLogic logic, File output) throws IOException;
 
-	protected boolean isInitField(ModelProperty prp, ModelStruct ofStruct) {
+	protected boolean isInitField(ModelProperty prp, ModelADT ofStruct) {
 		return includeField(prp, ofStruct) && !prp.requiresArray();
 	}
 
-	// type property only needed/ possible if struct has constants
+	// type property only needed/ possible if adt has constants
 	// (e.g., in solidity, these will be added to a separate enum)
 
-	protected boolean includeField(ModelProperty prp, ModelStruct ofStruct) {
+	protected boolean includeField(ModelProperty prp, ModelADT ofStruct) {
 		return (!prp.isTypePrp() || ofStruct.hasConstants());
 	}
 
@@ -105,11 +106,11 @@ public abstract class GenerateCode {
 			return null;
 		}
 	}
-	
+
 	protected abstract String genIfThen(IfThen ifThen, int level);
-	
+
 	protected abstract String genBlock(Block block);
-	
+
 	protected abstract String genAssignment(Assignment assign);
 
 	protected String genCondition(Condition cond, int level) {
@@ -148,4 +149,11 @@ public abstract class GenerateCode {
 	}
 
 	protected abstract String genComparison(Comparison cmp);
+
+	protected String safeName(String str, boolean clsName) {
+		str = str.replace(".", "pt").replace("-", "_").replace(",", "and");
+
+		return CaseUtils.toCamelCase(str, clsName, new char[] { ' ', '_', '-' });
+
+	}
 }

@@ -1,7 +1,8 @@
-pragma solidity >=0.4.16;
+// Specifies the version of Solidity, using semantic versioning.
+// Learn more: https://solidity.readthedocs.io/en/v0.5.10/layout-of-source-files.html#pragma
+pragma solidity ^0.7.0;
 
-
-contract {{physician}} {
+contract DiabetesIot2 {
 	string public message;
 	
 	constructor(string memory initMessage) {
@@ -39,7 +40,7 @@ contract {{physician}} {
 	enum DrugSubplans{ MonotherapyPlan }
 	
 	struct DrugSubplan {
-		DiabetesDrugs hasDrugParticipant;
+		DiabetesDrug hasDrugParticipant;
 		DrugSubplans hasType;
 		bool exists;
 	}
@@ -68,8 +69,8 @@ contract {{physician}} {
 		if (patient.hasPhysicalExamination[DiabetesPhysicalExaminations.Bmi].exists
 			&& patient.hasPhysicalExamination[DiabetesPhysicalExaminations.Bmi].hasQuantitativeValue >= 35) {
 		
-			PatientDemographic memory v0 = PatientDemographic({ hasType: PatientDemographics.ObeseClassI,hasQuantitativeValue:0, exists: true });
-			patient.hasDemographic[v0.hasType] = v0;
+			PatientDemographic memory v2 = PatientDemographic({ hasType: PatientDemographics.ObeseClassI, hasQuantitativeValue: 0, exists: true });
+			patient.hasDemographic[v2.hasType] = v2;
 		}
 		
 		if (patient.hasLabTest[DiabetesLaboratoryTests.Hba1c].exists
@@ -82,8 +83,8 @@ contract {{physician}} {
 			&& patient.hasLabTest[DiabetesLaboratoryTests.Fpg].hasQuantitativeValue >= 110
 			&& patient.hasDemographic[PatientDemographics.ObeseClassI].exists) {
 		
-			DrugSubplan memory v1 = DrugSubplan({ hasType: DrugSubplans.MonotherapyPlan, hasDrugParticipant: DiabetesDrugs.Metformin, exists: true });
-			patient.hasPart[v1.hasType] = v1;
+			DrugSubplan memory v3 = DrugSubplan({ hasType: DrugSubplans.MonotherapyPlan, hasDrugParticipant: DiabetesDrugs.Metformin, exists: true });
+			patient.hasPart[v3.hasType] = v3;
 		
 			emit NewTreatmentSubPlan(block.timestamp);
 		}

@@ -1,4 +1,4 @@
-package wvw.semweb.codegen.model;
+package wvw.semweb.codegen.model.logic;
 
 import java.util.ArrayList;
 import java.util.List;

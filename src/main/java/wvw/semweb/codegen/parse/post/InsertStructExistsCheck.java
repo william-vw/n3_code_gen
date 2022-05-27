@@ -3,31 +3,33 @@ package wvw.semweb.codegen.parse.post;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.apache.jen3.n3.N3Model;
+
 import wvw.semweb.codegen.gen.Util;
-import wvw.semweb.codegen.model.Assignment;
-import wvw.semweb.codegen.model.Block;
-import wvw.semweb.codegen.model.CodeStatement.Codes;
-import wvw.semweb.codegen.model.Comparison;
-import wvw.semweb.codegen.model.Comparison.Comparators;
-import wvw.semweb.codegen.model.CreateStruct;
-import wvw.semweb.codegen.model.IfThen;
-import wvw.semweb.codegen.model.NodePath;
-import wvw.semweb.codegen.model.Variable;
-import wvw.semweb.codegen.model.struct.CodeModel;
+import wvw.semweb.codegen.model.adt.CodeModel;
+import wvw.semweb.codegen.model.logic.Assignment;
+import wvw.semweb.codegen.model.logic.Block;
+import wvw.semweb.codegen.model.logic.Comparison;
+import wvw.semweb.codegen.model.logic.CreateStruct;
+import wvw.semweb.codegen.model.logic.IfThen;
+import wvw.semweb.codegen.model.logic.NodePath;
+import wvw.semweb.codegen.model.logic.Variable;
+import wvw.semweb.codegen.model.logic.CodeStatement.Codes;
+import wvw.semweb.codegen.model.logic.Comparison.Comparators;
 import wvw.semweb.codegen.parse.rule.RuleGraph;
 
 public class InsertStructExistsCheck extends ModelPostprocessor {
 
-	// for create-struct assignment blocks:
+	// for create-adt assignment blocks:
 	// modify the code block to check whether something already exists at end of
-	// path (visitor code will simply assign a new struct each time)
+	// path (visitor code will simply assign a new adt each time)
 
 	// (difficult to do this in visitor since we should only do this for
 	// intermediary assignments (i.e., not for the last assignment))
 
 	@Override
-	public void postprocess(CodeModel model, IfThen it, RuleGraph ruleGraph) {
-		// TODO currently only blocks will be created for create-struct assignment
+	public void postprocess(CodeModel model, IfThen it, RuleGraph ruleGraph, N3Model ontology) {
+		// TODO currently only blocks will be created for create-adt assignment
 		// blocks; should somehow tag these blocks for extensibility ..
 
 		Block block = (Block) it.getThen();
@@ -49,15 +51,15 @@ public class InsertStructExistsCheck extends ModelPostprocessor {
 			} else {
 				subBlock.clear();
 
-				// check whether struct at current path exists
-				// if not, create new struct and assign to path
+				// check whether adt at current path exists
+				// if not, create new adt and assign to path
 
 				Comparison notExists = new Comparison(path, Comparators.NEX);
 				Assignment newAsn = new Assignment(path, createStruct);
 
 				subBlock.add(new IfThen(notExists, newAsn));
 
-				// assign (possibly new) struct at end of path to variable
+				// assign (possibly new) adt at end of path to variable
 
 				Assignment newAsn2 = new Assignment(var, path);
 				subBlock.add(newAsn2);

@@ -11,47 +11,47 @@ import wvw.semweb.codegen.parse.ParseModelLogic;
 
 //(important)
 
-//TODO rename ModelStruct to ModelADT
+// TODO in paper, consider talking about InsertAllOntologyConstants:
+// i.e., add all sub-types of a given type as constants
+// (should ideally also include URIs of the given type)
 
-// TODO should add all sub-types of a given type as constants
-// input data could have any of those sub-types
-// this will even lead to a bug for diabetes-iot-2, since no key types are given for drug subplan
-// (nothing to index the mapping on)
-
-// TODO in JS, use same mapping solution as in solidity
-// ("some" solution doesn't work)
+// TODO add createPatient methods to smart contracts
+// (unfortunately, these need to be created separately *per* scenario)
 
 // (future work)
 
-//TODO limitations of struct merging for solidity: 
+//TODO limitations of adt merging for solidity: 
 //combination of lifestyle with drug subplans will likely not work
 
 // TODO assuming that the rule ordering reflects the chaining sequence
 
-// TODO can only create new struct with *non* array-like properties
+// TODO can only create new adt with *non* array-like properties
 // (e.g., try DrugSubPlan; remove functional property type)
 // (in solidity: "TypeError: Struct containing a (nested) mapping cannot be constructed")
+
+// TODO have separate post-processing for adt model
+// (most are only needed after all the rules are processed; currently doing duplicate work)
+
+//TODO post-processing where adts sharing a (non-trivial) superclass (i.e., not owl:Thing, entity, ..)
+//are merged together
 
 //(minor)
 
 //TODO properly parametrize ModelVisitorImpl code (e.g., CodeLogicVisitor, CodeModelVisitor)
-
-//TODO post-processing where structs sharing a (non-trivial) superclass (i.e., not owl:Thing, entity, ..)
-// are merged together
 
 public class CodeGen {
 
 	private static final Logger log = LogManager.getLogger(CodeGen.class);
 
 	public static void main(String[] args) throws Exception {
-//		generateCode(new File("diabetes-iot-1.n3"), new File("DMTO2.n3"), new File("src/main/resources/"),
-//				CodeTypes.JAVASCRIPT);
-//		generateCode(new File("diabetes-iot-2.n3"), new File("DMTO2.n3"), new File("src/main/resources/"),
-//				CodeTypes.JAVASCRIPT);
-//		generateCode(new File("diabetes-iot-3.n3"), new File("DMTO2.n3"), new File("src/main/resources/"),
-//				CodeTypes.JAVASCRIPT);
+		generateCode(new File("diabetes-iot-1.n3"), new File("DMTO2.n3"), new File("src/main/resources/"),
+				CodeTypes.SOLIDITY);
+		generateCode(new File("diabetes-iot-2.n3"), new File("DMTO2.n3"), new File("src/main/resources/"),
+				CodeTypes.SOLIDITY);
+		generateCode(new File("diabetes-iot-3.n3"), new File("DMTO2.n3"), new File("src/main/resources/"),
+				CodeTypes.SOLIDITY);
 		generateCode(new File("diabetes-iot-4.n3"), new File("DMTO2.n3"), new File("src/main/resources/"),
-				CodeTypes.JAVASCRIPT);
+				CodeTypes.SOLIDITY);
 	}
 
 	public static void generateCode(File ruleFile, File ontologyFile, File outFolder, CodeTypes codeType)

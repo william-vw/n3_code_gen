@@ -7,30 +7,29 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.text.CaseUtils;
 import org.apache.jen3.datatypes.RDFDatatype;
 import org.apache.jen3.util.IOUtils;
 import org.atteo.evo.inflector.English;
 
-import wvw.semweb.codegen.model.Assignment;
-import wvw.semweb.codegen.model.Block;
-import wvw.semweb.codegen.model.CodeLogic;
-import wvw.semweb.codegen.model.Comparison;
-import wvw.semweb.codegen.model.Comparison.Comparators;
-import wvw.semweb.codegen.model.Condition.Conditions;
-import wvw.semweb.codegen.model.CreateStruct;
-import wvw.semweb.codegen.model.IfThen;
-import wvw.semweb.codegen.model.Literal;
-import wvw.semweb.codegen.model.NodePath;
-import wvw.semweb.codegen.model.Operand;
-import wvw.semweb.codegen.model.Operand.Operands;
-import wvw.semweb.codegen.model.StructConstant;
-import wvw.semweb.codegen.model.Variable;
-import wvw.semweb.codegen.model.struct.CodeModel;
-import wvw.semweb.codegen.model.struct.ModelElement;
-import wvw.semweb.codegen.model.struct.ModelProperty;
-import wvw.semweb.codegen.model.struct.ModelStruct;
-import wvw.semweb.codegen.model.struct.ModelType;
+import wvw.semweb.codegen.model.adt.CodeModel;
+import wvw.semweb.codegen.model.adt.ModelElement;
+import wvw.semweb.codegen.model.adt.ModelProperty;
+import wvw.semweb.codegen.model.adt.ModelADT;
+import wvw.semweb.codegen.model.adt.ModelType;
+import wvw.semweb.codegen.model.logic.Assignment;
+import wvw.semweb.codegen.model.logic.Block;
+import wvw.semweb.codegen.model.logic.CodeLogic;
+import wvw.semweb.codegen.model.logic.Comparison;
+import wvw.semweb.codegen.model.logic.CreateStruct;
+import wvw.semweb.codegen.model.logic.IfThen;
+import wvw.semweb.codegen.model.logic.Literal;
+import wvw.semweb.codegen.model.logic.NodePath;
+import wvw.semweb.codegen.model.logic.Operand;
+import wvw.semweb.codegen.model.logic.StructConstant;
+import wvw.semweb.codegen.model.logic.Variable;
+import wvw.semweb.codegen.model.logic.Comparison.Comparators;
+import wvw.semweb.codegen.model.logic.Condition.Conditions;
+import wvw.semweb.codegen.model.logic.Operand.Operands;
 import wvw.semweb.codegen.parse.rule.ann.ParameterAnnotation;
 import wvw.semweb.codegen.parse.rule.ann.ParameterAnnotation.ParameterTypes;
 import wvw.semweb.codegen.parse.rule.ann.RuleAnnotation;
@@ -100,20 +99,20 @@ public class GenerateSolidity extends GenerateCode {
 
 		if (loadParam.isPresent()) {
 			String name = loadParam.get().getNode().getName() + "s";
-			String type = structName(codeModel.getStruct(loadParam.get().getNode()));
+			String type = adtName(codeModel.getStruct(loadParam.get().getNode()));
 
 			logic.append("\nmapping(address => ").append(type).append(") ").append(name).append(";\n\n");
 		}
 
 		String fnParams = codeLogic.getAnnotations().getAll().stream().filter(a -> a.getType() == AnnotationTypes.PARAM)
 				.map(a -> (ParameterAnnotation) a).filter(a -> a.getParameterType() == ParameterTypes.FUNCTION)
-				.map(a -> structName(codeModel.getStruct(a.getNode())) + " memory " + a.getNode().getName())
+				.map(a -> adtName(codeModel.getStruct(a.getNode())) + " memory " + a.getNode().getName())
 				.collect(Collectors.joining(", "));
 
-		logic.append("function execute(").append(fnParams).append(") {\n");
+		logic.append("function execute(").append(fnParams).append(") public {\n");
 
 		if (loadParam.isPresent()) {
-			logic.append("\t").append(structName(codeModel.getStruct(loadParam.get().getNode())) + " storage "
+			logic.append("\t").append(adtName(codeModel.getStruct(loadParam.get().getNode())) + " storage "
 					+ loadParam.get().getNode().getName() + " = patients[msg.sender];\n\n");
 		}
 
@@ -198,9 +197,9 @@ public class GenerateSolidity extends GenerateCode {
 			switch (assign.getOp2().getType()) {
 
 			case CREATE_STRUCT:
-				// get type of new struct that we're creating; this will be the variable's type
-				ModelStruct struct = ((CreateStruct) assign.getOp2()).getStruct();
-				typeName = structName(struct);
+				// get type of new adt that we're creating; this will be the variable's type
+				ModelADT adt = ((CreateStruct) assign.getOp2()).getStruct();
+				typeName = adtName(adt);
 
 				break;
 
@@ -208,7 +207,7 @@ public class GenerateSolidity extends GenerateCode {
 				NodePath path = (NodePath) assign.getOp2();
 				ModelType lastTarget = path.getPath().getLast().getTarget();
 				if (lastTarget.hasObjectType())
-					typeName = structName(lastTarget.getObjectType());
+					typeName = adtName(lastTarget.getObjectType());
 				else
 					typeName = solDatatype(lastTarget.getDataType());
 
@@ -252,7 +251,7 @@ public class GenerateSolidity extends GenerateCode {
 
 		case CREATE_STRUCT:
 			CreateStruct cnstr = (CreateStruct) op;
-			String params = cnstr.getConstructParams().stream().map(p -> {
+			String params = cnstr.getConadtParams().stream().map(p -> {
 				if (p.getOp1().getType() != Operands.NODE_PATH)
 					log.error("expecting nodepath of size 1 for constructor parameter: " + p.getOp1());
 
@@ -262,7 +261,7 @@ public class GenerateSolidity extends GenerateCode {
 			}).collect(Collectors.joining(", "));
 			params += ", exists: true";
 
-			return structName(cnstr.getStruct()) + "({ " + params + " })";
+			return adtName(cnstr.getStruct()) + "({ " + params + " })";
 
 		case NODE_PATH:
 			NodePath np = (NodePath) op;
@@ -303,15 +302,15 @@ public class GenerateSolidity extends GenerateCode {
 		}
 	}
 
-	private void genStruct(ModelStruct struct) {
+	private void genStruct(ModelADT adt) {
 		if (!model.isEmpty())
 			model.append("\n\n");
 
 		// add any required enum to keep types & uris
 
-		Iterator<ModelElement> cnsts = struct.getConstants();
+		Iterator<ModelElement> cnsts = adt.getConstants();
 		if (cnsts.hasNext()) {
-			String enumName = enumName(struct);
+			String enumName = enumName(adt);
 			model.append("enum ").append(enumName).append("{ ");
 
 			int cnt = 0;
@@ -327,12 +326,12 @@ public class GenerateSolidity extends GenerateCode {
 			model.append("\n\n");
 		}
 
-		// add the actual struct
+		// add the actual adt
 
-		model.append("struct ").append(structName(struct)).append(" {\n");
+		model.append("struct ").append(adtName(adt)).append(" {\n");
 
-		for (ModelProperty prp : struct.getProperties())
-			genField(prp, struct);
+		for (ModelProperty prp : adt.getProperties())
+			genField(prp, adt);
 
 		// yes this is actually needed
 		model.append("\tbool exists;\n");
@@ -340,8 +339,8 @@ public class GenerateSolidity extends GenerateCode {
 		model.append("}");
 	}
 
-	private void genField(ModelProperty prp, ModelStruct ofStruct) {
-		if (!includeField(prp, ofStruct))
+	private void genField(ModelProperty prp, ModelADT ofAdt) {
+		if (!includeField(prp, ofAdt))
 			return;
 
 		model.append("\t");
@@ -349,13 +348,13 @@ public class GenerateSolidity extends GenerateCode {
 		String typeName = null;
 
 		if (prp.isTypePrp()) {
-			String structName = enumName(ofStruct);
-			typeName = structName;
+			String adtName = enumName(ofAdt);
+			typeName = adtName;
 
 		} else {
 			ModelType target = prp.getTarget();
 			if (target.hasObjectType())
-				typeName = structName(target.getObjectType());
+				typeName = adtName(target.getObjectType());
 			else
 				typeName = solDatatype(target.getDataType());
 		}
@@ -364,7 +363,7 @@ public class GenerateSolidity extends GenerateCode {
 			String keyName = null;
 
 			ModelType target = prp.getTarget();
-			// key will be the type property of the target struct
+			// key will be the type property of the target adt
 			// so put the type property's static type (i.e., enum w/ constants)
 			if (target.hasObjectType())
 				keyName = enumName(target.getObjectType());
@@ -386,12 +385,12 @@ public class GenerateSolidity extends GenerateCode {
 		return solName(name, true);
 	}
 
-	private String structName(ModelStruct struct) {
-		return solName(struct, true);
+	private String adtName(ModelADT adt) {
+		return solName(adt, true);
 	}
 
-	private String enumName(ModelStruct struct) {
-		return English.plural(structName(struct));
+	private String enumName(ModelADT adt) {
+		return English.plural(adtName(adt));
 	}
 
 	private String fieldName(ModelProperty prp) {
@@ -414,7 +413,7 @@ public class GenerateSolidity extends GenerateCode {
 	}
 
 	private String solName(String str, boolean clsName) {
-		return CaseUtils.toCamelCase(str, clsName, new char[] { ' ', '_', '-' });
+		return safeName(str, clsName);
 	}
 
 	private String solDatatype(RDFDatatype dt) {

@@ -1,6 +1,6 @@
-package wvw.semweb.codegen.model.struct;
+package wvw.semweb.codegen.model.adt;
 
-import wvw.semweb.codegen.model.StructConstant;
+import wvw.semweb.codegen.model.logic.StructConstant;
 
 public class ModelProperty extends ModelElement {
 

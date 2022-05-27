@@ -26,7 +26,8 @@
 
 } => {
     ?profile DDO:DDO_0000139 [ # has_demographic
-		a DTO:DTO:0002079 # type obese class I
+		a DTO:DTO:0002079 ; # type obese class I
+		DDO:DDO_0000134 0
     ]
 
 } ; cg:loadParam ?patient .

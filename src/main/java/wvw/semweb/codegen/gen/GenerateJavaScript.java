@@ -4,26 +4,25 @@ import java.io.File;
 import java.io.IOException;
 import java.util.stream.Collectors;
 
-import org.apache.commons.text.CaseUtils;
 import org.apache.jen3.util.IOUtils;
 
-import wvw.semweb.codegen.model.Assignment;
-import wvw.semweb.codegen.model.Block;
-import wvw.semweb.codegen.model.CodeLogic;
-import wvw.semweb.codegen.model.Comparison;
-import wvw.semweb.codegen.model.Comparison.Comparators;
-import wvw.semweb.codegen.model.Condition.Conditions;
-import wvw.semweb.codegen.model.CreateStruct;
-import wvw.semweb.codegen.model.IfThen;
-import wvw.semweb.codegen.model.Literal;
-import wvw.semweb.codegen.model.NodePath;
-import wvw.semweb.codegen.model.Operand;
-import wvw.semweb.codegen.model.StructConstant;
-import wvw.semweb.codegen.model.Variable;
-import wvw.semweb.codegen.model.struct.CodeModel;
-import wvw.semweb.codegen.model.struct.ModelElement;
-import wvw.semweb.codegen.model.struct.ModelProperty;
-import wvw.semweb.codegen.model.struct.ModelStruct;
+import wvw.semweb.codegen.model.adt.CodeModel;
+import wvw.semweb.codegen.model.adt.ModelElement;
+import wvw.semweb.codegen.model.adt.ModelProperty;
+import wvw.semweb.codegen.model.logic.Assignment;
+import wvw.semweb.codegen.model.logic.Block;
+import wvw.semweb.codegen.model.logic.CodeLogic;
+import wvw.semweb.codegen.model.logic.Comparison;
+import wvw.semweb.codegen.model.logic.CreateStruct;
+import wvw.semweb.codegen.model.logic.IfThen;
+import wvw.semweb.codegen.model.logic.Literal;
+import wvw.semweb.codegen.model.logic.NodePath;
+import wvw.semweb.codegen.model.logic.Operand;
+import wvw.semweb.codegen.model.logic.StructConstant;
+import wvw.semweb.codegen.model.logic.Variable;
+import wvw.semweb.codegen.model.logic.Comparison.Comparators;
+import wvw.semweb.codegen.model.logic.Condition.Conditions;
+import wvw.semweb.codegen.model.adt.ModelADT;
 import wvw.semweb.codegen.parse.rule.ann.ParameterAnnotation;
 import wvw.semweb.codegen.parse.rule.ann.ParameterAnnotation.ParameterTypes;
 import wvw.semweb.codegen.parse.rule.ann.RuleAnnotation.AnnotationTypes;
@@ -104,7 +103,8 @@ public class GenerateJavaScript extends GenerateCode {
 
 	@Override
 	protected String genBlock(Block block) {
-		return block.getStatements().stream().map(stmt -> genStatement(stmt, 0)).collect(Collectors.joining("\n")) + "\n";
+		return block.getStatements().stream().map(stmt -> genStatement(stmt, 0)).collect(Collectors.joining("\n"))
+				+ "\n";
 	}
 
 	@Override
@@ -143,7 +143,7 @@ public class GenerateJavaScript extends GenerateCode {
 		case CREATE_STRUCT:
 			CreateStruct cnstr = (CreateStruct) op;
 
-			String params = cnstr.getConstructParams().stream().map(p -> genOperand(p.getOp2()))
+			String params = cnstr.getConadtParams().stream().map(p -> genOperand(p.getOp2()))
 					.collect(Collectors.joining(", "));
 			return "new " + jsName(cnstr.getStruct(), true) + "(" + params + ")";
 
@@ -186,37 +186,37 @@ public class GenerateJavaScript extends GenerateCode {
 		}
 	}
 
-	private void genClass(ModelStruct struct) {
+	private void genClass(ModelADT adt) {
 		if (!classes.isEmpty())
 			classes.append("\n\n");
 
-		String clsName = jsName(struct, true);
+		String clsName = jsName(adt, true);
 		classes.append("class ").append(clsName).append(" {\n");
 
-		for (ModelElement type : struct.getTypes())
+		for (ModelElement type : adt.getTypes())
 			genStaticField(type);
 
-		if (!struct.getTypes().isEmpty())
+		if (!adt.getTypes().isEmpty())
 			classes.append("\n");
 
-		for (ModelElement value : struct.getValues())
+		for (ModelElement value : adt.getValues())
 			genStaticField(value);
 
-		if (!struct.getValues().isEmpty())
+		if (!adt.getValues().isEmpty())
 			classes.append("\n");
 
-		if (!struct.getProperties().isEmpty()) {
+		if (!adt.getProperties().isEmpty()) {
 			// @formatter:off
-			String params = struct.getProperties().stream()
+			String params = adt.getProperties().stream()
 					.sorted((e1, e2) -> (e1.isTypePrp() ? -1 : 1))
-					.filter(p -> isInitField(p, struct))
+					.filter(p -> isInitField(p, adt))
 					.map(p -> fieldName(p))
 					.collect(Collectors.joining(", "));
 			if (!params.isEmpty()) {
 				classes.append("\tconstructor(").append(params).append(") {\n")
 					.append(
-						struct.getProperties().stream()
-							.filter(p -> isInitField(p, struct))
+						adt.getProperties().stream()
+							.filter(p -> isInitField(p, adt))
 							.map(p -> {
 								String field = fieldName(p);
 								return "\t\tthis." + field + " = " + field + ";";
@@ -229,8 +229,8 @@ public class GenerateJavaScript extends GenerateCode {
 
 			classes.append("\n");
 
-			for (ModelProperty prp : struct.getProperties())
-				genField(prp, struct);
+			for (ModelProperty prp : adt.getProperties())
+				genField(prp, adt);
 		}
 
 		classes.append("}");
@@ -242,7 +242,7 @@ public class GenerateJavaScript extends GenerateCode {
 		classes.append("\tstatic ").append(jsName).append(" = '").append(jsName).append("';\n");
 	}
 
-	private void genField(ModelProperty prp, ModelStruct ofStruct) {
+	private void genField(ModelProperty prp, ModelADT ofStruct) {
 		if (!includeField(prp, ofStruct))
 			return;
 
@@ -264,6 +264,6 @@ public class GenerateJavaScript extends GenerateCode {
 	}
 
 	private String jsName(String str, boolean cls) {
-		return CaseUtils.toCamelCase(str, cls, new char[] { ' ', '_' });
+		return safeName(str, cls);
 	}
 }

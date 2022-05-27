@@ -21,9 +21,9 @@ import org.apache.jen3.util.IOUtils;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
-import wvw.semweb.codegen.model.CodeLogic;
-import wvw.semweb.codegen.model.IfThen;
-import wvw.semweb.codegen.model.struct.CodeModel;
+import wvw.semweb.codegen.model.adt.CodeModel;
+import wvw.semweb.codegen.model.logic.CodeLogic;
+import wvw.semweb.codegen.model.logic.IfThen;
 import wvw.semweb.codegen.parse.post.ModelPostprocessor;
 import wvw.semweb.codegen.parse.post.ModelPostprocessor.PostprocessTypes;
 import wvw.semweb.codegen.parse.rule.RuleGraph;
@@ -43,6 +43,7 @@ public class ParseModelLogic implements N3EventListener {
 	private static final Logger log = LogManager.getLogger(ParseModelLogic.class);
 
 	private List<N3Rule> parsedRules = new ArrayList<>();
+	private N3Model ontology;
 
 	private CodeModel model = new CodeModel();
 	private CodeLogic logic = new CodeLogic();
@@ -65,7 +66,7 @@ public class ParseModelLogic implements N3EventListener {
 
 		logic.setRulesName(FilenameUtils.removeExtension(rulesFile.getName()));
 
-		N3Model ontology = ModelFactory.createN3Model(N3ModelSpec.get(Types.N3_MEM_FP_INF));
+		ontology = ModelFactory.createN3Model(N3ModelSpec.get(Types.N3_MEM_FP_INF));
 		ontology.read(IOUtils.getResourceInputStream(getClass(), ontologyFile.getPath()), null);
 
 		N3Model ruleset = ModelFactory.createN3Model(N3ModelSpec.get(Types.N3_MEM_FP_INF));
@@ -162,14 +163,14 @@ public class ParseModelLogic implements N3EventListener {
 	}
 
 	private void postprocess(CodeModel newModel, IfThen newIt, RuleGraph ruleGraph, PostprocessTypes... postprocesses) {
-
-		// do this by default
-		ModelPostprocessor.create(PostprocessTypes.REMOVE_EXISTS_CHECK_LITERALS).postprocess(newModel, newIt,
-				ruleGraph);
+		for (PostprocessTypes type : PostprocessTypes.values()) {
+			if (type.isDefault())
+				ModelPostprocessor.create(type).postprocess(newModel, newIt, ruleGraph, ontology);
+		}
 
 		for (PostprocessTypes type : postprocesses) {
 			log.info("(postprocess: " + type + ")");
-			ModelPostprocessor.create(type).postprocess(newModel, newIt, ruleGraph);
+			ModelPostprocessor.create(type).postprocess(newModel, newIt, ruleGraph, ontology);
 		}
 	}
 }

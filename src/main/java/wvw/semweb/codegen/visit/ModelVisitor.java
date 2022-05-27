@@ -4,9 +4,9 @@ import org.apache.jen3.n3.N3Model;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
-import wvw.semweb.codegen.model.Block;
-import wvw.semweb.codegen.model.Conjunction;
-import wvw.semweb.codegen.model.struct.CodeModel;
+import wvw.semweb.codegen.model.adt.CodeModel;
+import wvw.semweb.codegen.model.logic.Block;
+import wvw.semweb.codegen.model.logic.Conjunction;
 import wvw.semweb.codegen.parse.rule.RuleGraph;
 
 public abstract class ModelVisitor {

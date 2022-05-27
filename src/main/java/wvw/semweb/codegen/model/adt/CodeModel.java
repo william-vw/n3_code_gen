@@ -1,4 +1,4 @@
-package wvw.semweb.codegen.model.struct;
+package wvw.semweb.codegen.model.adt;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -11,15 +11,15 @@ import org.apache.jen3.graph.Node;
 
 public class CodeModel {
 
-	private static int structCnt = 0;
+	private static int adtCnt = 0;
 
-	private Map<String, ModelStruct> nameStructs = new HashMap<>();
-	public Map<Node, ModelStruct> nodeStructs = new HashMap<>();
+	private Map<String, ModelADT> nameStructs = new HashMap<>();
+	public Map<Node, ModelADT> nodeStructs = new HashMap<>();
 
-	public ModelStruct getOrCreateStruct(String name, Node node) {
-		ModelStruct ret = nameStructs.get(name);
+	public ModelADT getOrCreateStruct(String name, Node node) {
+		ModelADT ret = nameStructs.get(name);
 		if (ret == null) {
-			ret = new ModelStruct(name, structCnt++);
+			ret = new ModelADT(name, adtCnt++);
 
 			nameStructs.put(name, ret);
 		}
@@ -35,14 +35,14 @@ public class CodeModel {
 		else {
 			newModel.nameStructs.entrySet().stream().forEach(e -> {
 				String name = e.getKey();
-				ModelStruct struct = e.getValue();
+				ModelADT adt = e.getValue();
 
 				if (nameStructs.containsKey(name)) {
-					ModelStruct struct0 = nameStructs.get(name);
-					struct0.replacing(struct);
+					ModelADT adt0 = nameStructs.get(name);
+					adt0.replacing(adt);
 
 				} else
-					nameStructs.put(name, struct);
+					nameStructs.put(name, adt);
 			});
 		}
 
@@ -51,21 +51,21 @@ public class CodeModel {
 	}
 
 	// TODO
-	public void removeStruct(ModelStruct struct) {
-		nameStructs.entrySet().removeIf(e -> e.getValue().equals(struct));
-		nodeStructs.entrySet().removeIf(e -> e.getValue().equals(struct));
+	public void removeStruct(ModelADT adt) {
+		nameStructs.entrySet().removeIf(e -> e.getValue().equals(adt));
+		nodeStructs.entrySet().removeIf(e -> e.getValue().equals(adt));
 	}
 
-	public ModelStruct getStruct(Node node) {
+	public ModelADT getStruct(Node node) {
 		return nodeStructs.get(node);
 	}
 
-	public void setStruct(Node node, ModelStruct struct) {
-		nodeStructs.put(node, struct);
+	public void setStruct(Node node, ModelADT adt) {
+		nodeStructs.put(node, adt);
 	}
 
-	public Collection<ModelStruct> getAllStructs() {
-		List<ModelStruct> sorted = new ArrayList<>(nameStructs.values());
+	public Collection<ModelADT> getAllStructs() {
+		List<ModelADT> sorted = new ArrayList<>(nameStructs.values());
 		sorted.sort(null);
 
 		return sorted;

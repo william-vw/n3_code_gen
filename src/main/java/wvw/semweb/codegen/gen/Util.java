@@ -3,10 +3,10 @@ package wvw.semweb.codegen.gen;
 import org.apache.jen3.graph.Node_URI;
 import org.apache.jen3.rdf.model.Resource;
 
-import wvw.semweb.codegen.model.NodePath;
-import wvw.semweb.codegen.model.Operand;
-import wvw.semweb.codegen.model.Operand.Operands;
-import wvw.semweb.codegen.model.struct.ModelProperty;
+import wvw.semweb.codegen.model.adt.ModelProperty;
+import wvw.semweb.codegen.model.logic.NodePath;
+import wvw.semweb.codegen.model.logic.Operand;
+import wvw.semweb.codegen.model.logic.Operand.Operands;
 
 public class Util {
 

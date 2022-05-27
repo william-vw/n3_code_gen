@@ -21,6 +21,7 @@ class TreatmentPlan {
 
 class TreatmentSubplan {
 	static lifestyleSubplan = 'lifestyleSubplan';
+	static educationSubplan = 'educationSubplan';
 	static drugSubplan = 'drugSubplan';
 
 	constructor(type, label) {

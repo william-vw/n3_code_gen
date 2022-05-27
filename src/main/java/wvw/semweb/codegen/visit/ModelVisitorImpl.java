@@ -21,26 +21,24 @@ import org.apache.jen3.reasoner.rulesys.Node_RuleVariable;
 import org.apache.jen3.vocabulary.N3List;
 import org.apache.jen3.vocabulary.N3Log;
 import org.apache.jen3.vocabulary.N3Math;
-import org.apache.jen3.vocabulary.OWL;
 import org.apache.jen3.vocabulary.RDF;
-import org.apache.jen3.vocabulary.RDFS;
 
 import wvw.semweb.codegen.gen.Util;
-import wvw.semweb.codegen.model.Assignment;
-import wvw.semweb.codegen.model.Block;
-import wvw.semweb.codegen.model.Comparison;
-import wvw.semweb.codegen.model.Comparison.Comparators;
-import wvw.semweb.codegen.model.Condition;
-import wvw.semweb.codegen.model.CreateStruct;
-import wvw.semweb.codegen.model.Disjunction;
-import wvw.semweb.codegen.model.Literal;
-import wvw.semweb.codegen.model.NodePath;
-import wvw.semweb.codegen.model.StructConstant;
-import wvw.semweb.codegen.model.Variable;
-import wvw.semweb.codegen.model.struct.ModelElement;
-import wvw.semweb.codegen.model.struct.ModelProperty;
-import wvw.semweb.codegen.model.struct.ModelStruct;
-import wvw.semweb.codegen.model.struct.ModelType;
+import wvw.semweb.codegen.model.adt.ModelElement;
+import wvw.semweb.codegen.model.adt.ModelProperty;
+import wvw.semweb.codegen.model.adt.ModelADT;
+import wvw.semweb.codegen.model.adt.ModelType;
+import wvw.semweb.codegen.model.logic.Assignment;
+import wvw.semweb.codegen.model.logic.Block;
+import wvw.semweb.codegen.model.logic.Comparison;
+import wvw.semweb.codegen.model.logic.Condition;
+import wvw.semweb.codegen.model.logic.CreateStruct;
+import wvw.semweb.codegen.model.logic.Disjunction;
+import wvw.semweb.codegen.model.logic.Literal;
+import wvw.semweb.codegen.model.logic.NodePath;
+import wvw.semweb.codegen.model.logic.StructConstant;
+import wvw.semweb.codegen.model.logic.Variable;
+import wvw.semweb.codegen.model.logic.Comparison.Comparators;
 import wvw.semweb.codegen.parse.rule.GraphEdge;
 import wvw.semweb.codegen.parse.rule.GraphNode;
 import wvw.semweb.codegen.parse.rule.RuleGraph;
@@ -111,17 +109,18 @@ public class ModelVisitorImpl extends ModelVisitor {
 
 		ModelType ret = null;
 
-		// add a new struct to our model
+		// add a new adt to our model
 		// (or get previously created one)
-		ModelStruct modelStruct = model.getOrCreateStruct(Util.localName(nodeType), node);
-		loadAnnotations(nodeType.getURI(), modelStruct);
+		ModelADT modelStruct = model.getOrCreateStruct(Util.localName(nodeType), node);
+		modelStruct.setId(nodeType);
+		OntologyUtil.loadAnnotations(nodeType.getURI(), modelStruct, ontology);
 
-		// return struct as target
+		// return adt as target
 		ret = new ModelType(modelStruct);
 
 		// -- URI node
 		if (node instanceof Node_URI)
-			// add as constant to our struct
+			// add as constant to our adt
 			addConstant((Node_URI) node, true, modelStruct);
 
 		for (GraphEdge edge : gnode.getOut()) {
@@ -137,10 +136,10 @@ public class ModelVisitorImpl extends ModelVisitor {
 				if (target.getId() instanceof Node_URI) {
 					Node_URI typeUri = (Node_URI) target.getId();
 
-					// e.g., Patient struct with 'patient' type doesn't make a lot of sense
+					// e.g., Patient adt with 'patient' type doesn't make a lot of sense
 					if (!Util.localName(typeUri).equals(modelStruct.getName()))
 
-						// add as constant to our struct
+						// add as constant to our adt
 						addConstant(typeUri, false, modelStruct);
 				}
 
@@ -150,7 +149,7 @@ public class ModelVisitorImpl extends ModelVisitor {
 			} else if (toUriComparator(edge) != null) {
 				// TODO likely no longer needed if we add all values from ontology
 
-				// if the target is concrete, add those as values in the struct
+				// if the target is concrete, add those as values in the adt
 
 				// -- individual URI
 				if (target.getId() instanceof Node_URI) {
@@ -173,8 +172,8 @@ public class ModelVisitorImpl extends ModelVisitor {
 			} else {
 				// -- regular property
 				ModelProperty modelPrp = new ModelProperty(Util.localName(nodePrp));
-				loadAnnotations(nodePrp.getURI(), modelPrp);
-				loadCardinality(nodePrp.getURI(), modelPrp);
+				OntologyUtil.loadAnnotations(nodePrp.getURI(), modelPrp, ontology);
+				OntologyUtil.loadCardinality(nodePrp.getURI(), modelPrp, ontology);
 
 				// then, recursively call this method on the edge target
 
@@ -188,7 +187,6 @@ public class ModelVisitorImpl extends ModelVisitor {
 		}
 
 		return ret;
-
 	}
 
 	private void constructLogic(GraphNode gnode, GraphEdge from, NodePath path, Set<GraphNode> found)
@@ -211,7 +209,7 @@ public class ModelVisitorImpl extends ModelVisitor {
 			literalNode(gnode, from, path, clauseType, lit);
 		}
 
-		ModelStruct modelStruct = model.getStruct(node);
+		ModelADT modelStruct = model.getStruct(node);
 
 		// - object type
 		// (else: literal datatype)
@@ -289,7 +287,7 @@ public class ModelVisitorImpl extends ModelVisitor {
 			if (edge.getId().equals(RDF.type.asNode()) && target.getId() instanceof Node_URI) {
 				Node_URI typeUri = (Node_URI) target.getId();
 
-				// e.g., Patient struct with 'patient' type doesn't make a lot of sense
+				// e.g., Patient adt with 'patient' type doesn't make a lot of sense
 				if (!Util.localName(typeUri).equals(modelStruct.getName())) {
 					ModelElement type = modelStruct.getConstant(Util.localName(typeUri));
 
@@ -321,11 +319,11 @@ public class ModelVisitorImpl extends ModelVisitor {
 		nodePropertiesEnd();
 	}
 
-	private void addConstant(Node_URI uri, boolean isValue, ModelStruct modelStruct) {
+	private void addConstant(Node_URI uri, boolean isValue, ModelADT modelStruct) {
 		ModelElement cnst = new ModelElement(Util.localName(uri));
-		loadAnnotations(uri.getURI(), cnst);
+		OntologyUtil.loadAnnotations(uri.getURI(), cnst, ontology);
 
-		// add as constant to our struct
+		// add as constant to our adt
 		if (isValue) {
 			modelStruct.addValue(cnst);
 		} else
@@ -369,7 +367,7 @@ public class ModelVisitorImpl extends ModelVisitor {
 		return types;
 	}
 
-	// keep track of current struct constructors
+	// keep track of current adt constructors
 	// (any property will be added as constructor parameter)
 
 	private LinkedList<CreateStruct> newStructs = new LinkedList<>();
@@ -379,7 +377,7 @@ public class ModelVisitorImpl extends ModelVisitor {
 
 	private void nodePropertiesEnd() {
 		// only consider direct properties as constructor parameters
-		// (see #structNode())
+		// (see #adtNode())
 		if (!newStructs.isEmpty()) {
 			newStructs.removeLast();
 		}
@@ -393,10 +391,10 @@ public class ModelVisitorImpl extends ModelVisitor {
 	}
 
 	// support existential rules
-	// if the node represents a blank node, then instantiate a new struct
+	// if the node represents a blank node, then instantiate a new adt
 
-	private NodePath newStruct(NodePath path, ModelStruct modelStruct) {
-		// create new struct
+	private NodePath newStruct(NodePath path, ModelADT modelStruct) {
+		// create new adt
 		CreateStruct newStruct = new CreateStruct(modelStruct);
 
 		// use as constructor parameter
@@ -407,12 +405,12 @@ public class ModelVisitorImpl extends ModelVisitor {
 			curStruct.add(new Assignment(path, newStruct));
 
 			// properties of blank node will serve as constructor parameters
-			// add this struct to the stack; use new assignments as parameters
+			// add this adt to the stack; use new assignments as parameters
 
 			// (node path doesn't matter here)
 			newStructs.add(newStruct);
 
-			// following struct parameters will have "empty" path
+			// following adt parameters will have "empty" path
 			// (params are identified by predicates)
 			return new NodePath();
 
@@ -427,18 +425,18 @@ public class ModelVisitorImpl extends ModelVisitor {
 			Assignment asn = new Assignment(v, newStruct);
 			subBlock.add(asn);
 
-			// assign end of path to newly created struct
+			// assign end of path to newly created adt
 			Assignment asn2 = new Assignment(path, v);
 			subBlock.add(asn2);
 
 			// properties of blank node will serve as constructor parameters
-			// add this struct to the stack; use new assignments as parameters
+			// add this adt to the stack; use new assignments as parameters
 			// (see first option above)
 
 			// (once constructor is done, new node path starts from variable)
 			newStructs.add(newStruct);
 
-			// but, following struct parameters, will have "empty" path
+			// but, following adt parameters, will have "empty" path
 			// (params are identified by predicates)
 			return new NodePath();
 		}
@@ -484,12 +482,12 @@ public class ModelVisitorImpl extends ModelVisitor {
 	}
 
 	private void constantNode(GraphNode node, GraphEdge from, NodePath path, ClauseTypes clauseType,
-			ModelStruct modelStruct, ModelElement value) throws VisitModelException {
+			ModelADT modelStruct, ModelElement value) throws VisitModelException {
 
 		// check whether incoming property constitutes a builtin (i.e., comparison)
 		Comparators cmp = toUriComparator(from);
 
-		// assumed that this value is a constant of the model-struct
+		// assumed that this value is a constant of the model-adt
 		StructConstant cnst = new StructConstant(modelStruct, value);
 
 		// type required to index an array-like property
@@ -567,7 +565,7 @@ public class ModelVisitorImpl extends ModelVisitor {
 
 		for (Node el : coll.getElements()) {
 			Node_URI elUri = (Node_URI) el;
-			ModelStruct elStruct = model.getStruct(el);
+			ModelADT elStruct = model.getStruct(el);
 
 			ModelElement value = elStruct.getConstant(Util.localName(elUri));
 			StructConstant cnst = new StructConstant(elStruct, value);
@@ -588,46 +586,6 @@ public class ModelVisitorImpl extends ModelVisitor {
 
 	private void newCondition(Condition cond) {
 		this.cond.add(cond);
-	}
-
-	private void loadAnnotations(String uri, ModelElement el) {
-		Resource res = ontology.createResource(uri);
-
-		if (res.hasProperty(RDFS.label))
-			el.setLabel(res.getPropertyResourceValue(RDFS.label).asLiteral().getString());
-	}
-
-	private void loadCardinality(String uri, ModelProperty prp) {
-		// NOTE assume maxCardinality of 1 for label
-		if (uri.equals(RDFS.label.getURI())) {
-			prp.setMaxCardinality(1);
-			return;
-		}
-
-		Resource prpRes = ontology.createResource(uri);
-
-		ontology.listStatements(null, ontology.createResource(OWL.onProperty), prpRes).forEachRemaining(stmt -> {
-
-			Resource restr = stmt.getSubject();
-
-			if (restr.hasProperty(OWL.maxCardinality)) {
-				if (prp.hasMaxCardinality())
-					log.warn("found multiple maxCardinality constraints for property " + uri);
-
-				int value = restr.getPropertyResourceValue(OWL.maxCardinality).asLiteral().getInt();
-				prp.setMaxCardinality(value);
-			}
-		});
-
-		if (prpRes.hasProperty(RDF.type, OWL.FunctionalProperty)) {
-			if (prp.hasMaxCardinality())
-				log.warn("found multiple cardinality-related constraints for property " + uri);
-
-			prp.setMaxCardinality(1);
-		}
-
-		if (prp.hasMaxCardinality())
-			log.info("found max cardinality for " + uri + ": " + prp.getMaxCardinality());
 	}
 
 	private Comparators toLiteralComparator(GraphEdge edge, Object literal) {

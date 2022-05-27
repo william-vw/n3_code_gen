@@ -1,4 +1,4 @@
-package wvw.semweb.codegen.model.struct;
+package wvw.semweb.codegen.model.adt;
 
 import java.util.Objects;
 
@@ -6,6 +6,7 @@ public class ModelElement {
 
 	protected String name;
 	protected String label;
+	protected Object id;
 
 	public ModelElement(String name) {
 		this.name = name;
@@ -43,6 +44,14 @@ public class ModelElement {
 	// for debugging
 	public String print() {
 		return getString();
+	}
+
+	public Object getId() {
+		return id;
+	}
+
+	public void setId(Object id) {
+		this.id = id;
 	}
 
 	public void setString(String str) {

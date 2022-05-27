@@ -9,9 +9,14 @@ import java.util.stream.Collectors;
 
 import org.apache.jen3.n3.N3Model;
 import org.apache.jen3.rdf.model.Resource;
+import org.apache.jen3.vocabulary.OWL;
+import org.apache.jen3.vocabulary.RDF;
 import org.apache.jen3.vocabulary.RDFS;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
+
+import wvw.semweb.codegen.model.adt.ModelElement;
+import wvw.semweb.codegen.model.adt.ModelProperty;
 
 public class OntologyUtil {
 
@@ -34,13 +39,13 @@ public class OntologyUtil {
 		if (allTypes.size() > 1)
 //			log.info("allTypes: " + allTypes);
 
-		// (also takes care of duplicates)
+			// (also takes care of duplicates)
 
-		if (filterSuper)
-			filterSuperClasses(allTypes);
-		else
-			// (e.g., prefer "diagnosis" over "diabetes diagnosis")
-			filterSubClasses(allTypes);
+			if (filterSuper)
+				filterSuperClasses(allTypes);
+			else
+				// (e.g., prefer "diagnosis" over "diabetes diagnosis")
+				filterSubClasses(allTypes);
 
 //		log.info("> class:\n" + cls);
 //		log.info("> domains:\n" + allDomains);
@@ -63,6 +68,15 @@ public class OntologyUtil {
 		filterSubClasses(superTypes);
 
 		return superTypes;
+	}
+
+	public static List<Resource> getSubTypes(Resource resource, N3Model ontology) {
+		List<Resource> subTypes = ontology.listStatements(null, RDFS.subClassOf, resource).toList().stream()
+				.map(stmt -> stmt.getSubject()).collect(Collectors.toList());
+
+		subTypes = subTypes.stream().filter(t -> !t.isAnon()).collect(Collectors.toList());
+
+		return subTypes;
 	}
 
 	// TODO currently not supporting property restrictions as types
@@ -123,5 +137,45 @@ public class OntologyUtil {
 		}
 
 		return false;
+	}
+
+	public static void loadAnnotations(String uri, ModelElement el, N3Model ontology) {
+		Resource res = ontology.createResource(uri);
+
+		if (res.hasProperty(RDFS.label))
+			el.setLabel(res.getPropertyResourceValue(RDFS.label).asLiteral().getString());
+	}
+
+	public static void loadCardinality(String uri, ModelProperty prp, N3Model ontology) {
+		// NOTE assume maxCardinality of 1 for label
+		if (uri.equals(RDFS.label.getURI())) {
+			prp.setMaxCardinality(1);
+			return;
+		}
+
+		Resource prpRes = ontology.createResource(uri);
+
+		ontology.listStatements(null, ontology.createResource(OWL.onProperty), prpRes).forEachRemaining(stmt -> {
+
+			Resource restr = stmt.getSubject();
+
+			if (restr.hasProperty(OWL.maxCardinality)) {
+				if (prp.hasMaxCardinality())
+					log.warn("found multiple maxCardinality constraints for property " + uri);
+
+				int value = restr.getPropertyResourceValue(OWL.maxCardinality).asLiteral().getInt();
+				prp.setMaxCardinality(value);
+			}
+		});
+
+		if (prpRes.hasProperty(RDF.type, OWL.FunctionalProperty)) {
+			if (prp.hasMaxCardinality())
+				log.warn("found multiple cardinality-related constraints for property " + uri);
+
+			prp.setMaxCardinality(1);
+		}
+
+		if (prp.hasMaxCardinality())
+			log.info("found max cardinality for " + uri + ": " + prp.getMaxCardinality());
 	}
 }

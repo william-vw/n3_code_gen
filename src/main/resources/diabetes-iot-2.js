@@ -19,6 +19,24 @@ class PatientProfile {
 
 class DiabetesPhysicalExamination {
 	static bmi = 'bmi';
+	static familyHistoryOfType1DiabetesMellitus = 'familyHistoryOfType1DiabetesMellitus';
+	static smoking = 'smoking';
+	static personalHistoryOfHemochromatosis = 'personalHistoryOfHemochromatosis';
+	static familyHistoryOfType2DiabetesMellitus = 'familyHistoryOfType2DiabetesMellitus';
+	static oralExam = 'oralExam';
+	static eyeExam = 'eyeExam';
+	static vitalSign = 'vitalSign';
+	static thyroidFunction = 'thyroidFunction';
+	static babyDeliveredWeighingMoreThan4pt5Kg = 'babyDeliveredWeighingMoreThan4pt5Kg';
+	static lostFootSensation = 'lostFootSensation';
+	static firstDegreeRelativeWithDiabetes = 'firstDegreeRelativeWithDiabetes';
+	static historyOfGestationalDiabetes = 'historyOfGestationalDiabetes';
+	static highRiskPopulation = 'highRiskPopulation';
+	static waistCircumference = 'waistCircumference';
+	static familyHistoryOfHemochromatosis = 'familyHistoryOfHemochromatosis';
+	static physicallyInactive = 'physicallyInactive';
+	static drinkingAlcohol = 'drinkingAlcohol';
+	static familyHistoryOfGestationalDiabetesMellitus = 'familyHistoryOfGestationalDiabetesMellitus';
 	static historyOfPrediabetes = 'historyOfPrediabetes';
 
 	constructor(type, hasQuantitativeValue) {
@@ -31,8 +49,18 @@ class DiabetesPhysicalExamination {
 }
 
 class PatientDemographic {
+	static residence = 'residence';
+	static breastFeeding = 'breastFeeding';
+	static maritalStatus = 'maritalStatus';
+	static weight = 'weight';
+	static levelOfEducation = 'levelOfEducation';
+	static height = 'height';
+	static gender = 'gender';
+	static activityLevel = 'activityLevel';
 	static age = 'age';
 	static obeseClassI = 'obeseClassI';
+	static pregnancyState = 'pregnancyState';
+	static job = 'job';
 
 	constructor(type, hasQuantitativeValue) {
 		this.type = type;
@@ -50,6 +78,7 @@ class TreatmentPlan {
 
 class DrugSubplan {
 	static monotherapyPlan = 'monotherapyPlan';
+	static dualTherapyPlan = 'dualTherapyPlan';
 
 	constructor(type, hasDrugParticipant) {
 		this.hasDrugParticipant = hasDrugParticipant;
@@ -61,6 +90,16 @@ class DrugSubplan {
 }
 
 class DiabetesDrug {
+	static dopamineAgonist = 'dopamineAgonist';
+	static otherDrug = 'otherDrug';
+	static combinedDrug = 'combinedDrug';
+	static insulin = 'insulin';
+	static thiazolidinedione = 'thiazolidinedione';
+	static sulfonylurea = 'sulfonylurea';
+	static incretin = 'incretin';
+	static meglitinide = 'meglitinide';
+	static alphaGlucosidaseInhibitor = 'alphaGlucosidaseInhibitor';
+
 	static metformin = 'metformin';
 
 	constructor(type) {
@@ -71,6 +110,21 @@ class DiabetesDrug {
 }
 
 class DiabetesLaboratoryTest {
+	static bloodKetone = 'bloodKetone';
+	static plasmaBicarbonate = 'plasmaBicarbonate';
+	static bloodGlucoseTest = 'bloodGlucoseTest';
+	static lipidProfile = 'lipidProfile';
+	static serumFetuinA = 'serumFetuinA';
+	static serumOsmolality = 'serumOsmolality';
+	static autoantibody = 'autoantibody';
+	static serumAdiponectin = 'serumAdiponectin';
+	static hematologicalProfile = 'hematologicalProfile';
+	static insulinMeasurement = 'insulinMeasurement';
+	static kidneyFunctionTest = 'kidneyFunctionTest';
+	static tumorMarker = 'tumorMarker';
+	static urineAnalysis = 'urineAnalysis';
+	static plasmaCreatinine = 'plasmaCreatinine';
+	static liverFunctionTest = 'liverFunctionTest';
 	static hba1c = 'hba1c';
 	static fpg = 'fpg';
 

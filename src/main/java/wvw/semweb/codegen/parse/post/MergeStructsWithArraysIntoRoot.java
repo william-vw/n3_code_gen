@@ -8,19 +8,20 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import org.apache.jen3.graph.Node;
+import org.apache.jen3.n3.N3Model;
 
-import wvw.semweb.codegen.model.Assignment;
-import wvw.semweb.codegen.model.Block;
-import wvw.semweb.codegen.model.Comparison;
-import wvw.semweb.codegen.model.MultiCondition;
-import wvw.semweb.codegen.model.Condition;
-import wvw.semweb.codegen.model.Conjunction;
-import wvw.semweb.codegen.model.IfThen;
-import wvw.semweb.codegen.model.NodePath;
-import wvw.semweb.codegen.model.Operand.Operands;
-import wvw.semweb.codegen.model.struct.CodeModel;
-import wvw.semweb.codegen.model.struct.ModelProperty;
-import wvw.semweb.codegen.model.struct.ModelStruct;
+import wvw.semweb.codegen.model.adt.CodeModel;
+import wvw.semweb.codegen.model.adt.ModelProperty;
+import wvw.semweb.codegen.model.logic.Assignment;
+import wvw.semweb.codegen.model.logic.Block;
+import wvw.semweb.codegen.model.logic.Comparison;
+import wvw.semweb.codegen.model.logic.Condition;
+import wvw.semweb.codegen.model.logic.Conjunction;
+import wvw.semweb.codegen.model.logic.IfThen;
+import wvw.semweb.codegen.model.logic.MultiCondition;
+import wvw.semweb.codegen.model.logic.NodePath;
+import wvw.semweb.codegen.model.logic.Operand.Operands;
+import wvw.semweb.codegen.model.adt.ModelADT;
 import wvw.semweb.codegen.parse.rule.GraphNode;
 import wvw.semweb.codegen.parse.rule.RuleGraph;
 
@@ -30,32 +31,32 @@ public class MergeStructsWithArraysIntoRoot extends ModelPostprocessor {
 	protected IfThen it;
 
 	@Override
-	public void postprocess(CodeModel model, IfThen it, RuleGraph ruleGraph) {
+	public void postprocess(CodeModel model, IfThen it, RuleGraph ruleGraph, N3Model ontology) {
 		this.model = model;
 		this.it = it;
 
 		for (GraphNode root : ruleGraph.getGraphRoots()) {
-			ModelStruct struct = model.getStruct((Node) root.getId());
+			ModelADT adt = model.getStruct((Node) root.getId());
 
-			consumeStructsRecursively(struct, new ArrayList<>(), new ArrayList<>(), mergePred,
-					new MergeConsumer(struct, it));
+			consumeStructsRecursively(adt, new ArrayList<>(), new ArrayList<>(), mergePred,
+					new MergeConsumer(adt, it));
 		}
 	}
 
-	private void consumeStructsRecursively(ModelStruct curStruct, List<ModelProperty> prpPath,
-			List<ModelStruct> structPath, Predicate<ModelStruct> filter,
-			BiConsumer<List<ModelProperty>, List<ModelStruct>> collect) {
+	private void consumeStructsRecursively(ModelADT curStruct, List<ModelProperty> prpPath,
+			List<ModelADT> adtPath, Predicate<ModelADT> filter,
+			BiConsumer<List<ModelProperty>, List<ModelADT>> collect) {
 
 		// not dealing with root
 		if (!prpPath.isEmpty()) {
 
-			// does the struct have any array-like properties?
+			// does the adt have any array-like properties?
 			if (filter.test(curStruct)) {
 				// if so, let's merge them
-				collect.accept(prpPath, structPath);
+				collect.accept(prpPath, adtPath);
 
 				prpPath.clear();
-				structPath.clear();
+				adtPath.clear();
 			}
 		}
 
@@ -64,9 +65,9 @@ public class MergeStructsWithArraysIntoRoot extends ModelPostprocessor {
 
 		curPrps.forEach(newPrp -> {
 			if (newPrp.hasTarget() && newPrp.getTarget().hasObjectType()) {
-				ModelStruct newStruct = newPrp.getTarget().getObjectType();
+				ModelADT newStruct = newPrp.getTarget().getObjectType();
 
-				List<ModelStruct> newStructPath = new ArrayList<>(structPath);
+				List<ModelADT> newStructPath = new ArrayList<>(adtPath);
 				newStructPath.add(newStruct);
 
 				List<ModelProperty> newPrpPath = new ArrayList<>(prpPath);
@@ -77,31 +78,31 @@ public class MergeStructsWithArraysIntoRoot extends ModelPostprocessor {
 		});
 	}
 
-	private Predicate<ModelStruct> mergePred = new Predicate<ModelStruct>() {
+	private Predicate<ModelADT> mergePred = new Predicate<ModelADT>() {
 
 		@Override
-		public boolean test(ModelStruct t) {
+		public boolean test(ModelADT t) {
 			return t.getProperties().stream().anyMatch(p -> p.requiresArray());
 		}
 	};
 
-	private class MergeConsumer implements BiConsumer<List<ModelProperty>, List<ModelStruct>> {
+	private class MergeConsumer implements BiConsumer<List<ModelProperty>, List<ModelADT>> {
 
-		private ModelStruct root;
+		private ModelADT root;
 		private IfThen it;
 
-		public MergeConsumer(ModelStruct root, IfThen it) {
+		public MergeConsumer(ModelADT root, IfThen it) {
 			this.root = root;
 			this.it = it;
 		}
 
 		@Override
-		public void accept(List<ModelProperty> prpPath, List<ModelStruct> structPath) {
+		public void accept(List<ModelProperty> prpPath, List<ModelADT> adtPath) {
 			log.info("merging into " + root.getString() + ": "
-					+ structPath.stream().map(s -> s.getString()).collect(Collectors.joining(", ")) + " (removing: "
+					+ adtPath.stream().map(s -> s.getString()).collect(Collectors.joining(", ")) + " (removing: "
 					+ prpPath.stream().map(s -> s.getString()).collect(Collectors.joining(", ")) + ")");
 
-			structPath.forEach(s -> {
+			adtPath.forEach(s -> {
 				root.replacing(s);
 				model.removeStruct(s);
 			});

@@ -4,15 +4,17 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import wvw.semweb.codegen.model.Comparison;
-import wvw.semweb.codegen.model.Comparison.Comparators;
-import wvw.semweb.codegen.model.Condition;
-import wvw.semweb.codegen.model.MultiCondition;
-import wvw.semweb.codegen.model.Conjunction;
-import wvw.semweb.codegen.model.IfThen;
-import wvw.semweb.codegen.model.Operand;
-import wvw.semweb.codegen.model.Operand.Operands;
-import wvw.semweb.codegen.model.struct.CodeModel;
+import org.apache.jen3.n3.N3Model;
+
+import wvw.semweb.codegen.model.adt.CodeModel;
+import wvw.semweb.codegen.model.logic.Comparison;
+import wvw.semweb.codegen.model.logic.Condition;
+import wvw.semweb.codegen.model.logic.Conjunction;
+import wvw.semweb.codegen.model.logic.IfThen;
+import wvw.semweb.codegen.model.logic.MultiCondition;
+import wvw.semweb.codegen.model.logic.Operand;
+import wvw.semweb.codegen.model.logic.Comparison.Comparators;
+import wvw.semweb.codegen.model.logic.Operand.Operands;
 import wvw.semweb.codegen.parse.rule.RuleGraph;
 
 public class RemoveExistChecksForLiterals extends ModelPostprocessor {
@@ -22,7 +24,7 @@ public class RemoveExistChecksForLiterals extends ModelPostprocessor {
 	// be added for the latter. but, this check is redundant, so remove those here.
 
 	@Override
-	public void postprocess(CodeModel model, IfThen it, RuleGraph ruleGraph) {
+	public void postprocess(CodeModel model, IfThen it, RuleGraph ruleGraph, N3Model ontology) {
 		Conjunction cond = (Conjunction) it.getCondition();
 
 		List<Operand> toRemove = new ArrayList<>();

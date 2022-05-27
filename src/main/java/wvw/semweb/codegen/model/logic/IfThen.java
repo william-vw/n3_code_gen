@@ -1,4 +1,4 @@
-package wvw.semweb.codegen.model;
+package wvw.semweb.codegen.model.logic;
 
 import wvw.semweb.codegen.parse.rule.ann.Annotated;
 
