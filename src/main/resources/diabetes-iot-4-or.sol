@@ -1,8 +1,9 @@
-pragma solidity >=0.4.16;
+// Specifies the version of Solidity, using semantic versioning.
+// Learn more: https://solidity.readthedocs.io/en/v0.5.10/layout-of-source-files.html#pragma
+pragma solidity ^0.7.0;
 
-
-contract {{physician}} {
-    	string public message;
+contract DiabetesIot4 {
+	string public message;
 	
 	constructor(string memory initMessage) {
 		message = initMessage;
@@ -36,7 +37,7 @@ contract {{physician}} {
 		bool exists;
 	}
 	
-	enum PatientDemographics{ Overweight,ObeseClassI }
+	enum PatientDemographics{ Overweight }
 	
 	struct PatientDemographic {
 		PatientDemographics hasType;
@@ -58,7 +59,7 @@ contract {{physician}} {
 	
 	mapping(address => Patient) patients;
 	
-	function execute() public {
+	function execute() {
 		Patient storage patient = patients[msg.sender];
 	
 		if (patient.hasPhysicalExamination[DiabetesPhysicalExaminations.Bmi].exists
@@ -66,7 +67,7 @@ contract {{physician}} {
 			&& patient.hasEthnicity.exists
 			&& patient.hasEthnicity.hasType != Ethnicities.AsianAmerican) {
 		
-			PatientDemographic memory v0 = PatientDemographic({ hasType: PatientDemographics.ObeseClassI, exists: true });
+			PatientDemographic memory v0 = PatientDemographic({ hasType: PatientDemographics.Overweight, exists: true });
 			patient.hasDemographic[v0.hasType] = v0;
 		}
 		

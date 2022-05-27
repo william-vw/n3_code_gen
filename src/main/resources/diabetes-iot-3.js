@@ -16,7 +16,7 @@ class PatientProfile {
 
 class TreatmentPlan {
 
-	hasPart = [];
+	hasPart = {};
 }
 
 class TreatmentSubplan {
@@ -45,7 +45,7 @@ class BloodPressure {
 	hasQuantitativeValue;
 }
 
-function execute(sys, dias, patient) {
+function execute(sys, patient, dias) {
 	if (patient.hasPatientProfile != undefined
 		&& patient.hasPatientProfile.hasTreatmentPlan != undefined
 		&& sys.type == BloodPressure.systolicBloodPressure
@@ -53,8 +53,8 @@ function execute(sys, dias, patient) {
 		&& dias.type == BloodPressure.diastolicBloodPressure
 		&& dias.hasQuantitativeValue > 80) {
 	
-		var v0 = new TreatmentSubplan(TreatmentSubplan.lifestyleSubplan, "weight loss if indicated, \n            a Dietary Approaches to Stop Hypertension (DASH)-style eating pattern, \n            including reducing sodium and increasing potassium intake, moderation of alcohol intake, \n            and increased physical activity.");
-		patient.hasPatientProfile.hasTreatmentPlan.hasPart.push(v0);
+		var v4 = new TreatmentSubplan(TreatmentSubplan.lifestyleSubplan, "weight loss if indicated, \n            a Dietary Approaches to Stop Hypertension (DASH)-style eating pattern, \n            including reducing sodium and increasing potassium intake, moderation of alcohol intake, \n            and increased physical activity.");
+		patient.hasPatientProfile.hasTreatmentPlan.hasPart.push(v4);
 	}
 	
 	if (patient.hasPatientProfile != undefined
@@ -64,7 +64,7 @@ function execute(sys, dias, patient) {
 		&& dias.type == BloodPressure.diastolicBloodPressure
 		&& dias.hasQuantitativeValue > 80) {
 	
-		var v1 = new TreatmentSubplan(TreatmentSubplan.drugSubplan, "in addition to lifestyle therapy, \n        have prompt initiation and timely titration of pharmacologic therapy \n        to achieve blood pressure goals");
-		patient.hasPatientProfile.hasTreatmentPlan.hasPart.push(v1);
+		var v5 = new TreatmentSubplan(TreatmentSubplan.drugSubplan, "in addition to lifestyle therapy, \n        have prompt initiation and timely titration of pharmacologic therapy \n        to achieve blood pressure goals");
+		patient.hasPatientProfile.hasTreatmentPlan.hasPart.push(v5);
 	}
 }

@@ -7,10 +7,14 @@ class Patient {
 }
 
 class PatientProfile {
+	constructor(hasEthnicity) {
+		this.hasEthnicity = hasEthnicity;
+	}
 
-	hasEthnicity = [];
-	hasPhysicalExamination = [];
-	hasDemographic = [];
+	recommendTest = {};
+	hasEthnicity;
+	hasPhysicalExamination = {};
+	hasDemographic = {};
 }
 
 class DiabetesPhysicalExamination {
@@ -27,6 +31,12 @@ class DiabetesPhysicalExamination {
 
 class Ethnicity {
 	static highRiskEthnicity = 'highRiskEthnicity';
+
+	static pacificIslander = 'pacificIslander';
+	static africanAmerican = 'africanAmerican';
+	static asianAmerican = 'asianAmerican';
+	static latino = 'latino';
+	static nativeAmerican = 'nativeAmerican';
 
 	constructor(type) {
 		this.type = type;
@@ -45,27 +55,50 @@ class PatientDemographic {
 	type;
 }
 
+class Recommendation {
+	static diabetesScreening = 'diabetesScreening';
+
+	constructor(type) {
+		this.type = type;
+	}
+
+	type;
+}
+
 function execute(patient) {
 	if (patient.hasPatientProfile != undefined
-		&& patient.hasPatientProfile.hasPhysicalExamination.some((e) => e.type == DiabetesPhysicalExamination.bmi)
-		&& patient.hasPatientProfile.hasPhysicalExamination.some((e) => e.hasQuantitativeValue >= 25)) {
+		&& patient.hasPatientProfile.hasPhysicalExamination[DiabetesPhysicalExamination.bmi] != undefined
+		&& patient.hasPatientProfile.hasPhysicalExamination[DiabetesPhysicalExamination.bmi].hasQuantitativeValue >= 25
+		&& patient.hasPatientProfile.hasEthnicity != undefined
+		&& patient.hasPatientProfile.hasEthnicity.type != Ethnicity.asianAmerican) {
 	
-		var v0 = new PatientDemographic(PatientDemographic.overweight);
-		patient.hasPatientProfile.hasDemographic.push(v0);
+		var v6 = new PatientDemographic(PatientDemographic.overweight);
+		patient.hasPatientProfile.hasDemographic.push(v6);
 	}
 	
 	if (patient.hasPatientProfile != undefined
-		&& patient.hasPatientProfile.hasPhysicalExamination.some((e) => e.type == DiabetesPhysicalExamination.bmi)
-		&& patient.hasPatientProfile.hasPhysicalExamination.some((e) => e.hasQuantitativeValue >= 23)) {
+		&& patient.hasPatientProfile.hasPhysicalExamination[DiabetesPhysicalExamination.bmi] != undefined
+		&& patient.hasPatientProfile.hasPhysicalExamination[DiabetesPhysicalExamination.bmi].hasQuantitativeValue >= 23
+		&& patient.hasPatientProfile.hasEthnicity.type == Ethnicity.asianAmerican) {
 	
-		var v1 = new PatientDemographic(PatientDemographic.overweight);
-		patient.hasPatientProfile.hasDemographic.push(v1);
+		var v7 = new PatientDemographic(PatientDemographic.overweight);
+		patient.hasPatientProfile.hasDemographic.push(v7);
 	}
 	
 	if (patient.hasPatientProfile != undefined
-		&& patient.hasPatientProfile.hasDemographic.some((e) => e.type == PatientDemographic.overweight)
-		&& patient.hasPatientProfile.hasEthnicity.some((e) => e.type == Ethnicity.highRiskEthnicity)) {
+		&& patient.hasPatientProfile.hasEthnicity != undefined
+		&& null) {
 	
-		
+		var v8 = new Ethnicity(Ethnicity.highRiskEthnicity);
+		patient.hasPatientProfile.hasEthnicity = v8;
+	}
+	
+	if (patient.hasPatientProfile != undefined
+		&& patient.hasPatientProfile.hasEthnicity != undefined
+		&& patient.hasPatientProfile.hasEthnicity.type == Ethnicity.highRiskEthnicity
+		&& patient.hasPatientProfile.hasDemographic[PatientDemographic.overweight] != undefined) {
+	
+		var v9 = new Recommendation(Recommendation.diabetesScreening);
+		patient.hasPatientProfile.recommendTest.push(v9);
 	}
 }

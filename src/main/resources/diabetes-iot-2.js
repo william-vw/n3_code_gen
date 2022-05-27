@@ -11,23 +11,10 @@ class PatientProfile {
 		this.hasTreatmentPlan = hasTreatmentPlan;
 	}
 
-	hasPhysicalExamination = [];
-	hasDemographic = [];
+	hasDemographic = {};
+	hasPhysicalExamination = {};
 	hasTreatmentPlan;
-	hasLabTest = [];
-}
-
-class DiabetesPhysicalExamination {
-	static bmi = 'bmi';
-	static historyOfPrediabetes = 'historyOfPrediabetes';
-
-	constructor(type, hasQuantitativeValue) {
-		this.type = type;
-		this.hasQuantitativeValue = hasQuantitativeValue;
-	}
-
-	type;
-	hasQuantitativeValue;
+	hasLabTest = {};
 }
 
 class PatientDemographic {
@@ -43,17 +30,34 @@ class PatientDemographic {
 	hasQuantitativeValue;
 }
 
+class DiabetesPhysicalExamination {
+	static bmi = 'bmi';
+	static historyOfPrediabetes = 'historyOfPrediabetes';
+
+	constructor(type, hasQuantitativeValue) {
+		this.type = type;
+		this.hasQuantitativeValue = hasQuantitativeValue;
+	}
+
+	type;
+	hasQuantitativeValue;
+}
+
 class TreatmentPlan {
 
-	hasPart = [];
+	hasPart = {};
 }
 
 class DrugSubplan {
-	constructor(hasDrugParticipant) {
+	static monotherapyPlan = 'monotherapyPlan';
+
+	constructor(hasDrugParticipant, type) {
 		this.hasDrugParticipant = hasDrugParticipant;
+		this.type = type;
 	}
 
 	hasDrugParticipant;
+	type;
 }
 
 class DiabetesDrug {
@@ -81,26 +85,26 @@ class DiabetesLaboratoryTest {
 
 function execute(patient) {
 	if (patient.hasPatientProfile != undefined
-		&& patient.hasPatientProfile.hasPhysicalExamination.some((e) => e.type == DiabetesPhysicalExamination.bmi)
-		&& patient.hasPatientProfile.hasPhysicalExamination.some((e) => e.hasQuantitativeValue >= 35)) {
+		&& patient.hasPatientProfile.hasPhysicalExamination[DiabetesPhysicalExamination.bmi] != undefined
+		&& patient.hasPatientProfile.hasPhysicalExamination[DiabetesPhysicalExamination.bmi].hasQuantitativeValue >= 35) {
 	
-		var v0 = new PatientDemographic(PatientDemographic.obeseClassI);
-		patient.hasPatientProfile.hasDemographic.push(v0);
+		var v2 = new PatientDemographic(PatientDemographic.obeseClassI);
+		patient.hasPatientProfile.hasDemographic.push(v2);
 	}
 	
 	if (patient.hasPatientProfile != undefined
 		&& patient.hasPatientProfile.hasTreatmentPlan != undefined
-		&& patient.hasPatientProfile.hasLabTest.some((e) => e.type == DiabetesLaboratoryTest.hba1c)
-		&& patient.hasPatientProfile.hasLabTest.some((e) => e.hasQuantitativeValue >= 6)
-		&& patient.hasPatientProfile.hasPhysicalExamination.some((e) => e.type == DiabetesPhysicalExamination.historyOfPrediabetes)
-		&& patient.hasPatientProfile.hasDemographic.some((e) => e.type == PatientDemographic.age)
-		&& patient.hasPatientProfile.hasDemographic.some((e) => e.hasQuantitativeValue >= 25)
-		&& patient.hasPatientProfile.hasDemographic.some((e) => e.hasQuantitativeValue <= 59)
-		&& patient.hasPatientProfile.hasLabTest.some((e) => e.type == DiabetesLaboratoryTest.fpg)
-		&& patient.hasPatientProfile.hasLabTest.some((e) => e.hasQuantitativeValue >= 110)
-		&& patient.hasPatientProfile.hasDemographic.some((e) => e.type == PatientDemographic.obeseClassI)) {
+		&& patient.hasPatientProfile.hasLabTest[DiabetesLaboratoryTest.hba1c] != undefined
+		&& patient.hasPatientProfile.hasLabTest[DiabetesLaboratoryTest.hba1c].hasQuantitativeValue >= 6
+		&& patient.hasPatientProfile.hasPhysicalExamination[DiabetesPhysicalExamination.historyOfPrediabetes] != undefined
+		&& patient.hasPatientProfile.hasDemographic[PatientDemographic.age] != undefined
+		&& patient.hasPatientProfile.hasDemographic[PatientDemographic.age].hasQuantitativeValue >= 25
+		&& patient.hasPatientProfile.hasDemographic[PatientDemographic.age].hasQuantitativeValue <= 59
+		&& patient.hasPatientProfile.hasLabTest[DiabetesLaboratoryTest.fpg] != undefined
+		&& patient.hasPatientProfile.hasLabTest[DiabetesLaboratoryTest.fpg].hasQuantitativeValue >= 110
+		&& patient.hasPatientProfile.hasDemographic[PatientDemographic.obeseClassI] != undefined) {
 	
-		var v1 = new DrugSubplan(DiabetesDrug.metformin);
-		patient.hasPatientProfile.hasTreatmentPlan.hasPart.push(v1);
+		var v3 = new DrugSubplan(DrugSubplan.monotherapyPlan, DiabetesDrug.metformin);
+		patient.hasPatientProfile.hasTreatmentPlan.hasPart.push(v3);
 	}
 }
