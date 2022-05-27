@@ -61,9 +61,7 @@
     # african american, latino, native american, asian american, pacific islander
     ?ethnicity list:in ( DTO:DTO:0001936 DTO:DTO:0001937 DTO:DTO:0001938 DTO:DTO:0001939 DTO:DTO:0001940 ) 
 } => {
-     ?profile DDO:DDO_0000140 [ # has_ethnicity
-        a DTO:DTO:0001935 # type high risk ethnicity
-     ]
+     ?profile DDO:DDO_0000140 DTO:DTO:0001935 . # has_ethnicity, high risk ethnicity
 
 } ; cg:loadParam ?patient .
 
@@ -71,7 +69,7 @@
 {   ?patient a DMTO:DMTO_0000021 ; # type patient
         DMTO:DMTO_0001667 ?profile . # has_patient_profile
     ?profile!DDO:DDO_0000139 a DTO:DTO:0002078 . # has_demographic, type overweight
-    ?profile!DDO:DDO_0000140 a DTO:DTO:0001935 . # has_ethnicity, high risk ethnicity
+    ?profile DDO:DDO_0000140 DTO:DTO:0001935 . # has_ethnicity, high risk ethnicity
 
 } => {
     ?profile DMTO:recommend_test [ 
