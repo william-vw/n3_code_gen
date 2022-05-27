@@ -12,7 +12,7 @@ import org.apache.jen3.graph.Node;
 import wvw.semweb.codegen.model.Assignment;
 import wvw.semweb.codegen.model.Block;
 import wvw.semweb.codegen.model.Comparison;
-import wvw.semweb.codegen.model.ConditionList;
+import wvw.semweb.codegen.model.MultiCondition;
 import wvw.semweb.codegen.model.Condition;
 import wvw.semweb.codegen.model.Conjunction;
 import wvw.semweb.codegen.model.IfThen;
@@ -115,7 +115,7 @@ public class MergeStructsWithArraysIntoRoot extends ModelPostprocessor {
 			updateAssignments((Block) it.getThen(), prpPath);
 		}
 
-		private void updateComparisons(ConditionList list, List<ModelProperty> prpPath) {
+		private void updateComparisons(MultiCondition list, List<ModelProperty> prpPath) {
 			Iterator<Condition> condIt = list.getConditions().iterator();
 			while (condIt.hasNext()) {
 				
@@ -124,7 +124,7 @@ public class MergeStructsWithArraysIntoRoot extends ModelPostprocessor {
 
 				case CONJ:
 				case DISJ:
-					updateComparisons((ConditionList) cond, prpPath);
+					updateComparisons((MultiCondition) cond, prpPath);
 					break;
 
 				case CMP:

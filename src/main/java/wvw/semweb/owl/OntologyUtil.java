@@ -20,7 +20,7 @@ public class OntologyUtil {
 	public static List<Resource> findDomainRangeTypes(List<String> inPrp, List<String> outPrp, boolean filterSuper,
 			N3Model ontology) {
 
-//		log.debug("finding domain for: " + properties);
+//		log.info("finding domain for:\nin: " + inPrp + "\nout: " + outPrp);
 
 		List<Resource> allDomains = getTypes(outPrp, RDFS.domain, ontology);
 		List<Resource> allRanges = getTypes(inPrp, RDFS.range, ontology);
@@ -31,8 +31,8 @@ public class OntologyUtil {
 
 		allTypes = allTypes.stream().filter(t -> !t.isAnon()).collect(Collectors.toList());
 
-//		if (allTypes.size() > 1)
-//			log.debug("allTypes: " + allTypes);
+		if (allTypes.size() > 1)
+//			log.info("allTypes: " + allTypes);
 
 		// (also takes care of duplicates)
 
@@ -42,11 +42,11 @@ public class OntologyUtil {
 			// (e.g., prefer "diagnosis" over "diabetes diagnosis")
 			filterSubClasses(allTypes);
 
-//		log.debug("> class:\n" + cls);
-//		log.debug("> domains:\n" + allDomains);
-//		log.debug("> ranges:\n" + allRanges);
-//		log.debug("> selected types:\n" + allTypes);
-//		log.debug("\n");
+//		log.info("> class:\n" + cls);
+//		log.info("> domains:\n" + allDomains);
+//		log.info("> ranges:\n" + allRanges);
+//		log.info("> selected types:\n" + allTypes);
+//		log.info("\n");
 
 		return allTypes;
 	}

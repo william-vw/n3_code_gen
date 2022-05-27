@@ -3,7 +3,7 @@ package wvw.semweb.codegen.model;
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class ConditionList extends Condition {
+public abstract class MultiCondition extends Condition {
 
 	protected List<Condition> conditions = new ArrayList<>();
 

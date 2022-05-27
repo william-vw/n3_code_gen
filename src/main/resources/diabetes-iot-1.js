@@ -47,7 +47,7 @@ class TreatmentPlan {
 class TreatmentSubplan {
 	static lifestyleSubplan = 'lifestyleSubplan';
 
-	constructor(label, type) {
+	constructor(type, label) {
 		this.label = label;
 		this.type = type;
 	}
@@ -74,13 +74,13 @@ class DiabetesMellitus {
 	type;
 }
 
-function execute(patient, exam) {
+function execute(exam, patient) {
 	if (patient.hasPatientProfile != undefined
 		&& exam.type == DiabetesPhysicalExamination.bmi
 		&& exam.hasQuantitativeValue >= 25) {
 	
 		var v0 = new PatientDemographic(PatientDemographic.overweight);
-		patient.hasPatientProfile.hasDemographic.push(v0);
+		patient.hasPatientProfile.hasDemographic[v0.type] = v0;
 	}
 	
 	if (patient.hasPatientProfile != undefined
@@ -91,6 +91,6 @@ function execute(patient, exam) {
 		&& patient.hasPatientProfile.hasDemographic[PatientDemographic.overweight] != undefined) {
 	
 		var v1 = new TreatmentSubplan(TreatmentSubplan.lifestyleSubplan, "Management and reduction of weight is important");
-		patient.hasPatientProfile.hasTreatmentPlan.hasPart.push(v1);
+		patient.hasPatientProfile.hasTreatmentPlan.hasPart[v1.type] = v1;
 	}
 }

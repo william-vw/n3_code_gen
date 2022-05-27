@@ -11,15 +11,15 @@ class PatientProfile {
 		this.hasTreatmentPlan = hasTreatmentPlan;
 	}
 
-	hasDemographic = {};
 	hasPhysicalExamination = {};
+	hasDemographic = {};
 	hasTreatmentPlan;
 	hasLabTest = {};
 }
 
-class PatientDemographic {
-	static age = 'age';
-	static obeseClassI = 'obeseClassI';
+class DiabetesPhysicalExamination {
+	static bmi = 'bmi';
+	static historyOfPrediabetes = 'historyOfPrediabetes';
 
 	constructor(type, hasQuantitativeValue) {
 		this.type = type;
@@ -30,9 +30,9 @@ class PatientDemographic {
 	hasQuantitativeValue;
 }
 
-class DiabetesPhysicalExamination {
-	static bmi = 'bmi';
-	static historyOfPrediabetes = 'historyOfPrediabetes';
+class PatientDemographic {
+	static age = 'age';
+	static obeseClassI = 'obeseClassI';
 
 	constructor(type, hasQuantitativeValue) {
 		this.type = type;
@@ -51,7 +51,7 @@ class TreatmentPlan {
 class DrugSubplan {
 	static monotherapyPlan = 'monotherapyPlan';
 
-	constructor(hasDrugParticipant, type) {
+	constructor(type, hasDrugParticipant) {
 		this.hasDrugParticipant = hasDrugParticipant;
 		this.type = type;
 	}
@@ -89,7 +89,7 @@ function execute(patient) {
 		&& patient.hasPatientProfile.hasPhysicalExamination[DiabetesPhysicalExamination.bmi].hasQuantitativeValue >= 35) {
 	
 		var v2 = new PatientDemographic(PatientDemographic.obeseClassI);
-		patient.hasPatientProfile.hasDemographic.push(v2);
+		patient.hasPatientProfile.hasDemographic[v2.type] = v2;
 	}
 	
 	if (patient.hasPatientProfile != undefined
@@ -105,6 +105,6 @@ function execute(patient) {
 		&& patient.hasPatientProfile.hasDemographic[PatientDemographic.obeseClassI] != undefined) {
 	
 		var v3 = new DrugSubplan(DrugSubplan.monotherapyPlan, DiabetesDrug.metformin);
-		patient.hasPatientProfile.hasTreatmentPlan.hasPart.push(v3);
+		patient.hasPatientProfile.hasTreatmentPlan.hasPart[v3.type] = v3;
 	}
 }

@@ -23,7 +23,7 @@ class TreatmentSubplan {
 	static lifestyleSubplan = 'lifestyleSubplan';
 	static drugSubplan = 'drugSubplan';
 
-	constructor(label, type) {
+	constructor(type, label) {
 		this.label = label;
 		this.type = type;
 	}
@@ -45,7 +45,7 @@ class BloodPressure {
 	hasQuantitativeValue;
 }
 
-function execute(sys, patient, dias) {
+function execute(dias, sys, patient) {
 	if (patient.hasPatientProfile != undefined
 		&& patient.hasPatientProfile.hasTreatmentPlan != undefined
 		&& sys.type == BloodPressure.systolicBloodPressure
@@ -54,7 +54,7 @@ function execute(sys, patient, dias) {
 		&& dias.hasQuantitativeValue > 80) {
 	
 		var v4 = new TreatmentSubplan(TreatmentSubplan.lifestyleSubplan, "weight loss if indicated, \n            a Dietary Approaches to Stop Hypertension (DASH)-style eating pattern, \n            including reducing sodium and increasing potassium intake, moderation of alcohol intake, \n            and increased physical activity.");
-		patient.hasPatientProfile.hasTreatmentPlan.hasPart.push(v4);
+		patient.hasPatientProfile.hasTreatmentPlan.hasPart[v4.type] = v4;
 	}
 	
 	if (patient.hasPatientProfile != undefined
@@ -65,6 +65,6 @@ function execute(sys, patient, dias) {
 		&& dias.hasQuantitativeValue > 80) {
 	
 		var v5 = new TreatmentSubplan(TreatmentSubplan.drugSubplan, "in addition to lifestyle therapy, \n        have prompt initiation and timely titration of pharmacologic therapy \n        to achieve blood pressure goals");
-		patient.hasPatientProfile.hasTreatmentPlan.hasPart.push(v5);
+		patient.hasPatientProfile.hasTreatmentPlan.hasPart[v5.type] = v5;
 	}
 }

@@ -76,7 +76,7 @@ public class ParseModelLogic implements N3EventListener {
 			log.error("no rules found in " + rulesFile.getPath());
 
 		for (N3Rule r : parsedRules) {
-//			log.debug("- parsed rule:\n" + r);
+//			log.info("- parsed rule:\n" + r);
 
 			List<RuleAnnotation> annotations = getRuleAnnotations(r, ruleset);
 			checkAnnotations(annotations, r);

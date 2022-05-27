@@ -30,9 +30,8 @@ class DiabetesPhysicalExamination {
 }
 
 class Ethnicity {
-	static highRiskEthnicity = 'highRiskEthnicity';
-
 	static pacificIslander = 'pacificIslander';
+	static highRiskEthnicity = 'highRiskEthnicity';
 	static africanAmerican = 'africanAmerican';
 	static asianAmerican = 'asianAmerican';
 	static latino = 'latino';
@@ -72,8 +71,8 @@ function execute(patient) {
 		&& patient.hasPatientProfile.hasEthnicity != undefined
 		&& patient.hasPatientProfile.hasEthnicity.type != Ethnicity.asianAmerican) {
 	
-		var v6 = new PatientDemographic(PatientDemographic.overweight);
-		patient.hasPatientProfile.hasDemographic.push(v6);
+		var v0 = new PatientDemographic(PatientDemographic.overweight);
+		patient.hasPatientProfile.hasDemographic[v0.type] = v0;
 	}
 	
 	if (patient.hasPatientProfile != undefined
@@ -81,24 +80,26 @@ function execute(patient) {
 		&& patient.hasPatientProfile.hasPhysicalExamination[DiabetesPhysicalExamination.bmi].hasQuantitativeValue >= 23
 		&& patient.hasPatientProfile.hasEthnicity.type == Ethnicity.asianAmerican) {
 	
-		var v7 = new PatientDemographic(PatientDemographic.overweight);
-		patient.hasPatientProfile.hasDemographic.push(v7);
+		var v1 = new PatientDemographic(PatientDemographic.overweight);
+		patient.hasPatientProfile.hasDemographic[v1.type] = v1;
 	}
 	
 	if (patient.hasPatientProfile != undefined
 		&& patient.hasPatientProfile.hasEthnicity != undefined
-		&& null) {
+		&& (patient.hasPatientProfile.hasEthnicity.type == Ethnicity.africanAmerican
+		|| patient.hasPatientProfile.hasEthnicity.type == Ethnicity.latino
+		|| patient.hasPatientProfile.hasEthnicity.type == Ethnicity.nativeAmerican
+		|| patient.hasPatientProfile.hasEthnicity.type == Ethnicity.asianAmerican
+		|| patient.hasPatientProfile.hasEthnicity.type == Ethnicity.pacificIslander)) {
 	
-		var v8 = new Ethnicity(Ethnicity.highRiskEthnicity);
-		patient.hasPatientProfile.hasEthnicity = v8;
+		patient.hasPatientProfile.hasEthnicity.type = Ethnicity.highRiskEthnicity;
 	}
 	
 	if (patient.hasPatientProfile != undefined
-		&& patient.hasPatientProfile.hasEthnicity != undefined
-		&& patient.hasPatientProfile.hasEthnicity.type == Ethnicity.highRiskEthnicity
-		&& patient.hasPatientProfile.hasDemographic[PatientDemographic.overweight] != undefined) {
+		&& patient.hasPatientProfile.hasDemographic[PatientDemographic.overweight] != undefined
+		&& patient.hasPatientProfile.hasEthnicity.type == Ethnicity.highRiskEthnicity) {
 	
-		var v9 = new Recommendation(Recommendation.diabetesScreening);
-		patient.hasPatientProfile.recommendTest.push(v9);
+		var v2 = new Recommendation(Recommendation.diabetesScreening);
+		patient.hasPatientProfile.recommendTest[v2.type] = v2;
 	}
 }

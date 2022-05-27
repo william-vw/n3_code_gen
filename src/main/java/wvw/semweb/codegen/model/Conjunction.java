@@ -2,7 +2,7 @@ package wvw.semweb.codegen.model;
 
 import java.util.stream.Collectors;
 
-public class Conjunction extends ConditionList {
+public class Conjunction extends MultiCondition {
 
 	@Override
 	public Conditions getConditionType() {

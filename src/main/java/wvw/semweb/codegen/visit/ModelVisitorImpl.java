@@ -70,6 +70,7 @@ public class ModelVisitorImpl extends ModelVisitor {
 		found.add(gnode);
 
 		Node node = (Node) gnode.getId();
+		log.info("node? " + node);
 
 		// - literal node
 		if (node instanceof Node_Literal) {
@@ -84,9 +85,7 @@ public class ModelVisitorImpl extends ModelVisitor {
 		// incoming properties from the rule graph
 		List<Resource> nodeTypes = getNodeTypes(gnode);
 
-//		log.debug("\nfrom? " + from);
-//		log.debug("node? " + node);
-//		log.debug("found ontology types: " + nodeTypes);
+		log.info("found ontology types: " + nodeTypes);
 
 		if (nodeTypes.size() > 1)
 			log.warn("found multiple domain/range types for node " + node + " (using first one): " + nodeTypes);
@@ -126,71 +125,70 @@ public class ModelVisitorImpl extends ModelVisitor {
 			addConstant((Node_URI) node, true, modelStruct);
 
 		for (GraphEdge edge : gnode.getOut()) {
-//			log.info("edge? " + node.getId() + " -> " + edge.getId());
+			log.info("edge? " + node + " -> " + edge.getId());
 
+			Node_URI nodePrp = (Node_URI) edge.getId();
 			GraphNode target = edge.getTarget();
 
 			// -- outgoing "type" edge
 			// if a URI, this node is an explicit type in the rule
 
-			if (edge.getId().equals(RDF.type.asNode()) && target.getId() instanceof Node_URI) {
-				Node_URI typeUri = (Node_URI) target.getId();
+			if (edge.getId().equals(RDF.type.asNode())) {
+				if (target.getId() instanceof Node_URI) {
+					Node_URI typeUri = (Node_URI) target.getId();
 
-				// e.g., Patient struct with 'patient' type doesn't make a lot of sense
-				if (!Util.localName(typeUri).equals(modelStruct.getName()))
+					// e.g., Patient struct with 'patient' type doesn't make a lot of sense
+					if (!Util.localName(typeUri).equals(modelStruct.getName()))
 
-					// add as constant to our struct
-					addConstant(typeUri, false, modelStruct);
-
-			} else {
-				Node_URI nodePrp = (Node_URI) edge.getId();
+						// add as constant to our struct
+						addConstant(typeUri, false, modelStruct);
+				}
 
 				// - not a regular property (builtin) but builtin
 				// (as w/ literals; assumed this is an end-point in model;
 				// builtins on literal datatypes are already ignored)
+			} else if (toUriComparator(edge) != null) {
+				// TODO likely no longer needed if we add all values from ontology
 
-				if (toUriComparator(edge) != null) {
-					// TODO likely no longer needed if we add all values from ontology
+				// if the target is concrete, add those as values in the struct
 
-					// if the target is concrete, add those as values in the struct
+				// -- individual URI
+				if (target.getId() instanceof Node_URI) {
+					Node_URI targetUri = (Node_URI) target.getId();
 
-					// -- individual URI
-					if (target.getId() instanceof Node_URI) {
-						Node_URI targetUri = (Node_URI) target.getId();
+					addConstant(targetUri, true, modelStruct);
+					model.setStruct(targetUri, modelStruct);
 
-						addConstant(targetUri, true, modelStruct);
-						model.setStruct(targetUri, modelStruct);
+					// -- collection of URIs
+				} else if (target.getId() instanceof Node_Collection) {
+					Node_Collection coll = (Node_Collection) target.getId();
+					coll.getElements().forEach(el -> {
+						if (el instanceof Node_URI) {
+							addConstant((Node_URI) el, true, modelStruct);
+							model.setStruct(el, modelStruct);
+						}
+					});
 
-						// -- collection of URIs
-					} else if (target.getId() instanceof Node_Collection) {
-						Node_Collection coll = (Node_Collection) target.getId();
-						coll.getElements().forEach(el -> {
-							if (el instanceof Node_URI) {
-								addConstant((Node_URI) el, true, modelStruct);
-								model.setStruct(el, modelStruct);
-							}
-						});
-					}
+				}
+			} else {
+				// -- regular property
+				ModelProperty modelPrp = new ModelProperty(Util.localName(nodePrp));
+				loadAnnotations(nodePrp.getURI(), modelPrp);
+				loadCardinality(nodePrp.getURI(), modelPrp);
 
-				} else {
-					// -- regular property
-					ModelProperty modelPrp = new ModelProperty(Util.localName(nodePrp));
-					loadAnnotations(nodePrp.getURI(), modelPrp);
-					loadCardinality(nodePrp.getURI(), modelPrp);
+				// then, recursively call this method on the edge target
 
-					// then, recursively call this method on the edge target
-
-					ModelType prpType = constructModel(edge.getTarget(), found);
-					// returned model-type will serve as type for our property
-					if (prpType != null) {
-						modelPrp.setTarget(prpType);
-						modelStruct.addProperty(modelPrp);
-					}
+				ModelType prpType = constructModel(edge.getTarget(), found);
+				// returned model-type will serve as type for our property
+				if (prpType != null) {
+					modelPrp.setTarget(prpType);
+					modelStruct.addProperty(modelPrp);
 				}
 			}
 		}
 
 		return ret;
+
 	}
 
 	private void constructLogic(GraphNode gnode, GraphEdge from, NodePath path, Set<GraphNode> found)
@@ -306,6 +304,7 @@ public class ModelVisitorImpl extends ModelVisitor {
 
 				if (modelStruct != null && toUriComparator(edge) == null) {
 					Node_URI nodePrp = (Node_URI) edge.getId();
+
 					// (needs to be copied; key-type can be overridden)
 					ModelProperty modelPrp = modelStruct.getProperty(Util.localName(nodePrp)).copy();
 

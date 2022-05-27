@@ -2,11 +2,21 @@ package wvw.semweb.codegen.gen;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.stream.Collectors;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
+import wvw.semweb.codegen.model.Assignment;
+import wvw.semweb.codegen.model.Block;
 import wvw.semweb.codegen.model.CodeLogic;
+import wvw.semweb.codegen.model.CodeStatement;
+import wvw.semweb.codegen.model.Comparison;
+import wvw.semweb.codegen.model.Condition;
+import wvw.semweb.codegen.model.Conjunction;
+import wvw.semweb.codegen.model.Disjunction;
+import wvw.semweb.codegen.model.IfThen;
+import wvw.semweb.codegen.model.MultiCondition;
 import wvw.semweb.codegen.model.struct.CodeModel;
 import wvw.semweb.codegen.model.struct.ModelProperty;
 import wvw.semweb.codegen.model.struct.ModelStruct;
@@ -75,4 +85,67 @@ public abstract class GenerateCode {
 		} else
 			return o.toString();
 	}
+
+	protected String genStatement(CodeStatement stmt, int level) {
+		switch (stmt.getStatementType()) {
+
+		case COND:
+			return genCondition((Condition) stmt, level);
+
+		case IF_THEN:
+			return genIfThen((IfThen) stmt, level);
+
+		case BLOCK:
+			return genBlock((Block) stmt);
+
+		case ASSIGN:
+			return genAssignment((Assignment) stmt);
+
+		default:
+			return null;
+		}
+	}
+	
+	protected abstract String genIfThen(IfThen ifThen, int level);
+	
+	protected abstract String genBlock(Block block);
+	
+	protected abstract String genAssignment(Assignment assign);
+
+	protected String genCondition(Condition cond, int level) {
+		switch (cond.getConditionType()) {
+
+		case CONJ:
+			return genConjunction((Conjunction) cond, level);
+
+		case DISJ:
+			return genDisjunction((Disjunction) cond, level);
+
+		case CMP:
+			return genComparison((Comparison) cond);
+
+		default:
+			return null;
+		}
+	}
+
+	protected String genConjunction(Conjunction conj, int level) {
+		return genConditionList(conj, "&&", level);
+	}
+
+	protected String genDisjunction(Disjunction disj, int level) {
+		return genConditionList(disj, "||", level);
+	}
+
+	protected String genConditionList(MultiCondition list, String conn, int level) {
+		String ret = list.getConditions().stream().map(c -> genCondition(c, level + 1))
+				.collect(Collectors.joining("\n\t" + conn + " "));
+
+		if (level > 0)
+			return "(" + ret + ")";
+		else
+			return ret;
+	}
+
+	protected abstract String genComparison(Comparison cmp);
 }

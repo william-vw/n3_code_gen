@@ -7,7 +7,7 @@ import java.util.List;
 import wvw.semweb.codegen.model.Comparison;
 import wvw.semweb.codegen.model.Comparison.Comparators;
 import wvw.semweb.codegen.model.Condition;
-import wvw.semweb.codegen.model.ConditionList;
+import wvw.semweb.codegen.model.MultiCondition;
 import wvw.semweb.codegen.model.Conjunction;
 import wvw.semweb.codegen.model.IfThen;
 import wvw.semweb.codegen.model.Operand;
@@ -34,14 +34,14 @@ public class RemoveExistChecksForLiterals extends ModelPostprocessor {
 		doRemove(cond, toRemove);
 	}
 
-	private void collectToRemove(ConditionList list, List<Operand> toRemove) {
+	private void collectToRemove(MultiCondition list, List<Operand> toRemove) {
 		list.getConditions().forEach(c -> {
 
 			switch (c.getConditionType()) {
 
 			case CONJ:
 			case DISJ:
-				collectToRemove((ConditionList) c, toRemove);
+				collectToRemove((MultiCondition) c, toRemove);
 				break;
 
 			case CMP:
@@ -55,7 +55,7 @@ public class RemoveExistChecksForLiterals extends ModelPostprocessor {
 		});
 	}
 
-	private void doRemove(ConditionList list, List<Operand> toRemove) {
+	private void doRemove(MultiCondition list, List<Operand> toRemove) {
 		Iterator<Condition> condIt = list.getConditions().iterator();
 		while (condIt.hasNext()) {
 			Condition cond = condIt.next();
@@ -64,7 +64,7 @@ public class RemoveExistChecksForLiterals extends ModelPostprocessor {
 
 			case CONJ:
 			case DISJ:
-				doRemove((ConditionList) cond, toRemove);
+				doRemove((MultiCondition) cond, toRemove);
 				break;
 
 			case CMP:

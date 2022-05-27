@@ -15,15 +15,10 @@ import org.atteo.evo.inflector.English;
 import wvw.semweb.codegen.model.Assignment;
 import wvw.semweb.codegen.model.Block;
 import wvw.semweb.codegen.model.CodeLogic;
-import wvw.semweb.codegen.model.CodeStatement;
 import wvw.semweb.codegen.model.Comparison;
 import wvw.semweb.codegen.model.Comparison.Comparators;
-import wvw.semweb.codegen.model.Condition;
 import wvw.semweb.codegen.model.Condition.Conditions;
-import wvw.semweb.codegen.model.ConditionList;
-import wvw.semweb.codegen.model.Conjunction;
 import wvw.semweb.codegen.model.CreateStruct;
-import wvw.semweb.codegen.model.Disjunction;
 import wvw.semweb.codegen.model.IfThen;
 import wvw.semweb.codegen.model.Literal;
 import wvw.semweb.codegen.model.NodePath;
@@ -131,62 +126,8 @@ public class GenerateSolidity extends GenerateCode {
 		logic.append("\n}");
 	}
 
-	private String genStatement(CodeStatement stmt, int level) {
-		switch (stmt.getStatementType()) {
-
-		case COND:
-			return genCondition((Condition) stmt, level);
-
-		case IF_THEN:
-			return genIfThen((IfThen) stmt, level);
-
-		case BLOCK:
-			return genBlock((Block) stmt);
-
-		case ASSIGN:
-			return genAssignment((Assignment) stmt);
-
-		default:
-			return null;
-		}
-	}
-
-	private String genCondition(Condition cond, int level) {
-		switch (cond.getConditionType()) {
-
-		case CONJ:
-			return genConjunction((Conjunction) cond, level);
-
-		case DISJ:
-			return genDisjunction((Disjunction) cond, level);
-
-		case CMP:
-			return genComparison((Comparison) cond);
-
-		default:
-			return null;
-		}
-	}
-
-	private String genConjunction(Conjunction conj, int level) {
-		return genConditionList(conj, "&&", level);
-	}
-
-	private String genDisjunction(Disjunction disj, int level) {
-		return genConditionList(disj, "||", level);
-	}
-
-	private String genConditionList(ConditionList list, String conn, int level) {
-		String ret = list.getConditions().stream().map(c -> genCondition(c, level + 1))
-				.collect(Collectors.joining("\n\t" + conn + " "));
-
-		if (level > 0)
-			return "(" + ret + ")";
-		else
-			return ret;
-	}
-
-	private String genComparison(Comparison cmp) {
+	@Override
+	protected String genComparison(Comparison cmp) {
 		String cpr = genCmp(cmp.getCmp());
 		String op2 = genOperand(cmp.getOp2());
 
@@ -210,7 +151,8 @@ public class GenerateSolidity extends GenerateCode {
 		return op1 + " " + part2;
 	}
 
-	private String genIfThen(IfThen ifThen, int level) {
+	@Override
+	protected String genIfThen(IfThen ifThen, int level) {
 		String ifContents = genCondition(ifThen.getCondition(), level);
 
 		String thenContents = genStatement(ifThen.getThen(), level);
@@ -232,8 +174,9 @@ public class GenerateSolidity extends GenerateCode {
 
 		return ret;
 	}
-
-	private String genBlock(Block block) {
+	
+	@Override
+	protected String genBlock(Block block) {
 		StringBuffer out = new StringBuffer();
 
 		out.append(block.getStatements().stream().map(stmt -> genStatement(stmt, 0)).collect(Collectors.joining("\n")));
@@ -243,7 +186,8 @@ public class GenerateSolidity extends GenerateCode {
 		return out.toString();
 	}
 
-	private String genAssignment(Assignment assign) {
+	@Override
+	protected String genAssignment(Assignment assign) {
 		String op1 = genOperand(assign.getOp1());
 
 		// assigning to variable
