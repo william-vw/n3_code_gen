@@ -17,18 +17,18 @@ public abstract class ModelPostprocessor {
 		INSERT_STRUCT_EXISTS_CHECK, 
 		REMOVE_EXISTS_CHECK_LITERALS(true),
 		MERGE_STRUCTS_W_ARRAYS_IN_ROOT,
-		INSERT_ALL_ONTO_CONSTANTS; //(true);
+		INSERT_ALL_ONTO_CONSTANTS(true);
 		// @formatter:on
-		
+
 		private boolean def = false;
-		
+
 		private PostprocessTypes() {
 		}
-		
+
 		private PostprocessTypes(boolean def) {
 			this.def = def;
 		}
-		
+
 		public boolean isDefault() {
 			return def;
 		}
@@ -45,7 +45,7 @@ public abstract class ModelPostprocessor {
 
 		case MERGE_STRUCTS_W_ARRAYS_IN_ROOT:
 			return new MergeStructsWithArraysIntoRoot();
-			
+
 		case INSERT_ALL_ONTO_CONSTANTS:
 			return new InsertAllOntologyConstants();
 		}

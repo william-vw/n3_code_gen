@@ -22,7 +22,7 @@ contract DiabetesIot4 {
 		bool exists;
 	}
 	
-	enum DiabetesPhysicalExaminations{ Bmi }
+	enum DiabetesPhysicalExaminations{ Bmi, FamilyHistoryOfType1DiabetesMellitus, Smoking, PersonalHistoryOfHemochromatosis, FamilyHistoryOfType2DiabetesMellitus, OralExam, EyeExam, VitalSign, ThyroidFunction, BabyDeliveredWeighingMoreThan4pt5Kg, LostFootSensation, FirstDegreeRelativeWithDiabetes, HistoryOfGestationalDiabetes, HighRiskPopulation, WaistCircumference, FamilyHistoryOfHemochromatosis, PhysicallyInactive, DrinkingAlcohol, FamilyHistoryOfGestationalDiabetesMellitus, HistoryOfPrediabetes }
 	
 	struct DiabetesPhysicalExamination {
 		DiabetesPhysicalExaminations hasType;
@@ -30,14 +30,14 @@ contract DiabetesIot4 {
 		bool exists;
 	}
 	
-	enum Ethnicities{ PacificIslander, HighRiskEthnicity, AfricanAmerican, AsianAmerican, Latino, NativeAmerican }
+	enum Ethnicities{ HighRiskEthnicity, PacificIslander, HighRiskEthnicity, AfricanAmerican, AsianAmerican, Latino, NativeAmerican }
 	
 	struct Ethnicity {
 		Ethnicities hasType;
 		bool exists;
 	}
 	
-	enum PatientDemographics{ Overweight }
+	enum PatientDemographics{ Residence, BreastFeeding, MaritalStatus, Weight, LevelOfEducation, Overweight, Height, Gender, ActivityLevel, Age, PregnancyState, Job }
 	
 	struct PatientDemographic {
 		PatientDemographics hasType;

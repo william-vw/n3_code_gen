@@ -20,14 +20,14 @@ contract DiabetesIot1 {
 		bool exists;
 	}
 	
-	enum PatientDemographics{ Overweight }
+	enum PatientDemographics{ Residence, BreastFeeding, MaritalStatus, Weight, LevelOfEducation, Overweight, Height, Gender, ActivityLevel, Age, PregnancyState, Job }
 	
 	struct PatientDemographic {
 		PatientDemographics hasType;
 		bool exists;
 	}
 	
-	enum DiabetesPhysicalExaminations{ Bmi }
+	enum DiabetesPhysicalExaminations{ Bmi, FamilyHistoryOfType1DiabetesMellitus, Smoking, PersonalHistoryOfHemochromatosis, FamilyHistoryOfType2DiabetesMellitus, OralExam, EyeExam, VitalSign, ThyroidFunction, BabyDeliveredWeighingMoreThan4pt5Kg, LostFootSensation, FirstDegreeRelativeWithDiabetes, HistoryOfGestationalDiabetes, HighRiskPopulation, WaistCircumference, FamilyHistoryOfHemochromatosis, PhysicallyInactive, DrinkingAlcohol, FamilyHistoryOfGestationalDiabetesMellitus, HistoryOfPrediabetes }
 	
 	struct DiabetesPhysicalExamination {
 		DiabetesPhysicalExaminations hasType;
@@ -35,7 +35,7 @@ contract DiabetesIot1 {
 		bool exists;
 	}
 	
-	enum TreatmentSubplans{ LifestyleSubplan }
+	enum TreatmentSubplans{ LifestyleSubplan, EducationSubplan, DrugSubplan }
 	
 	struct TreatmentSubplan {
 		string label;
@@ -48,7 +48,7 @@ contract DiabetesIot1 {
 		bool exists;
 	}
 	
-	enum DiabetesMellituses{ Type2DiabetesMellitus }
+	enum DiabetesMellituses{ DiabetesMellitusDuringPregnancyandChildbirthAndThePuerperium, DiabetesMellitusWithoutComplication, Type2DiabetesMellitus }
 	
 	struct DiabetesMellitus {
 		DiabetesMellituses hasType;

@@ -22,7 +22,7 @@
 
     ?exam a DDO:DDO_0000230 ; # type BMI
         DDO:DDO_0000134 ?value . # has_quantitative_value
-    ?value math:notLessThan 35 .
+    ?value math:notLessThan 30 .
 
 } => {
     ?profile DDO:DDO_0000139 [ # has_demographic

@@ -13,8 +13,29 @@ class PatientProfile {
 
 	recommendTest = {};
 	hasEthnicity;
-	hasPhysicalExamination = {};
 	hasDemographic = {};
+	hasPhysicalExamination = {};
+}
+
+class PatientDemographic {
+	static residence = 'residence';
+	static breastFeeding = 'breastFeeding';
+	static maritalStatus = 'maritalStatus';
+	static weight = 'weight';
+	static levelOfEducation = 'levelOfEducation';
+	static overweight = 'overweight';
+	static height = 'height';
+	static gender = 'gender';
+	static activityLevel = 'activityLevel';
+	static age = 'age';
+	static pregnancyState = 'pregnancyState';
+	static job = 'job';
+
+	constructor(type) {
+		this.type = type;
+	}
+
+	type;
 }
 
 class DiabetesPhysicalExamination {
@@ -57,27 +78,6 @@ class Ethnicity {
 	static asianAmerican = 'asianAmerican';
 	static latino = 'latino';
 	static nativeAmerican = 'nativeAmerican';
-
-	constructor(type) {
-		this.type = type;
-	}
-
-	type;
-}
-
-class PatientDemographic {
-	static residence = 'residence';
-	static breastFeeding = 'breastFeeding';
-	static maritalStatus = 'maritalStatus';
-	static weight = 'weight';
-	static levelOfEducation = 'levelOfEducation';
-	static overweight = 'overweight';
-	static height = 'height';
-	static gender = 'gender';
-	static activityLevel = 'activityLevel';
-	static age = 'age';
-	static pregnancyState = 'pregnancyState';
-	static job = 'job';
 
 	constructor(type) {
 		this.type = type;

@@ -140,9 +140,9 @@ class DiabetesLaboratoryTest {
 function execute(patient) {
 	if (patient.hasPatientProfile != undefined
 		&& patient.hasPatientProfile.hasPhysicalExamination[DiabetesPhysicalExamination.bmi] != undefined
-		&& patient.hasPatientProfile.hasPhysicalExamination[DiabetesPhysicalExamination.bmi].hasQuantitativeValue >= 35) {
+		&& patient.hasPatientProfile.hasPhysicalExamination[DiabetesPhysicalExamination.bmi].hasQuantitativeValue >= 30) {
 	
-		var v2 = new PatientDemographic(PatientDemographic.obeseClassI);
+		var v2 = new PatientDemographic(PatientDemographic.obeseClassI, 0);
 		patient.hasPatientProfile.hasDemographic[v2.type] = v2;
 	}
 	

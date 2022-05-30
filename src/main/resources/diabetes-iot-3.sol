@@ -18,7 +18,7 @@ contract DiabetesIot3 {
 		bool exists;
 	}
 	
-	enum TreatmentSubplans{ LifestyleSubplan, DrugSubplan }
+	enum TreatmentSubplans{ LifestyleSubplan, EducationSubplan, DrugSubplan }
 	
 	struct TreatmentSubplan {
 		string label;

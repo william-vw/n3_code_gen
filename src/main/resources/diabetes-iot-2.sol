@@ -21,7 +21,7 @@ contract DiabetesIot2 {
 		bool exists;
 	}
 	
-	enum DiabetesPhysicalExaminations{ Bmi, HistoryOfPrediabetes }
+	enum DiabetesPhysicalExaminations{ Bmi, FamilyHistoryOfType1DiabetesMellitus, Smoking, PersonalHistoryOfHemochromatosis, FamilyHistoryOfType2DiabetesMellitus, OralExam, EyeExam, VitalSign, ThyroidFunction, BabyDeliveredWeighingMoreThan4pt5Kg, LostFootSensation, FirstDegreeRelativeWithDiabetes, HistoryOfGestationalDiabetes, HighRiskPopulation, WaistCircumference, FamilyHistoryOfHemochromatosis, PhysicallyInactive, DrinkingAlcohol, FamilyHistoryOfGestationalDiabetesMellitus, HistoryOfPrediabetes }
 	
 	struct DiabetesPhysicalExamination {
 		DiabetesPhysicalExaminations hasType;
@@ -29,7 +29,7 @@ contract DiabetesIot2 {
 		bool exists;
 	}
 	
-	enum PatientDemographics{ Age, ObeseClassI }
+	enum PatientDemographics{ Residence, BreastFeeding, MaritalStatus, Weight, LevelOfEducation, Height, Gender, ActivityLevel, Age, ObeseClassI, PregnancyState, Job }
 	
 	struct PatientDemographic {
 		PatientDemographics hasType;
@@ -37,7 +37,7 @@ contract DiabetesIot2 {
 		bool exists;
 	}
 	
-	enum DrugSubplans{ MonotherapyPlan }
+	enum DrugSubplans{ MonotherapyPlan, DualTherapyPlan }
 	
 	struct DrugSubplan {
 		DiabetesDrug hasDrugParticipant;
@@ -45,14 +45,14 @@ contract DiabetesIot2 {
 		bool exists;
 	}
 	
-	enum DiabetesDrugs{ Metformin }
+	enum DiabetesDrugs{ DopamineAgonist, OtherDrug, CombinedDrug, Insulin, Thiazolidinedione, Sulfonylurea, Incretin, Meglitinide, AlphaGlucosidaseInhibitor, Metformin }
 	
 	struct DiabetesDrug {
 		DiabetesDrugs hasType;
 		bool exists;
 	}
 	
-	enum DiabetesLaboratoryTests{ Hba1c, Fpg }
+	enum DiabetesLaboratoryTests{ BloodKetone, PlasmaBicarbonate, BloodGlucoseTest, LipidProfile, SerumFetuinA, SerumOsmolality, Autoantibody, SerumAdiponectin, HematologicalProfile, InsulinMeasurement, KidneyFunctionTest, TumorMarker, UrineAnalysis, PlasmaCreatinine, LiverFunctionTest, Hba1c, Fpg }
 	
 	struct DiabetesLaboratoryTest {
 		DiabetesLaboratoryTests hasType;
@@ -67,7 +67,7 @@ contract DiabetesIot2 {
 		Patient storage patient = patients[msg.sender];
 	
 		if (patient.hasPhysicalExamination[DiabetesPhysicalExaminations.Bmi].exists
-			&& patient.hasPhysicalExamination[DiabetesPhysicalExaminations.Bmi].hasQuantitativeValue >= 35) {
+			&& patient.hasPhysicalExamination[DiabetesPhysicalExaminations.Bmi].hasQuantitativeValue >= 30) {
 		
 			PatientDemographic memory v2 = PatientDemographic({ hasType: PatientDemographics.ObeseClassI, hasQuantitativeValue: 0, exists: true });
 			patient.hasDemographic[v2.hasType] = v2;
